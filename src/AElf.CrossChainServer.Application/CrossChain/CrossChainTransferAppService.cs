@@ -246,7 +246,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         var fromChain = await _chainAppService.GetAsync(fromChainId);
         var toChain = await _chainAppService.GetAsync(toChainId);
         
-        if (fromChainId == null || toChainId == null)
+        if (fromChain == null || toChain == null)
         {
             return CrossChainType.Homogeneous;
         }
