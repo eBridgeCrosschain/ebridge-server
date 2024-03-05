@@ -23,6 +23,10 @@ public class IndexerAppService: CrossChainServerAppService, IIndexerAppService
     public async Task<long> GetLatestIndexHeightAsync(string chainId)
     {
         var chain = await _chainAppService.GetAsync(chainId);
+        if (chain == null)
+        {
+            return 0;
+        }
         var data = await QueryDataAsync<ConfirmedBlockHeight>(new GraphQLRequest
         {
             Query = @"

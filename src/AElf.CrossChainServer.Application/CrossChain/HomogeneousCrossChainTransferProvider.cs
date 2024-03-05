@@ -89,8 +89,10 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
 
             
             var fromChain = await _chainAppService.GetAsync(transfer.FromChainId);
-            return await _tokenContractAppService.CrossChainReceiveTokenAsync(transfer.ToChainId,
-                fromChain.AElfChainId, parentHeight, transaction.ToByteArray().ToHex(), merklePath);
+            return fromChain == null
+                ? ""
+                : await _tokenContractAppService.CrossChainReceiveTokenAsync(transfer.ToChainId,
+                    fromChain.AElfChainId, parentHeight, transaction.ToByteArray().ToHex(), merklePath);
     }
     
     private async Task<MerklePath> GetMerklePathAsync(string chainId, string txId)

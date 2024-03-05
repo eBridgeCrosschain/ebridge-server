@@ -21,6 +21,6 @@ public class BridgeContractProviderFactory : IBridgeContractProviderFactory, ITr
     public async Task<IBridgeContractProvider> GetBridgeContractProviderAsync(string chainId)
     {
         var chain = await _chainAppService.GetAsync(chainId);
-        return _blockchainClientProviders.First(o => o.ChainType == chain.Type);
+        return chain == null ? null : _blockchainClientProviders.First(o => o.ChainType == chain.Type);
     }
 }

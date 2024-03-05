@@ -245,6 +245,12 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
     {
         var fromChain = await _chainAppService.GetAsync(fromChainId);
         var toChain = await _chainAppService.GetAsync(toChainId);
+        
+        if (fromChainId == null || toChainId == null)
+        {
+            return CrossChainType.Homogeneous;
+        }
+        
         return fromChain.Type == toChain.Type ? CrossChainType.Homogeneous : CrossChainType.Heterogeneous;
     }
 
@@ -337,6 +343,10 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
                 try
                 {
                     var toChain = await _chainAppService.GetAsync(transfer.ToChainId);
+                    if (toChain == null)
+                    {
+                        continue;
+                    }
                     if (toChain.Type != BlockchainType.AElf)
                     {
                         continue;

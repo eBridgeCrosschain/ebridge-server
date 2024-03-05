@@ -96,6 +96,10 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
         foreach (var crossChainLimitInfo in crossChainLimitInfos)
         {
             var chain = await _chainAppService.GetAsync(crossChainLimitInfo.Key.FromChainId);
+            if (chain == null)
+            {
+                continue;
+            }
             if (chain.Type == BlockchainType.AElf)
             {
                 _logger.LogInformation("Limit data processing，From chain:{fromChainId}, to chain:{toChainId}",
@@ -108,7 +112,12 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
                     swapRateLimits = OfEvmRateLimitInfos(value);
                 }
 
-                var aelfChainId = (await _chainAppService.GetAsync(crossChainLimitInfo.Key.FromChainId)).AElfChainId;
+                var chainDto = await _chainAppService.GetAsync(crossChainLimitInfo.Key.FromChainId);
+                if(chainDto == null)
+                {
+                    continue;
+                }
+                var aelfChainId = chainDto.AElfChainId;
                 crossChainLimitInfo.Key.FromChainId = ChainHelper.ConvertChainIdToBase58(aelfChainId);
                 result.Add(new CrossChainRateLimitsDto
                 {
@@ -131,7 +140,13 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
                     receiptRateLimits = OfEvmRateLimitInfos(value);
                 }
                 
-                var aelfChainId = (await _chainAppService.GetAsync(crossChainLimitInfo.Key.ToChainId)).AElfChainId;
+                var chainDto = await _chainAppService.GetAsync(crossChainLimitInfo.Key.ToChainId);
+                if(chainDto == null)
+                {
+                    continue;
+                }
+
+                var aelfChainId = chainDto.AElfChainId;
                 crossChainLimitInfo.Key.ToChainId = ChainHelper.ConvertChainIdToBase58(aelfChainId);
                 result.Add(new CrossChainRateLimitsDto
                 {
