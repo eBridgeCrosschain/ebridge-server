@@ -34,6 +34,10 @@ public class CrossChainServerApplicationTestModule : AbpModule
                 { "MainChain_AELF", "https://aelf.io" },
                 { "Tron", "https://nile.trongrid.io" }
             };
+            o.ApiKeys = new Dictionary<string, string>
+            {
+                { "Tron", "TRON_APIKEY" }
+            };
         });
 
         Configure<BridgeContractOptions>(o =>
