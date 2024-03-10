@@ -61,6 +61,10 @@ public class CrossChainIndexingInfoAppService : CrossChainServerAppService, ICro
     {
         var fromChain = await _chainAppService.GetAsync(fromChainId);
         var toChain = await _chainAppService.GetAsync(toChainId);
+        if (fromChain == null || toChain == null)
+        {
+            throw new UserFriendlyException("parameter chainId is not registered in database!");
+        }
         if (fromChain.Type != BlockchainType.AElf || toChain.Type != BlockchainType.AElf)
         {
             throw new UserFriendlyException("parameter chainId is not valid!");
@@ -75,6 +79,11 @@ public class CrossChainIndexingInfoAppService : CrossChainServerAppService, ICro
     {
         var fromChain = await _chainAppService.GetAsync(fromChainId);
         var toChain = await _chainAppService.GetAsync(toChainId);
+        
+        if (fromChain == null || toChain == null)
+        {
+            throw new UserFriendlyException("parameter chainId is not registered in database!");
+        }
 
         if (fromChain.IsMainChain)
         {

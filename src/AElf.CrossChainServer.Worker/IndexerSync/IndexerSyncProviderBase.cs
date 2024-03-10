@@ -47,6 +47,10 @@ public abstract class IndexerSyncProviderBase : IIndexerSyncProvider, ITransient
         }
 
         var chain = await ChainAppService.GetAsync(chainId);
+        if (chain == null)
+        {
+            return;
+        }
         var height = await HandleDataAsync(ChainHelper.ConvertChainIdToBase58(chain.AElfChainId), syncHeight + 1,
             endHeight);
 

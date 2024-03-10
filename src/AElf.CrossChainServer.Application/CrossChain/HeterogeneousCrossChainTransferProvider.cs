@@ -44,6 +44,10 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
     public async Task<int> CalculateCrossChainProgressAsync(CrossChainTransfer transfer)
     {
         var chain = await _chainAppService.GetAsync(transfer.ToChainId);
+        if (chain == null)
+        {
+            return 0;
+        }
         if (chain.Type == BlockchainType.AElf)
         {
             return await _oracleQueryInfoAppService.CalculateCrossChainProgressAsync(transfer.ToChainId,transfer.ReceiptId);
@@ -60,6 +64,10 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
                 transferToken.Symbol);
         var swapId = await _bridgeContractAppService.GetSwapIdByTokenAsync(transfer.ToChainId, transfer.FromChainId,
             symbol);
+        if (string.IsNullOrEmpty(swapId))
+        {
+            return "";
+        }
         var amount = (new BigDecimal(transfer.TransferAmount)) * BigInteger.Pow(10, transferToken.Decimals);
         return await _bridgeContractAppService.SwapTokenAsync(transfer.ToChainId, swapId, transfer.ReceiptId,
             amount.ToString(),

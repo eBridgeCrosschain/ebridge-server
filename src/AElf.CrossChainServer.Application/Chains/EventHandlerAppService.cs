@@ -20,6 +20,10 @@ public class EventHandlerAppService : CrossChainServerAppService, IEventHandlerA
     public async Task<DateTime> GetLatestSyncTimeAsync(string chainId, string jobCategory)
     {
         var chain = await _chainAppService.GetAsync(chainId);
+        if (chain == null)
+        {
+            return DateTime.MinValue;
+        }
         var dataKey = $"{chain.AElfChainId}-{jobCategory}-LatestCheckTickKey";
         var date = await _saveDataRepository.FindAsync(o => o.Key == dataKey);
         if (date == null)
