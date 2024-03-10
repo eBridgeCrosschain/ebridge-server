@@ -88,7 +88,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
             mustQuery.Add(q => q.Term(i => i.Field(f => f.Type).Value(input.Type.Value)));
         }
 
-        QueryContainer Filter(QueryContainerDescriptor<CrossChainTransferIndex> f) => f.Bool(b => b.Must(mustQuery).Should(shouldFromQuery).MinimumShouldMatch(shouldFromQuery.Count > 0 ? 1 : 0).Should(shouldToQuery).MinimumShouldMatch(shouldToQuery.Count > 0 ? 1 : 0));
+        QueryContainer Filter(QueryContainerDescriptor<CrossChainTransferIndex> f) => f.Bool(b => b.Must(mustQuery).Should(shouldFromQuery).Should(shouldToQuery).MinimumShouldMatch(shouldToQuery.Count > 0 || shouldFromQuery.Count > 0 ? 1 : 0));
 
         var list = await _crossChainTransferIndexRepository.GetListAsync(Filter, limit: input.MaxResultCount,
             skip: input.SkipCount, sortExp: o => o.TransferTime, sortType: SortOrder.Descending);
