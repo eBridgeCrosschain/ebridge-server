@@ -59,13 +59,16 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
 
         if (!input.FromAddress.IsNullOrWhiteSpace())
         {
-            if (!input.FromChainId.IsNullOrWhiteSpace())
+            if (!Base58CheckEncoding.Verify(input.FromAddress) && Nethereum.Util.AddressExtensions.IsValidEthereumAddressHexFormat(input.FromAddress))
             {
-                var fromChain = await _chainAppService.GetAsync(input.FromChainId);
-                if (fromChain is { Type: BlockchainType.Evm })
+                var splitAddress = input.FromAddress.Split("0x");
+                var upperCaseAddress = input.FromAddress.ToUpper();
+                if(splitAddress.Length > 1)
                 {
-                    shouldQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(input.FromAddress.ToLower())));
+                    upperCaseAddress = "0x" + splitAddress[1].ToUpper();
                 }
+                shouldQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(input.FromAddress.ToLower())));
+                shouldQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(upperCaseAddress)));
             }
             
             shouldQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(input.FromAddress)));
@@ -73,13 +76,16 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
 
         if (!input.ToAddress.IsNullOrWhiteSpace())
         {
-            if (!input.ToChainId.IsNullOrWhiteSpace())
+            if (!Base58CheckEncoding.Verify(input.ToAddress) && Nethereum.Util.AddressExtensions.IsValidEthereumAddressHexFormat(input.ToAddress))
             {
-                var toChain = await _chainAppService.GetAsync(input.ToChainId);
-                if (toChain is { Type: BlockchainType.Evm })
+                var splitAddress = input.ToAddress.Split("0x");
+                var upperCaseAddress = input.ToAddress.ToUpper();
+                if(splitAddress.Length > 1)
                 {
-                    shouldQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(input.ToAddress.ToLower())));
+                    upperCaseAddress = "0x" + splitAddress[1].ToUpper();
                 }
+                shouldQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(input.ToAddress.ToLower())));
+                shouldQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(upperCaseAddress)));
             }
 
             shouldQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(input.ToAddress)));
@@ -95,7 +101,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
             mustQuery.Add(q => q.Term(i => i.Field(f => f.Type).Value(input.Type.Value)));
         }
 
-        QueryContainer Filter(QueryContainerDescriptor<CrossChainTransferIndex> f) => f.Bool(b => b.Must(mustQuery).Should(shouldQuery).MinimumShouldMatch(1));
+        QueryContainer Filter(QueryContainerDescriptor<CrossChainTransferIndex> f) => f.Bool(b => b.Must(mustQuery).Should(shouldQuery));
 
         var list = await _crossChainTransferIndexRepository.GetListAsync(Filter, limit: input.MaxResultCount,
             skip: input.SkipCount, sortExp: o => o.TransferTime, sortType: SortOrder.Descending);
