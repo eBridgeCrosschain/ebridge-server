@@ -57,11 +57,29 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
 
         if (!input.FromAddress.IsNullOrWhiteSpace())
         {
+            if (!input.FromChainId.IsNullOrWhiteSpace())
+            {
+                var fromChain = await _chainAppService.GetAsync(input.FromChainId);
+                if (fromChain.Type == BlockchainType.Evm)
+                {
+                    input.FromAddress = input.FromAddress.ToLower();
+                }
+            }
+
             mustQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(input.FromAddress)));
         }
 
         if (!input.ToAddress.IsNullOrWhiteSpace())
         {
+            if (!input.ToChainId.IsNullOrWhiteSpace())
+            {
+                var toChain = await _chainAppService.GetAsync(input.ToChainId);
+                if (toChain.Type == BlockchainType.Evm)
+                {
+                    input.ToAddress = input.ToAddress.ToLower();
+                }
+            }
+
             mustQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(input.ToAddress)));
         }
 
