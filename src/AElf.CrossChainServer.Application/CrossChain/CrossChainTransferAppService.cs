@@ -61,14 +61,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         {
             if (!Base58CheckEncoding.Verify(input.FromAddress) && Nethereum.Util.AddressExtensions.IsValidEthereumAddressHexFormat(input.FromAddress))
             {
-                var splitAddress = input.FromAddress.Split("0x");
-                var upperCaseAddress = input.FromAddress.ToUpper();
-                if(splitAddress.Length > 1)
-                {
-                    upperCaseAddress = "0x" + splitAddress[1].ToUpper();
-                }
                 shouldQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(input.FromAddress.ToLower())));
-                shouldQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(upperCaseAddress)));
             }
             
             shouldQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(input.FromAddress)));
@@ -78,14 +71,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         {
             if (!Base58CheckEncoding.Verify(input.ToAddress) && Nethereum.Util.AddressExtensions.IsValidEthereumAddressHexFormat(input.ToAddress))
             {
-                var splitAddress = input.ToAddress.Split("0x");
-                var upperCaseAddress = input.ToAddress.ToUpper();
-                if(splitAddress.Length > 1)
-                {
-                    upperCaseAddress = "0x" + splitAddress[1].ToUpper();
-                }
                 shouldQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(input.ToAddress.ToLower())));
-                shouldQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(upperCaseAddress)));
             }
 
             shouldQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(input.ToAddress)));
