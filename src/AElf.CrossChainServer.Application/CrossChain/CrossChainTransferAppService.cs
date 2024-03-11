@@ -45,8 +45,6 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
     public async Task<PagedResultDto<CrossChainTransferIndexDto>> GetListAsync(GetCrossChainTransfersInput input)
     {
         var mustQuery = new List<Func<QueryContainerDescriptor<CrossChainTransferIndex>, QueryContainer>>();
-        var shouldFromQuery = new List<Func<QueryContainerDescriptor<CrossChainTransferIndex>, QueryContainer>>();
-        var shouldToQuery = new List<Func<QueryContainerDescriptor<CrossChainTransferIndex>, QueryContainer>>();
         
         if (!input.FromChainId.IsNullOrWhiteSpace())
         {
@@ -60,22 +58,36 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
 
         if (!input.FromAddress.IsNullOrWhiteSpace())
         {
+            var shouldFromQuery = new List<Func<QueryContainerDescriptor<CrossChainTransferIndex>, QueryContainer>>();
+            
             if (!Base58CheckEncoding.Verify(input.FromAddress) && Nethereum.Util.AddressExtensions.IsValidEthereumAddressHexFormat(input.FromAddress))
             {
                 shouldFromQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(input.FromAddress.ToLower())));
             }
             
             shouldFromQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(input.FromAddress)));
+            
+            mustQuery.Add(q => q.Bool(bb => bb
+                .MinimumShouldMatch(1)
+                .Should(shouldFromQuery)
+            ));
         }
 
         if (!input.ToAddress.IsNullOrWhiteSpace())
         {
+            var shouldToQuery = new List<Func<QueryContainerDescriptor<CrossChainTransferIndex>, QueryContainer>>();
+            
             if (!Base58CheckEncoding.Verify(input.ToAddress) && Nethereum.Util.AddressExtensions.IsValidEthereumAddressHexFormat(input.ToAddress))
             {
                 shouldToQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(input.ToAddress.ToLower())));
             }
 
             shouldToQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(input.ToAddress)));
+            
+            mustQuery.Add(q => q.Bool(bb => bb
+                .MinimumShouldMatch(1)
+                .Should(shouldToQuery)
+            ));
         }
 
         if (input.Status.HasValue)
@@ -88,17 +100,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
             mustQuery.Add(q => q.Term(i => i.Field(f => f.Type).Value(input.Type.Value)));
         }
 
-        QueryContainer Filter(QueryContainerDescriptor<CrossChainTransferIndex> f) => f.Bool(b => b.Must(mustQuery).Should(
-                sh => sh.Bool(b1 => b1
-                        .Should(shouldFromQuery)
-                        .MinimumShouldMatch(shouldFromQuery.Count > 0 ? 1 : 0)
-                ),
-                sh => sh.Bool(b2 => b2
-                    .Should(shouldToQuery)
-                    .MinimumShouldMatch(shouldToQuery.Count > 0 ? 1 : 0)
-                )
-            ).MinimumShouldMatch(1)
-        );
+        QueryContainer Filter(QueryContainerDescriptor<CrossChainTransferIndex> f) => f.Bool(b => b.Must(mustQuery));
 
         var list = await _crossChainTransferIndexRepository.GetListAsync(Filter, limit: input.MaxResultCount,
             skip: input.SkipCount, sortExp: o => o.TransferTime, sortType: SortOrder.Descending);
