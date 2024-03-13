@@ -31,6 +31,10 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
         long fromIndex, long endIndex)
     {
         var provider = await _bridgeContractProviderFactory.GetBridgeContractProviderAsync(chainId);
+        if (provider == null)
+        {
+            return new List<ReceiptInfoDto>();
+        }
         return await provider.GetSendReceiptInfosAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].BridgeInContract, targetChainId, tokenId, fromIndex,
             endIndex);
@@ -41,6 +45,10 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
         long fromIndex, long endIndex)
     {
         var provider = await _bridgeContractProviderFactory.GetBridgeContractProviderAsync(chainId);
+        if (provider == null)
+        {
+            return new List<ReceivedReceiptInfoDto>();
+        }
         return await provider.GetReceivedReceiptInfosAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].BridgeOutContract, targetChainId, tokenId, fromIndex,
             endIndex);
@@ -84,6 +92,10 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
         List<string> targetChainIds)
     {
         var provider = await _bridgeContractProviderFactory.GetBridgeContractProviderAsync(chainId);
+        if (provider == null)
+        {
+            return new List<ReceiptIndexDto>();
+        }
         return await provider.GetTransferReceiptIndexAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].BridgeInContract, tokenIds, targetChainIds);
     }
@@ -92,6 +104,10 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
         List<string> targetChainIds)
     {
         var provider = await _bridgeContractProviderFactory.GetBridgeContractProviderAsync(chainId);
+        if (provider == null)
+        {
+            return new List<ReceiptIndexDto>();
+        }
         return await provider.GetReceiveReceiptIndexAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].BridgeOutContract, tokenIds, targetChainIds);
     }
@@ -99,6 +115,10 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
     public async Task<bool> CheckTransmitAsync(string chainId, string receiptHash)
     {
         var provider = await _bridgeContractProviderFactory.GetBridgeContractProviderAsync(chainId);
+        if (provider == null)
+        {
+            return false;
+        }
         return await provider.CheckTransmitAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].BridgeOutContract, receiptHash);
     }
@@ -106,6 +126,10 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
     public async Task<string> GetSwapIdByTokenAsync(string chainId, string fromChainId, string symbol)
     {
         var provider = await _bridgeContractProviderFactory.GetBridgeContractProviderAsync(chainId);
+        if (provider == null)
+        {
+            return "";
+        }
         return await provider.GetSwapIdByTokenAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].BridgeOutContract, fromChainId, symbol);
     }
@@ -115,6 +139,10 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
     {
         var privateKey = _accountOptions.PrivateKeys[chainId];
         var provider = await _bridgeContractProviderFactory.GetBridgeContractProviderAsync(chainId);
+        if (provider == null)
+        {
+            return "";
+        }
         return await provider.SwapTokenAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].BridgeOutContract, privateKey, swapId, receiptId,
             originAmount, receiverAddress);
@@ -124,6 +152,10 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
         List<string> targetChainIds)
     {
         var provider = await _bridgeContractProviderFactory.GetBridgeContractProviderAsync(chainId);
+        if (provider == null)
+        {
+            return new List<TokenBucketDto>();
+        }
         return await provider.GetCurrentReceiptTokenBucketStatesAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].LimiterContract, tokenIds, targetChainIds);
     }
@@ -132,6 +164,10 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
         List<string> fromChainIds)
     {
         var provider = await _bridgeContractProviderFactory.GetBridgeContractProviderAsync(chainId);
+        if (provider == null)
+        {
+            return new List<TokenBucketDto>();
+        }
         return await provider.GetCurrentSwapTokenBucketStatesAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].LimiterContract, tokenIds, fromChainIds);
     }

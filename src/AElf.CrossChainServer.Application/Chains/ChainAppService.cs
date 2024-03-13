@@ -5,6 +5,7 @@ using AElf.Indexing.Elasticsearch;
 using Nest;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
+using Volo.Abp.Domain.Entities;
 
 namespace AElf.CrossChainServer.Chains
 {
@@ -22,8 +23,16 @@ namespace AElf.CrossChainServer.Chains
 
         public async Task<ChainDto> GetAsync(string id)
         {
-            var chain = await _chainRepository.GetAsync(id);
-            return ObjectMapper.Map<Chain, ChainDto>(chain);
+            try
+            {
+                var chain = await _chainRepository.GetAsync(id);
+                return ObjectMapper.Map<Chain, ChainDto>(chain);
+            }
+            catch (EntityNotFoundException e)
+            {
+                Console.WriteLine(e);
+                return null;
+            }
         }
         
         public async Task<ChainDto> GetByNameAsync(string name)
