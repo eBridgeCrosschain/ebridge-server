@@ -45,6 +45,11 @@ public class CheckTransferProvider : ICheckTransferProvider
             fromChainId, toChainId, symbol, amount);
 
         var chain = await _chainAppService.GetAsync(toChainId);
+        if (chain == null)
+        {
+            Logger.LogInformation("No chain info.");
+            return false;
+        }
         toChainId = ChainHelper.ConvertChainIdToBase58(chain.AElfChainId);
         var limitInfo =
             (await _indexerCrossChainLimitInfoService.GetCrossChainLimitInfoIndexAsync(fromChainId, toChainId,
