@@ -45,6 +45,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
     public async Task<PagedResultDto<CrossChainTransferIndexDto>> GetListAsync(GetCrossChainTransfersInput input)
     {
         var mustQuery = new List<Func<QueryContainerDescriptor<CrossChainTransferIndex>, QueryContainer>>();
+        
         if (!input.FromChainId.IsNullOrWhiteSpace())
         {
             mustQuery.Add(q => q.Term(i => i.Field(f => f.FromChainId).Value(input.FromChainId)));
@@ -57,12 +58,36 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
 
         if (!input.FromAddress.IsNullOrWhiteSpace())
         {
-            mustQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(input.FromAddress)));
+            var shouldFromQuery = new List<Func<QueryContainerDescriptor<CrossChainTransferIndex>, QueryContainer>>();
+            
+            if (!Base58CheckEncoding.Verify(input.FromAddress) && Nethereum.Util.AddressExtensions.IsValidEthereumAddressHexFormat(input.FromAddress))
+            {
+                shouldFromQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(input.FromAddress.ToLower())));
+            }
+            
+            shouldFromQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(input.FromAddress)));
+            
+            mustQuery.Add(q => q.Bool(bb => bb
+                .MinimumShouldMatch(1)
+                .Should(shouldFromQuery)
+            ));
         }
 
         if (!input.ToAddress.IsNullOrWhiteSpace())
         {
-            mustQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(input.ToAddress)));
+            var shouldToQuery = new List<Func<QueryContainerDescriptor<CrossChainTransferIndex>, QueryContainer>>();
+            
+            if (!Base58CheckEncoding.Verify(input.ToAddress) && Nethereum.Util.AddressExtensions.IsValidEthereumAddressHexFormat(input.ToAddress))
+            {
+                shouldToQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(input.ToAddress.ToLower())));
+            }
+
+            shouldToQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(input.ToAddress)));
+            
+            mustQuery.Add(q => q.Bool(bb => bb
+                .MinimumShouldMatch(1)
+                .Should(shouldToQuery)
+            ));
         }
 
         if (input.Status.HasValue)
