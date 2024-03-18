@@ -4,6 +4,8 @@ using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Contracts;
 using AElf.Types;
 using Google.Protobuf;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Volo.Abp.DependencyInjection;
 
 namespace AElf.CrossChainServer.CrossChain;
@@ -16,6 +18,8 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
     private readonly IChainAppService _chainAppService;
     private readonly ICrossChainContractAppService _crossChainContractAppService;
     private readonly ICrossChainTransferRepository _crossChainTransferRepository;
+    public ILogger<HomogeneousCrossChainTransferProvider> Logger { get; set; }
+
 
     public HomogeneousCrossChainTransferProvider(ICrossChainIndexingInfoAppService crossChainIndexingInfoAppService,
         ITokenContractAppService tokenContractAppService, IBlockchainAppService blockchainAppService,
@@ -28,12 +32,14 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
         _chainAppService = chainAppService;
         _crossChainContractAppService = crossChainContractAppService;
         _crossChainTransferRepository = crossChainTransferRepository;
+        Logger = NullLogger<HomogeneousCrossChainTransferProvider>.Instance;
     }
 
     public CrossChainType CrossChainType { get; } = CrossChainType.Homogeneous;
 
     public async Task<CrossChainTransfer> FindTransferAsync(string fromChainId, string toChainId, string transferTransactionId, string receiptId)
     {
+        Logger.LogInformation("FindTransferAsync: fromChainId: {0}, toChainId: {1}, transferTransactionId: {2}", fromChainId, toChainId, transferTransactionId);
         return await _crossChainTransferRepository.FindAsync(o =>
             o.FromChainId == fromChainId && o.ToChainId == toChainId &&
             o.TransferTransactionId == transferTransactionId);
