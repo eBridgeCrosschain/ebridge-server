@@ -54,6 +54,8 @@ public class CrossChainServerApplicationModule : AbpModule
         Configure<GraphQLClientOptions>(configuration.GetSection("GraphQLClients"));
         Configure<EvmTokensOptions>(configuration.GetSection("EvmTokens"));
         Configure<CrossChainLimitsOptions>(configuration.GetSection("CrossChainLimits"));
+        Configure<ReportQueryTimesOptions>(configuration.GetSection("ReportQueryTimes"));
+
         
         context.Services.AddSingleton<IBlockchainClientFactory<AElfClient>, AElfClientFactory>();
         context.Services.AddSingleton<IBlockchainClientFactory<Nethereum.Web3.Web3>, EvmClientFactory>();
