@@ -2,5 +2,5 @@ namespace AElf.CrossChainServer;
 
 public class ReportQueryTimesOptions
 {
-    public long QueryTimes { get; set; }
+    public int QueryTimes { get; set; }
 }
