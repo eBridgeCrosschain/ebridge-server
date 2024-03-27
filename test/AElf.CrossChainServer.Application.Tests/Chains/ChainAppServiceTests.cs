@@ -54,13 +54,32 @@ public class ChainAppServiceTests : CrossChainServerApplicationTestBase
             Type = BlockchainType.Evm
         });
         
+        await _chainIndexRepository.AddOrUpdateAsync(new ChainIndex
+        {
+            Id = "Tron",
+            Name = "Tron",
+            Type = BlockchainType.Tron
+        });
+        
         var chains = await _chainAppService.GetListAsync(new GetChainsInput());
-        chains.Items.Count.ShouldBe(3);
+        chains.Items.Count.ShouldBe(4);
         
         chains = await _chainAppService.GetListAsync(new GetChainsInput
         {
             Type = BlockchainType.AElf
         });
         chains.Items.Count.ShouldBe(2);
+        
+        chains = await _chainAppService.GetListAsync(new GetChainsInput
+        {
+            Type = BlockchainType.Evm
+        });
+        chains.Items.Count.ShouldBe(1);
+        
+        chains = await _chainAppService.GetListAsync(new GetChainsInput
+        {
+            Type = BlockchainType.Tron
+        });
+        chains.Items.Count.ShouldBe(1);
     }
 }

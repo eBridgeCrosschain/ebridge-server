@@ -23,6 +23,7 @@ public class CrossChainServerApplicationTestModule : AbpModule
 
         context.Services.AddTransient<IBlockchainClientProvider, MockAElfClientProvider>();
         context.Services.AddTransient<IBlockchainClientProvider, MockEvmClientProvider>();
+        context.Services.AddTransient<IBlockchainClientProvider, MockTronClientProvider>();
         context.Services.AddTransient<ICheckTransferProvider, MockCheckTransferProvider>();
         
         Configure<ChainApiOptions>(o =>
@@ -30,7 +31,12 @@ public class CrossChainServerApplicationTestModule : AbpModule
             o.ChainNodeApis = new Dictionary<string, string>
             {
                 { "Ethereum", "https://kovan.infura.io/v3/" },
-                { "MainChain_AELF", "https://aelf.io" }
+                { "MainChain_AELF", "https://aelf.io" },
+                { "Tron", "https://nile.trongrid.io" }
+            };
+            o.ApiKeys = new Dictionary<string, string>
+            {
+                { "Tron", "TRON_APIKEY" }
             };
         });
 
