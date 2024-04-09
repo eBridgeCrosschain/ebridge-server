@@ -114,10 +114,10 @@ namespace AElf.CrossChainServer.Chains
                 Symbol = symbol
             };
             var transactionGetToken =
-                await client.GenerateTransactionAsync(client.GetAddressFromPrivateKey(GetPrivateKey(chainId)), address,
+                await client.GenerateTransactionAsync(client.GetAddressFromPrivateKey(GetPrivateKeyForCall(chainId)), address,
                     "GetTokenInfo",
                     paramGetBalance);
-            var txWithSignGetToken = client.SignTransaction(GetPrivateKey(chainId), transactionGetToken);
+            var txWithSignGetToken = client.SignTransaction(GetPrivateKeyForCall(chainId), transactionGetToken);
             var transactionGetTokenResult = await client.ExecuteTransactionAsync(new ExecuteTransactionDto
             {
                 RawTransaction = txWithSignGetToken.ToByteArray().ToHex()
@@ -140,9 +140,9 @@ namespace AElf.CrossChainServer.Chains
             return await client.GetMerklePathByTransactionIdAsync(txId);
         }
         
-        protected string GetPrivateKey(string chainId)
+        protected string GetPrivateKeyForCall(string chainId)
         {
-            return _accountOptions.PrivateKeys[chainId];
+            return _accountOptions.PrivateKeysForCall[chainId];
         }
     }
 }

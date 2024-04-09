@@ -49,6 +49,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElf.CrossChainServer.Entit
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElf.CrossChainServer.ContractEventHandler.Core.Tests", "test\AElf.CrossChainServer.ContractEventHandler.Core.Tests\AElf.CrossChainServer.ContractEventHandler.Core.Tests.csproj", "{11AB449B-8C9B-4F2B-9834-4147314E66E4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElf.CrossChainServer.Signature", "src\AElf.CrossChainServer.Signature\AElf.CrossChainServer.Signature.csproj", "{6D9F3A4D-1198-43DB-94EF-3839F41EA7B8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -139,6 +141,10 @@ Global
 		{11AB449B-8C9B-4F2B-9834-4147314E66E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{11AB449B-8C9B-4F2B-9834-4147314E66E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{11AB449B-8C9B-4F2B-9834-4147314E66E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D9F3A4D-1198-43DB-94EF-3839F41EA7B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D9F3A4D-1198-43DB-94EF-3839F41EA7B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D9F3A4D-1198-43DB-94EF-3839F41EA7B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D9F3A4D-1198-43DB-94EF-3839F41EA7B8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -165,6 +171,7 @@ Global
 		{DE635372-2830-49D6-8AB3-0718747EE28A} = {CA9AC87F-097E-4F15-8393-4BC07735A5B0}
 		{07B948AC-AACC-4A84-9C59-E7CF0BD8DB29} = {CA9AC87F-097E-4F15-8393-4BC07735A5B0}
 		{11AB449B-8C9B-4F2B-9834-4147314E66E4} = {04DBDB01-70F4-4E06-B468-8F87850B22BE}
+		{6D9F3A4D-1198-43DB-94EF-3839F41EA7B8} = {CA9AC87F-097E-4F15-8393-4BC07735A5B0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {28315BFD-90E7-4E14-A2EA-F3D23AF4126F}

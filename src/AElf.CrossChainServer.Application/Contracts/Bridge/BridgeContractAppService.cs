@@ -137,14 +137,14 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
     public async Task<string> SwapTokenAsync(string chainId, string swapId, string receiptId, string originAmount,
         string receiverAddress)
     {
-        var privateKey = _accountOptions.PrivateKeys[chainId];
+        var pubKey = _accountOptions.PublicKeys[chainId];
         var provider = await _bridgeContractProviderFactory.GetBridgeContractProviderAsync(chainId);
         if (provider == null)
         {
             return "";
         }
         return await provider.SwapTokenAsync(chainId,
-            _bridgeContractOptions.ContractAddresses[chainId].BridgeOutContract, privateKey, swapId, receiptId,
+            _bridgeContractOptions.ContractAddresses[chainId].BridgeOutContract, pubKey, swapId, receiptId,
             originAmount, receiverAddress);
     }
 

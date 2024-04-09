@@ -26,9 +26,9 @@ public class AElfCrossChainContractProvider : AElfClientProvider, ICrossChainCon
             Value = height
         };
         var transaction =
-            await client.GenerateTransactionAsync(client.GetAddressFromPrivateKey(GetPrivateKey(chainId)), contractAddress,
+            await client.GenerateTransactionAsync(client.GetAddressFromPrivateKey(GetPrivateKeyForCall(chainId)), contractAddress,
                 "GetBoundParentChainHeightAndMerklePathByHeight", param);
-        var txWithSign = client.SignTransaction(GetPrivateKey(chainId), transaction);
+        var txWithSign = client.SignTransaction(GetPrivateKeyForCall(chainId), transaction);
         var transactionResult = await client.ExecuteTransactionAsync(new ExecuteTransactionDto
         {
             RawTransaction = txWithSign.ToByteArray().ToHex()

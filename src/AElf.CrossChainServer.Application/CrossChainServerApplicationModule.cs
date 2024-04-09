@@ -7,6 +7,7 @@ using AElf.CrossChainServer.Contracts.Report;
 using AElf.CrossChainServer.Contracts.Token;
 using AElf.CrossChainServer.CrossChain;
 using AElf.CrossChainServer.Indexer;
+using AElf.CrossChainServer.Signature;
 using AElf.CrossChainServer.Tokens;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Account;
@@ -29,8 +30,9 @@ namespace AElf.CrossChainServer;
     typeof(AbpTenantManagementApplicationModule),
     typeof(AbpFeatureManagementApplicationModule),
     typeof(AbpSettingManagementApplicationModule),
-    typeof(AElfNodeEventHandlerCoreModule)
-    )]
+    typeof(AElfNodeEventHandlerCoreModule),
+    typeof(CrossChainServerSignatureModule)
+)]
 public class CrossChainServerApplicationModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

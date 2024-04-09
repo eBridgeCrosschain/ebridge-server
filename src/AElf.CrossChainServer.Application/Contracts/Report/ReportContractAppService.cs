@@ -21,9 +21,9 @@ public class ReportContractAppService : CrossChainServerAppService, IReportContr
     public async Task<string> QueryOracleAsync(string chainId, string targetChainId, string receiptId,
         string receiptHash)
     {
-        var privateKey = _accountOptions.PrivateKeys[chainId];
+        var pubKey = _accountOptions.PublicKeys[chainId];
         var contractAddress = _reportContractOptions.ContractAddresses[chainId];
-        return await _reportContractProvider.QueryOracleAsync(chainId, contractAddress, privateKey, targetChainId,
+        return await _reportContractProvider.QueryOracleAsync(chainId, contractAddress, pubKey, targetChainId,
             receiptId, receiptHash);
     }
 }

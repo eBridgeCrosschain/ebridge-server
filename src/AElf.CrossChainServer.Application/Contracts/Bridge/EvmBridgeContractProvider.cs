@@ -172,7 +172,7 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
         throw new NotImplementedException();
     }
 
-    public Task<string> SwapTokenAsync(string chainId, string contractAddress, string privateKey, string swapId,
+    public Task<string> SwapTokenAsync(string chainId, string contractAddress, string pubKey, string swapId,
         string receiptId, string originAmount,
         string receiverAddress)
     {

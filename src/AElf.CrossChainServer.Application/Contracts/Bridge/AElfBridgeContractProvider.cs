@@ -5,6 +5,7 @@ using AElf.Client.Dto;
 using AElf.Client.Service;
 using AElf.Contracts.Bridge;
 using AElf.CrossChainServer.Chains;
+using AElf.CrossChainServer.Signature.Provider;
 using AElf.Types;
 using Google.Protobuf;
 using Microsoft.Extensions.Options;
@@ -13,9 +14,11 @@ namespace AElf.CrossChainServer.Contracts.Bridge;
 
 public class AElfBridgeContractProvider: AElfClientProvider, IBridgeContractProvider
 {
+    private readonly ISignatureProvider _signatureProvider;
     public AElfBridgeContractProvider(IBlockchainClientFactory<AElfClient> blockchainClientFactory,
-        IOptionsSnapshot<AccountOptions> accountOptions) : base(blockchainClientFactory, accountOptions)
+        IOptionsSnapshot<AccountOptions> accountOptions, ISignatureProvider signatureProvider) : base(blockchainClientFactory, accountOptions)
     {
+        _signatureProvider = signatureProvider;
     }
 
     public Task<List<ReceiptInfoDto>> GetSendReceiptInfosAsync(string chainId, string contractAddress, string targetChainId, Guid tokenId,
@@ -57,9 +60,9 @@ public class AElfBridgeContractProvider: AElfClientProvider, IBridgeContractProv
         };
 
         var transaction =
-            await client.GenerateTransactionAsync(client.GetAddressFromPrivateKey(GetPrivateKey(chainId)), contractAddress,
+            await client.GenerateTransactionAsync(client.GetAddressFromPrivateKey(GetPrivateKeyForCall(chainId)), contractAddress,
                 "GetSwapIdByToken", param);
-        var txWithSign = client.SignTransaction(GetPrivateKey(chainId), transaction);
+        var txWithSign = client.SignTransaction(GetPrivateKeyForCall(chainId), transaction);
         var transactionResult = await client.ExecuteTransactionAsync(new ExecuteTransactionDto
         {
             RawTransaction = txWithSign.ToByteArray().ToHex()
@@ -68,7 +71,7 @@ public class AElfBridgeContractProvider: AElfClientProvider, IBridgeContractProv
         return swapId.ToHex();
     }
 
-    public async Task<string> SwapTokenAsync(string chainId, string contractAddress, string privateKey, string swapId, string receiptId, string originAmount,
+    public async Task<string> SwapTokenAsync(string chainId, string contractAddress, string pubKey, string swapId, string receiptId, string originAmount,
         string receiverAddress)
     {
         var client = BlockchainClientFactory.GetClient(chainId);
@@ -80,13 +83,14 @@ public class AElfBridgeContractProvider: AElfClientProvider, IBridgeContractProv
             OriginAmount = originAmount,
             ReceiverAddress = Address.FromBase58(receiverAddress)
         };
-        var fromAddress = client.GetAddressFromPrivateKey(privateKey);
+        var fromAddress = client.GetAddressFromPubKey(pubKey);
         var transaction = await client.GenerateTransactionAsync(fromAddress, contractAddress, "SwapToken", param);
-        var txWithSign = client.SignTransaction(privateKey, transaction);
-
+        
+        var txWithSign = await _signatureProvider.SignTxMsg(pubKey, transaction.GetHash().ToHex());
+        transaction.Signature = ByteStringHelper.FromHexString(txWithSign);
         var result = await client.SendTransactionAsync(new SendTransactionInput
         {
-            RawTransaction = txWithSign.ToByteArray().ToHex()
+            RawTransaction = transaction.ToByteArray().ToHex()
         });
 
         return result.TransactionId;

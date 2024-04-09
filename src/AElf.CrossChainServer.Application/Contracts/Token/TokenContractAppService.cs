@@ -26,7 +26,7 @@ public class TokenContractAppService: CrossChainServerAppService,ITokenContractA
         MerklePath merklePath)
     {
         var contractAddress = _tokenContractOptions.ContractAddresses[chainId];
-        var privateKey = _accountOptions.PrivateKeys[chainId];
+        var privateKey = _accountOptions.PublicKeys[chainId];
         return await _tokenContractProvider.CrossChainReceiveTokenAsync(chainId, contractAddress, privateKey,
             fromChainId, parentChainHeight, transferTransaction, merklePath);
     }

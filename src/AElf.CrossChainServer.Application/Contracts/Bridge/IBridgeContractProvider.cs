@@ -22,7 +22,7 @@ public interface IBridgeContractProvider
     Task<bool> CheckTransmitAsync(string chainId, string contractAddress, string receiptHash);
     
     Task<string> GetSwapIdByTokenAsync(string chainId, string contractAddress, string fromChainId, string symbol);
-    Task<string> SwapTokenAsync(string chainId, string contractAddress, string privateKey, string swapId, string receiptId, string originAmount,
+    Task<string> SwapTokenAsync(string chainId, string contractAddress, string pubKey, string swapId, string receiptId, string originAmount,
         string receiverAddress);
 
     Task<List<TokenBucketDto>> GetCurrentReceiptTokenBucketStatesAsync(string chainId, string contractAddress, List<Guid> tokenIds, List<string> targetChainIds);
