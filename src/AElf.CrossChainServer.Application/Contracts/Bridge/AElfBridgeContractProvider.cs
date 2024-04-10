@@ -5,9 +5,12 @@ using AElf.Client.Dto;
 using AElf.Client.Service;
 using AElf.Contracts.Bridge;
 using AElf.CrossChainServer.Chains;
+using AElf.CrossChainServer.CrossChain;
 using AElf.CrossChainServer.Signature.Provider;
 using AElf.Types;
 using Google.Protobuf;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
 namespace AElf.CrossChainServer.Contracts.Bridge;
@@ -15,10 +18,13 @@ namespace AElf.CrossChainServer.Contracts.Bridge;
 public class AElfBridgeContractProvider: AElfClientProvider, IBridgeContractProvider
 {
     private readonly ISignatureProvider _signatureProvider;
+    private ILogger<AElfBridgeContractProvider> Logger { get; set; }
+
     public AElfBridgeContractProvider(IBlockchainClientFactory<AElfClient> blockchainClientFactory,
         IOptionsSnapshot<AccountOptions> accountOptions, ISignatureProvider signatureProvider) : base(blockchainClientFactory, accountOptions)
     {
         _signatureProvider = signatureProvider;
+        Logger = NullLogger<AElfBridgeContractProvider>.Instance;
     }
 
     public Task<List<ReceiptInfoDto>> GetSendReceiptInfosAsync(string chainId, string contractAddress, string targetChainId, Guid tokenId,
@@ -84,6 +90,7 @@ public class AElfBridgeContractProvider: AElfClientProvider, IBridgeContractProv
             ReceiverAddress = Address.FromBase58(receiverAddress)
         };
         var fromAddress = client.GetAddressFromPubKey(pubKey);
+        Logger.LogInformation("Send swap token transaction by:{fromAddress}", fromAddress);
         var transaction = await client.GenerateTransactionAsync(fromAddress, contractAddress, "SwapToken", param);
         
         var txWithSign = await _signatureProvider.SignTxMsg(pubKey, transaction.GetHash().ToHex());
