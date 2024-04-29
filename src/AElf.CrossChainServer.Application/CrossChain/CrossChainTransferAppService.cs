@@ -181,6 +181,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
 
         if (isTransferExist)
         {
+            Logger.LogInformation("transfer info:{status},{progress},{transferId}.",transfer.Status,transfer.Progress,transfer.TransferTransactionId);
             await _crossChainTransferRepository.UpdateAsync(transfer);
         }
         else
