@@ -173,6 +173,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
             transfer.ReceiveTime = input.ReceiveTime;
             transfer.ReceiveAmount = input.ReceiveAmount;
         }
+        Logger.LogInformation("update receive status to receive.");
 
         transfer.Status = CrossChainStatus.Received;
         transfer.Progress = CrossChainServerConsts.FullOfTheProgress;

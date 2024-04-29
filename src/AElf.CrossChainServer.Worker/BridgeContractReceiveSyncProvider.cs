@@ -4,17 +4,22 @@ using System.Threading.Tasks;
 using AElf.CrossChainServer.BridgeContract;
 using AElf.CrossChainServer.Contracts;
 using AElf.CrossChainServer.CrossChain;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AElf.CrossChainServer.Worker;
 
 public class BridgeContractReceiveSyncProvider :BridgeContractSyncProviderBase
 {
-    private readonly ICrossChainTransferAppService _crossChainTransferAppService;
+    private readonly ICrossChainTransferAppService _crossChainTransferAppService;    
+    public ILogger<BridgeContractReceiveSyncProvider> Logger { get; set; }
+
 
     public BridgeContractReceiveSyncProvider(
         ICrossChainTransferAppService crossChainTransferAppService)
     {
         _crossChainTransferAppService = crossChainTransferAppService;
+        Logger = NullLogger<BridgeContractReceiveSyncProvider>.Instance;
     }
 
     public override TransferType Type { get; } = TransferType.Receive;
@@ -26,6 +31,7 @@ public class BridgeContractReceiveSyncProvider :BridgeContractSyncProviderBase
 
     protected override async Task<HandleReceiptResult> HandleReceiptAsync(string chainId, string targetChainId, Guid tokenId, long fromIndex, long endIndex)
     {
+        Logger.LogInformation("Handle receipt, chainId:{chainId},targetChainId:{targetChainId},fromIndex:{fromIndex},toIndex:{toIndex}",chainId,targetChainId,fromIndex,endIndex);
         var result = new HandleReceiptResult();
 
         var receipts =
@@ -37,11 +43,11 @@ public class BridgeContractReceiveSyncProvider :BridgeContractSyncProviderBase
             var count = 0;
             foreach (var receipt in receipts)
             {
+                Logger.LogInformation("receipt, receiptId:{receiptId},receive time:{time}",receipt.ReceiptId,receipt.BlockTime);
                 if (receipt.BlockHeight >= lib)
                 {
                     break;
                 }
-                
                 await _crossChainTransferAppService.ReceiveAsync(new CrossChainReceiveInput
                 {
                     FromAddress = receipt.FromAddress,
