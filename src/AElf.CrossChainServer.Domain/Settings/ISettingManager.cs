@@ -1,4 +1,6 @@
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Volo.Abp.DependencyInjection;
 
 namespace AElf.CrossChainServer.Settings;
@@ -12,10 +14,14 @@ public interface ISettingManager
 public class SettingManager : ISettingManager, ITransientDependency
 {
     private readonly ISettingsRepository _settingsRepository;
+    public ILogger<SettingManager> Logger { get; set; }
+
 
     public SettingManager(ISettingsRepository settingsRepository)
     {
         _settingsRepository = settingsRepository;
+        Logger = NullLogger<SettingManager>.Instance;
+
     }
 
     public async Task<string> GetOrNullAsync(string chainId, string name)
@@ -26,6 +32,7 @@ public class SettingManager : ISettingManager, ITransientDependency
 
     public async Task SetAsync(string chainId, string name, string value)
     {
+        Logger.LogInformation("Start to set setting.{chainId}-{name}-{value}",chainId,name,value);
         var settings = await _settingsRepository.FindAsync(o=>o.ChainId == chainId && o.Name == name);
         if (settings == null)
         {
