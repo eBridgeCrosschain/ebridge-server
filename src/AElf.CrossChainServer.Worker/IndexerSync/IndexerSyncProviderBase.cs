@@ -45,7 +45,7 @@ public abstract class IndexerSyncProviderBase : IIndexerSyncProvider, ITransient
         var endHeight = Math.Min(syncHeight + MaxRequestCount, currentIndexHeight - syncDelayHeight);
         if (endHeight <= syncHeight)
         {
-            Logger.LogInformation("End height <= sync height,{chainId}",chainId);
+            Logger.LogInformation("End height <= sync height,{chainId},{endHeight},{syncHeight}",chainId,endHeight,syncHeight);
             return;
         }
 
