@@ -132,8 +132,10 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         var transfer = await FindCrossChainTransferAsync(input.FromChainId, input.ToChainId,
             input.TransferTransactionId, input.ReceiptId);
 
+        Logger.LogInformation("Sync transfer.{fromChain}-{toChain}-{id}",input.FromChainId,input.ToChainId,input.TransferTransactionId);
         if (transfer == null)
         {
+            Logger.LogInformation("New transfer.{fromChain}-{toChain}-{id}",input.FromChainId,input.ToChainId,input.TransferTransactionId);
             transfer = ObjectMapper.Map<CrossChainTransferInput, CrossChainTransfer>(input);
             transfer.Type = await GetCrossChainTypeAsync(input.FromChainId, input.ToChainId);
             transfer.Progress = 0;
