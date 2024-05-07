@@ -51,9 +51,10 @@ public abstract class IndexerSyncProviderBase : IIndexerSyncProvider, ITransient
         {
             return;
         }
-        Logger.LogInformation("Start sync transfer,{chainId},{height},{end}",ChainHelper.ConvertChainIdToBase58(chain.AElfChainId),syncHeight,endHeight);
+        Logger.LogInformation("Start sync transfer,{chainId},{height},{end},{typePrefix}",ChainHelper.ConvertChainIdToBase58(chain.AElfChainId),syncHeight,endHeight,typePrefix);
         var height = await HandleDataAsync(ChainHelper.ConvertChainIdToBase58(chain.AElfChainId), syncHeight + 1,
             endHeight);
+        Logger.LogInformation("After handler,{chainId},{height},{end},{typePrefix}",ChainHelper.ConvertChainIdToBase58(chain.AElfChainId),syncHeight,endHeight,typePrefix);
 
         await SetSyncHeightAsync(chainId, typePrefix, height);
     }
