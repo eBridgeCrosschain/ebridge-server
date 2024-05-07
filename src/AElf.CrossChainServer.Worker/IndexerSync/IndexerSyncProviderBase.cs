@@ -38,7 +38,6 @@ public abstract class IndexerSyncProviderBase : IIndexerSyncProvider, ITransient
 
     public async Task ExecuteAsync(string chainId, int syncDelayHeight = 0, string typePrefix = null)
     {
-
         var syncHeight = await GetSyncHeightAsync(chainId, typePrefix);
         Logger.LogInformation("Sync height,{chainId},{height},{typePrefix}",chainId,syncHeight,typePrefix);
         var currentIndexHeight = await GetIndexBlockHeightAsync(chainId);
@@ -46,6 +45,7 @@ public abstract class IndexerSyncProviderBase : IIndexerSyncProvider, ITransient
         var endHeight = Math.Min(syncHeight + MaxRequestCount, currentIndexHeight - syncDelayHeight);
         if (endHeight <= syncHeight)
         {
+            Logger.LogInformation("End height <= sync height");
             return;
         }
 
