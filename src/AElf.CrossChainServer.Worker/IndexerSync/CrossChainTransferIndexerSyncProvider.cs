@@ -65,7 +65,7 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
                     ChainId = chain.Id,
                     Symbol = transfer.TransferTokenSymbol
                 });
-                Logger.LogInformation("Start to save transfer.");
+                Logger.LogInformation("Start to save transfer.{fromChain}-{toChain}-{id}-{receiptId}",transfer.FromChainId,transfer.ToChainId,transfer.TransferTransactionId,transfer.ReceiptId);
                 await _crossChainTransferAppService.TransferAsync(new CrossChainTransferInput
                 {
                     TransferAmount = transfer.TransferAmount / (decimal)Math.Pow(10, transferToken.Decimals),
