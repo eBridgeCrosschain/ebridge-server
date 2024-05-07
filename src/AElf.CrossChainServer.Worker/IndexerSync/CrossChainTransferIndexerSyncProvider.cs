@@ -8,6 +8,7 @@ using AElf.CrossChainServer.Settings;
 using AElf.CrossChainServer.Tokens;
 using GraphQL;
 using GraphQL.Client.Abstractions;
+using Microsoft.Extensions.Logging;
 using Volo.Abp.Json;
 
 namespace AElf.CrossChainServer.Worker.IndexerSync;
@@ -34,6 +35,7 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
         var data = await QueryDataAsync<CrossChainTransferInfoDto>(GetRequest(aelfChainId, startHeight, endHeight));
         if (data == null || data.CrossChainTransferInfo.Count == 0)
         {
+            Logger.LogInformation("Get data from gql is null.");
             return endHeight;
         }
 
@@ -63,7 +65,7 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
                     ChainId = chain.Id,
                     Symbol = transfer.TransferTokenSymbol
                 });
-                
+                Logger.LogInformation("Start to save transfer.");
                 await _crossChainTransferAppService.TransferAsync(new CrossChainTransferInput
                 {
                     TransferAmount = transfer.TransferAmount / (decimal)Math.Pow(10, transferToken.Decimals),
