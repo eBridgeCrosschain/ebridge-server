@@ -129,6 +129,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
 
     public async Task TransferAsync(CrossChainTransferInput input)
     {
+        Logger.LogInformation("Find transfer.{fromChain}-{toChain}-{id}-{receipId}",input.FromChainId,input.ToChainId,input.TransferTransactionId,input.ReceiptId);
         var transfer = await FindCrossChainTransferAsync(input.FromChainId, input.ToChainId,
             input.TransferTransactionId, input.ReceiptId);
 

@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Contracts;
 using AElf.CrossChainServer.Tokens;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Nethereum.Util;
 using Volo.Abp.DependencyInjection;
 
@@ -17,6 +19,8 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
     private readonly ITokenSymbolMappingProvider _tokenSymbolMappingProvider;
     private readonly IBridgeContractAppService _bridgeContractAppService;
     private readonly ICrossChainTransferRepository _crossChainTransferRepository;
+    private readonly ILogger<HeterogeneousCrossChainTransferProvider> Logger;
+
 
     public HeterogeneousCrossChainTransferProvider(IChainAppService chainAppService,
         IOracleQueryInfoAppService oracleQueryInfoAppService, IReportInfoAppService reportInfoAppService,
@@ -30,6 +34,7 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
         _tokenSymbolMappingProvider = tokenSymbolMappingProvider;
         _bridgeContractAppService = bridgeContractAppService;
         _crossChainTransferRepository = crossChainTransferRepository;
+        Logger = NullLogger<HeterogeneousCrossChainTransferProvider>.Instance;
     }
 
     public CrossChainType CrossChainType { get; } = CrossChainType.Heterogeneous;
@@ -37,6 +42,7 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
     public async Task<CrossChainTransfer> FindTransferAsync(string fromChainId, string toChainId,
         string transferTransactionId, string receiptId)
     {
+        Logger.LogInformation("Find transfer Heterogeneous:{fromchainid}-{tochainid}-{receiptId}",fromChainId,toChainId,receiptId);
         return await _crossChainTransferRepository.FindAsync(o =>
             o.FromChainId == fromChainId && o.ToChainId == toChainId && o.ReceiptId == receiptId);
     }
