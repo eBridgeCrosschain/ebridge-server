@@ -38,8 +38,11 @@ public abstract class IndexerSyncProviderBase : IIndexerSyncProvider, ITransient
 
     public async Task ExecuteAsync(string chainId, int syncDelayHeight = 0, string typePrefix = null)
     {
+
         var syncHeight = await GetSyncHeightAsync(chainId, typePrefix);
+        Logger.LogInformation("Sync height,{chainId},{height},{typePrefix}",chainId,syncHeight,typePrefix);
         var currentIndexHeight = await GetIndexBlockHeightAsync(chainId);
+        Logger.LogInformation("Current index height,{chainId},{height},{typePrefix}",chainId,currentIndexHeight,typePrefix);
         var endHeight = Math.Min(syncHeight + MaxRequestCount, currentIndexHeight - syncDelayHeight);
         if (endHeight <= syncHeight)
         {
@@ -54,7 +57,7 @@ public abstract class IndexerSyncProviderBase : IIndexerSyncProvider, ITransient
         Logger.LogInformation("Start sync transfer,{chainId},{height},{end},{typePrefix}",ChainHelper.ConvertChainIdToBase58(chain.AElfChainId),syncHeight,endHeight,typePrefix);
         var height = await HandleDataAsync(ChainHelper.ConvertChainIdToBase58(chain.AElfChainId), syncHeight + 1,
             endHeight);
-        Logger.LogInformation("After handler,{chainId},{height},{end},{typePrefix}",ChainHelper.ConvertChainIdToBase58(chain.AElfChainId),syncHeight,endHeight,typePrefix);
+        Logger.LogInformation("After handler,{chainId},{height},{typePrefix}",ChainHelper.ConvertChainIdToBase58(chain.AElfChainId),height,typePrefix);
 
         await SetSyncHeightAsync(chainId, typePrefix, height);
     }
