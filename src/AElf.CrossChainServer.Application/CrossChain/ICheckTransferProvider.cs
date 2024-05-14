@@ -65,6 +65,11 @@ public class CheckTransferProvider : ICheckTransferProvider
             Logger.LogInformation("Daily limit refresh.");
             limitInfo.CurrentDailyLimit = limitInfo.DefaultDailyLimit;
         }
+        if (limitInfo.Capacity == 0)
+        {
+            Logger.LogInformation("Rate limit does not set.");
+            return amount <= limitInfo.CurrentDailyLimit;
+        }
         var timeDiff = time.Subtract(limitInfo.BucketUpdateTime).TotalSeconds;
         var rateLimit = Math.Min(limitInfo.Capacity,
             limitInfo.CurrentBucketTokenAmount + timeDiff * limitInfo.RefillRate);
