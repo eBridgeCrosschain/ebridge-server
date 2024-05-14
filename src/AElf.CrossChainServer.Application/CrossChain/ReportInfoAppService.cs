@@ -26,13 +26,15 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
     private readonly IIndexerAppService _indexerAppService;
     private readonly CrossChainOptions _crossChainOptions;
     private readonly ISettingManager _settingManager;
+    private readonly ReportQueryTimesOptions _reportQueryTimesOptions;
+
 
     public ReportInfoAppService(IReportInfoRepository reportInfoRepository,
         INESTRepository<ReportInfoIndex, Guid> nestRepository, IBridgeContractAppService bridgeContractAppService,
         IBlockchainAppService blockchainAppService,
         IReportContractAppService reportContractAppService,
         IOptionsSnapshot<CrossChainOptions> crossChainOptions, IIndexerAppService indexerAppService,
-        ISettingManager settingManager)
+        ISettingManager settingManager,IOptionsSnapshot<ReportQueryTimesOptions> reportQueryTimesOptions)
     {
         _reportInfoRepository = reportInfoRepository;
         _nestRepository = nestRepository;
@@ -42,6 +44,7 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
         _indexerAppService = indexerAppService;
         _settingManager = settingManager;
         _crossChainOptions = crossChainOptions.Value;
+        _reportQueryTimesOptions = reportQueryTimesOptions.Value;
     }
 
     public async Task CreateAsync(CreateReportInfoInput input)
@@ -114,8 +117,9 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
     public async Task UpdateStepAsync()
     {
         var q = await _reportInfoRepository.GetQueryableAsync();
+        Logger.LogInformation("Report query times: {queryTimes}", _reportQueryTimesOptions.QueryTimes);
         var list = await AsyncExecuter.ToListAsync(q
-            .Where(o => o.Step == ReportStep.Confirmed && o.QueryTimes < CrossChainServerConsts.MaxReportQueryTimes));
+            .Where(o => o.Step == ReportStep.Confirmed && o.QueryTimes < _reportQueryTimesOptions.QueryTimes));
 
         if (list.Count == 0)
         {
