@@ -47,6 +47,7 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
     public async Task<ListResultDto<CrossChainDailyLimitsDto>> GetCrossChainDailyLimitsAsync()
     {
         var crossChainLimits = _crossChainLimitsOptions.CurrentValue;
+        _logger.LogInformation("Get cross chain limit from settings.{chain}",crossChainLimits.ChainIdInfo.TokenFirstChainId);
         var toChainIds = new HashSet<string>(crossChainLimits.ChainIdInfo.ToChainIds);
         var indexerCrossChainLimitInfos =
             await _indexerCrossChainLimitInfoService.GetAllCrossChainLimitInfoIndexAsync();

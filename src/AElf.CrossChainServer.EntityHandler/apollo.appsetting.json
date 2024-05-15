@@ -1,0 +1,11 @@
+{
+  "ClientId": "CrossChainServer_EntityEventHandler",
+  "apollo": {
+    "UseApollo" : true,
+    "AppId": "CrossChainServer",
+    "MetaServer": "http://127.0.0.1:8070",
+    "Namespaces": [
+      "entityhandler_appsettings.json"
+    ]
+  }
+}
