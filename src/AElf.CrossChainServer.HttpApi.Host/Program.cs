@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using AElf.CrossChainServer.Extension;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,7 +37,9 @@ public class Program
         {
             Log.Information("Starting AElf.CrossChainServer.HttpApi.Host.");
             var builder = WebApplication.CreateBuilder(args);
+            builder.Configuration.AddJsonFile("apollo.appsettings.json");
             builder.Host.AddAppSettingsSecretsJson()
+                .UseApollo()
                 .UseAutofac()
                 .UseSerilog();
             await builder.AddApplicationAsync<CrossChainServerHttpApiHostModule>();
