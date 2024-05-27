@@ -1,19 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net7.0</TargetFramework>
         <RootNamespace>AElf.CrossChainServer.ContractEventHandler</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Volo.Abp.Core" Version="5.3.0" />
+      <PackageReference Include="Volo.Abp.Core" Version="7.0.0" />
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="AElf.AElfNode.EventHandler.BackgroundJob" Version="1.1.8" />
         <PackageReference Include="AElf.AElfNode.EventHandler.Core" Version="1.1.8" />
-        <PackageReference Include="Volo.Abp.Autofac" Version="5.3.0" />
-        <PackageReference Include="Volo.Abp.Swashbuckle" Version="5.3.0" />
+        <PackageReference Include="Volo.Abp.Autofac" Version="7.0.0" />
+        <PackageReference Include="Volo.Abp.Swashbuckle" Version="7.0.0" />
         <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="6.0.4" />
         <PackageReference Include="AElf.Sdk.CSharp" Version="1.2.0" />
     </ItemGroup>

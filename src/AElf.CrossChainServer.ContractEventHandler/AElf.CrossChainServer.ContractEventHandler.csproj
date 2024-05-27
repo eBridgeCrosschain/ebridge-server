@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net7.0</TargetFramework>
         <OutputType>Exe</OutputType>
     </PropertyGroup>
 
@@ -10,14 +10,14 @@
         <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
         <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />  
         <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="6.0.4" />
-        <PackageReference Include="Volo.Abp.AspNetCore.Serilog" Version="5.3.0" />
-        <PackageReference Include="Volo.Abp.Autofac" Version="5.3.0" />
-        <PackageReference Include="Volo.Abp.BlobStoring.Aliyun" Version="5.3.0" />
-        <PackageReference Include="Volo.Abp.Caching" Version="5.3.0" />
-        <PackageReference Include="Volo.Abp.Caching.StackExchangeRedis" Version="5.3.0" />
-        <PackageReference Include="Volo.Abp.Core" Version="5.3.0" />
-        <PackageReference Include="Volo.Abp.EventBus.RabbitMQ" Version="5.3.0" />
-        <PackageReference Include="Volo.Abp.RabbitMQ" Version="5.3.0" />
+        <PackageReference Include="Volo.Abp.AspNetCore.Serilog" Version="7.0.0" />
+        <PackageReference Include="Volo.Abp.Autofac" Version="7.0.0" />
+        <PackageReference Include="Volo.Abp.BlobStoring.Aliyun" Version="7.0.0" />
+        <PackageReference Include="Volo.Abp.Caching" Version="7.0.0" />
+        <PackageReference Include="Volo.Abp.Caching.StackExchangeRedis" Version="7.0.0" />
+        <PackageReference Include="Volo.Abp.Core" Version="7.0.0" />
+        <PackageReference Include="Volo.Abp.EventBus.RabbitMQ" Version="7.0.0" />
+        <PackageReference Include="Volo.Abp.RabbitMQ" Version="7.0.0" />
     </ItemGroup>
 
     <ItemGroup>

@@ -3,7 +3,7 @@
   <Import Project="..\..\common.props" />
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <RootNamespace>AElf.CrossChainServer</RootNamespace>
   </PropertyGroup>
 
@@ -12,16 +12,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Volo.Abp.Emailing" Version="5.3.0" />
-    <PackageReference Include="Volo.Abp.Identity.Domain" Version="5.3.0" />
-    <PackageReference Include="Volo.Abp.PermissionManagement.Domain.Identity" Version="5.3.0" />
-    <PackageReference Include="Volo.Abp.IdentityServer.Domain" Version="5.3.0" />
-    <PackageReference Include="Volo.Abp.PermissionManagement.Domain.IdentityServer" Version="5.3.0" />
-    <PackageReference Include="Volo.Abp.BackgroundJobs.Domain" Version="5.3.0" />
-    <PackageReference Include="Volo.Abp.AuditLogging.Domain" Version="5.3.0" />
-    <PackageReference Include="Volo.Abp.TenantManagement.Domain" Version="5.3.0" />
-    <PackageReference Include="Volo.Abp.FeatureManagement.Domain" Version="5.3.0" />
-    <PackageReference Include="Volo.Abp.SettingManagement.Domain" Version="5.3.0" />
+    <PackageReference Include="Volo.Abp.Emailing" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.Identity.Domain" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.PermissionManagement.Domain.Identity" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.IdentityServer.Domain" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.PermissionManagement.Domain.IdentityServer" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.BackgroundJobs.Domain" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.AuditLogging.Domain" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.TenantManagement.Domain" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.FeatureManagement.Domain" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.SettingManagement.Domain" Version="7.0.0" />
     <PackageReference Include="AElf.Indexing.Elasticsearch" Version="0.0.11" />
   </ItemGroup>
 
