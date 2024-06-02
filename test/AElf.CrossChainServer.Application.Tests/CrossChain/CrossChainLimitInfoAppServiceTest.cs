@@ -106,7 +106,7 @@ public class CrossChainLimitInfoAppServiceTest
         var result = await _service.GetCrossChainRateLimitsAsync();
 
         // Assert
-        Assert.Equal(4, result.Items.Count);
+        Assert.Equal(6, result.Items.Count);
     }
 
     
@@ -140,7 +140,11 @@ public class CrossChainLimitInfoAppServiceTest
                 {"BSC-AELF", 5},
                 {"BSC-tDVV", 6},
                 {"AELF-BSC", 7},
-                {"tDVV-BSC", 8}
+                {"tDVV-BSC", 8},
+                {"Nile-AELF", 9},
+                {"Nile-tDVV", 10},
+                {"AELF-Nile", 11},
+                {"tDVV-Nile", 12}
             }
         };
         return evmTokensOptions;
@@ -164,6 +168,13 @@ public class CrossChainLimitInfoAppServiceTest
                     {
                         new TokenInfo { Address = "BSCTest_Address", TargetChainId = "MainChain_AELF" },
                         new TokenInfo { Address = "BSCTest_Address", TargetChainId = "SideChain_tDVV" }
+                    }
+                },
+                {
+                    "Nile", new List<TokenInfo>
+                    {
+                        new TokenInfo { Address = "Nile_Address", TargetChainId = "MainChain_AELF" },
+                        new TokenInfo { Address = "Nile_Address", TargetChainId = "SideChain_tDVV" }
                     }
                 }
             }
@@ -205,6 +216,22 @@ public class CrossChainLimitInfoAppServiceTest
             {
               ""FromChainId"": ""Sepolia"",
               ""ToChainId"": ""tDVV""
+            },
+            {
+              ""FromChainId"": ""tDVV"",
+              ""ToChainId"": ""Nile""
+            },
+            {
+              ""FromChainId"": ""Nile"",
+              ""ToChainId"": ""tDVV""            
+            },
+            {
+              ""FromChainId"": ""AELF"",
+              ""ToChainId"": ""Nile""
+            },
+            {
+              ""FromChainId"": ""Nile"",
+              ""ToChainId"": ""AELF""
             }
           ]";
         var fromToChainList = JsonSerializer.Deserialize<List<IndexerCrossChainLimitInfo>>(fromToChainJsonArray);
@@ -279,6 +306,15 @@ public class CrossChainLimitInfoAppServiceTest
                 BlockChain = "BSC"
             });
         
+        _mockChainAppService.GetAsync(Arg.Is<string>(s =>  "Nile".Contains(s)))
+            .Returns(new ChainDto
+            {
+                Id = "Nile",
+                IsMainChain = true,
+                Type = BlockchainType.Tron,
+                BlockChain = "Tron"
+            });
+        
         _mockChainAppService.GetByAElfChainIdAsync(Arg.Is<int>(s => s == 9992731))
             .Returns(aelfChain);
         _mockChainAppService.GetByAElfChainIdAsync(Arg.Is<int>(s => s == 1866392))
@@ -294,7 +330,7 @@ public class CrossChainLimitInfoAppServiceTest
             { "USDT", 6 }
         };
         
-        var chainIds = new HashSet<string> { "MainChain_AELF", "SideChain_tDVV", "Sepolia" ,"BSCTest"};
+        var chainIds = new HashSet<string> { "MainChain_AELF", "SideChain_tDVV", "Sepolia" ,"BSCTest", "Nile"};
         
         foreach (var token in tokenDict)
         {
@@ -367,6 +403,30 @@ public class CrossChainLimitInfoAppServiceTest
 
         _mockBridgeContractAppService
             .GetCurrentSwapTokenBucketStatesAsync(Arg.Is("BSCTest"), Arg.Any<List<Guid>>(), Arg.Any<List<string>>())
+            .Returns(new List<TokenBucketDto>()
+            {
+                new()
+                {
+                    Capacity = 122,
+                    RefillRate = 103,
+                    MaximumTimeConsumed = 4
+                }
+            });
+        
+        _mockBridgeContractAppService
+            .GetCurrentReceiptTokenBucketStatesAsync(Arg.Is("Nile"), Arg.Any<List<Guid>>(), Arg.Any<List<string>>())
+            .Returns(new List<TokenBucketDto>()
+            {
+                new()
+                {
+                    Capacity = 121,
+                    RefillRate = 102,
+                    MaximumTimeConsumed = 3
+                }
+            });
+
+        _mockBridgeContractAppService
+            .GetCurrentSwapTokenBucketStatesAsync(Arg.Is("Nile"), Arg.Any<List<Guid>>(), Arg.Any<List<string>>())
             .Returns(new List<TokenBucketDto>()
             {
                 new()
