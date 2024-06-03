@@ -13,6 +13,7 @@ public class BridgeContractSyncOptions
     public int SyncDelayHeight { get; set; } = 100;
     public string ConfirmedSyncKeyPrefix { get; set; } = "Confirmed";
     public int ConfirmedSyncDelayHeight { get; set; } = 2000;
+    
 }
 
 public class TokenInfo
