@@ -23,19 +23,16 @@ public class AElfReportContractProvider : AElfClientProvider, IReportContractPro
     }
 
     public async Task<string> QueryOracleAsync(string chainId, string contractAddress, string privateKey,
-        string targetChainId, string receiptId, string receiptHash, long amount, string targetAddress)
+        string targetChainId, string receiptId, string receiptHash, string receiptInfo)
     {
         var client = BlockchainClientFactory.GetClient(chainId);
-        var receiptIdToken = receiptId.Split(".").First();
-        var optionParam = $"{amount}-{Address.FromBase58(targetAddress)}-{receiptIdToken}";
-        Logger.LogInformation("Query oracle params:{p}", optionParam);
         var param = new QueryOracleInput
         {
             Payment = 0,
             QueryInfo = new OffChainQueryInfo
             {
                 Title = $"lock_token_{receiptId}",
-                Options = { receiptHash, optionParam }
+                Options = { receiptHash, receiptInfo }
             },
             ChainId = targetChainId
         };

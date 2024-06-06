@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using AElf.CrossChainServer.Tokens;
 using Shouldly;
 using Xunit;
 
@@ -10,21 +9,16 @@ public class ReportInfoAppServiceTests : CrossChainServerApplicationTestBase
 {
     private readonly IReportInfoAppService _reportInfoAppService;
     private readonly IReportInfoRepository _reportInfoRepository;
-    private readonly ICrossChainTransferAppService _crossChainTransferAppService;
-    private readonly ITokenAppService _tokenAppService;
 
     public ReportInfoAppServiceTests()
     {
         _reportInfoAppService = GetRequiredService<IReportInfoAppService>();
         _reportInfoRepository = GetRequiredService<IReportInfoRepository>();
-        _crossChainTransferAppService = GetRequiredService<ICrossChainTransferAppService>();
-        _tokenAppService = GetRequiredService<ITokenAppService>();
     }
 
     [Fact]
     public async Task CreateTest()
     {
-        await CreateCrossChainTransfer();
         var input = new CreateReportInfoInput
         {
             ChainId = "MainChain_AELF",
@@ -33,7 +27,7 @@ public class ReportInfoAppServiceTests : CrossChainServerApplicationTestBase
             ReceiptId = "ReceiptId",
             RoundId = 1,
             LastUpdateHeight = 100,
-            TargetChainId = "Sepolia"
+            TargetChainId = "SideChain_tDVV"
         };
         await _reportInfoAppService.CreateAsync(input);
 
@@ -47,25 +41,22 @@ public class ReportInfoAppServiceTests : CrossChainServerApplicationTestBase
         reports[0].LastUpdateHeight.ShouldBe(input.LastUpdateHeight);
         reports[0].TargetChainId.ShouldBe(input.TargetChainId);
         reports[0].Step.ShouldBe(ReportStep.Proposed);
-        reports[0].Amount.ShouldBe(100);
-        reports[0].TargetAddress.ShouldBe("ToAddress");
 
-
-        await _reportInfoAppService.UpdateStepAsync("MainChain_AELF",1, "Token1", "Sepolia", ReportStep.Confirmed,  150);
+        await _reportInfoAppService.UpdateStepAsync("MainChain_AELF",1, "Token1", "SideChain_tDVV", ReportStep.Confirmed,  150);
         
         reports = await _reportInfoRepository.GetListAsync();
         reports.Count.ShouldBe(1);
         reports[0].LastUpdateHeight.ShouldBe(input.LastUpdateHeight);
         reports[0].Step.ShouldBe(ReportStep.Proposed);
         
-        await _reportInfoAppService.UpdateStepAsync("MainChain_AELF",1, "Token", "Sepolia", ReportStep.Confirmed,  150);
+        await _reportInfoAppService.UpdateStepAsync("MainChain_AELF",1, "Token", "SideChain_tDVV", ReportStep.Confirmed,  150);
         
         reports = await _reportInfoRepository.GetListAsync();
         reports.Count.ShouldBe(1);
         reports[0].LastUpdateHeight.ShouldBe(150);
         reports[0].Step.ShouldBe(ReportStep.Confirmed);
         
-        await _reportInfoAppService.UpdateStepAsync("MainChain_AELF",1, "Token", "Sepolia", ReportStep.Proposed,  200);
+        await _reportInfoAppService.UpdateStepAsync("MainChain_AELF",1, "Token", "SideChain_tDVV", ReportStep.Proposed,  200);
         
         reports = await _reportInfoRepository.GetListAsync();
         reports.Count.ShouldBe(1);
@@ -76,7 +67,6 @@ public class ReportInfoAppServiceTests : CrossChainServerApplicationTestBase
     [Fact]
     public async Task Create_Repeat_Test()
     {
-        await CreateCrossChainTransfer();
         var input = new CreateReportInfoInput
         {
             ChainId = "MainChain_AELF",
@@ -85,7 +75,7 @@ public class ReportInfoAppServiceTests : CrossChainServerApplicationTestBase
             ReceiptId = "ReceiptId",
             RoundId = 1,
             LastUpdateHeight = 100,
-            TargetChainId = "Sepolia"
+            TargetChainId = "SideChain_tDVV"
         };
         await _reportInfoAppService.CreateAsync(input);
         await _reportInfoAppService.CreateAsync(input);
@@ -93,35 +83,10 @@ public class ReportInfoAppServiceTests : CrossChainServerApplicationTestBase
         var reports = await _reportInfoRepository.GetListAsync();
         reports.Count.ShouldBe(1);
     }
-
-    private async Task CreateCrossChainTransfer()
-    {
-        var tokenTransfer = await _tokenAppService.GetAsync(new GetTokenInput
-        {
-            ChainId = "MainChain_AELF",
-            Symbol = "ELF"
-        });
-
-        var input = new CrossChainTransferInput
-        {
-            TransferAmount = 100,
-            FromAddress = "FromAddress",
-            ToAddress = "ToAddress",
-            TransferTokenId = tokenTransfer.Id,
-            FromChainId = "MainChain_AELF",
-            ToChainId = "Sepolia",
-            TransferBlockHeight = 100,
-            TransferTime = DateTime.UtcNow.AddMinutes(-1),
-            TransferTransactionId = "TransferTransactionId",
-            ReceiptId = "ReceiptId"
-        };
-        await _crossChainTransferAppService.TransferAsync(input);
-    }
     
     [Fact]
     public async Task Create_ResentTimes_Test()
     {
-        await CreateCrossChainTransfer();
         var input1 = new CreateReportInfoInput
         {
             ChainId = "MainChain_AELF",
@@ -130,7 +95,7 @@ public class ReportInfoAppServiceTests : CrossChainServerApplicationTestBase
             ReceiptId = "ReceiptId",
             RoundId = 1,
             LastUpdateHeight = 100,
-            TargetChainId = "Sepolia"
+            TargetChainId = "SideChain_tDVV"
         };
         await _reportInfoAppService.CreateAsync(input1);
         var input2 = new CreateReportInfoInput
@@ -141,7 +106,7 @@ public class ReportInfoAppServiceTests : CrossChainServerApplicationTestBase
             ReceiptId = "ReceiptId",
             RoundId = 2,
             LastUpdateHeight = 100,
-            TargetChainId = "Sepolia"
+            TargetChainId = "SideChain_tDVV"
         };
         await _reportInfoAppService.CreateAsync(input2);
 
