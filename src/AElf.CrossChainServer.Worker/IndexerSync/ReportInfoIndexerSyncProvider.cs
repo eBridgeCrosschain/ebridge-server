@@ -55,7 +55,8 @@ public class ReportInfoIndexerSyncProvider : IndexerSyncProviderBase
                     RoundId = report.RoundId,
                     Token = report.Token,
                     TargetChainId = report.TargetChainId,
-                    LastUpdateHeight = report.BlockHeight
+                    LastUpdateHeight = report.BlockHeight,
+                    ReceiptInfo = report.ReceiptInfo
                 });
                 break;
             case ReportStep.Confirmed:
