@@ -82,7 +82,8 @@ public class ReportInfoIndexerSyncProvider : IndexerSyncProviderBase
                     targetChainId,
                     receiptId,
                     receiptHash,
-                    step                
+                    step,
+                    receiptInfo                
             }
         }",
             Variables = new
@@ -108,4 +109,6 @@ public class ReportInfoDto : GraphQLDto
     public string ReceiptId { get; set; }
     public string ReceiptHash { get; set; }
     public ReportStep Step { get; set; }
+    public string ReceiptInfo { get; set; }
+
 }

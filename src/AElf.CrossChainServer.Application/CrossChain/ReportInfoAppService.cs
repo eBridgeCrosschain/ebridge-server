@@ -58,7 +58,6 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
 
         var info = ObjectMapper.Map<CreateReportInfoInput, ReportInfo>(input);
         info.Step = ReportStep.Proposed;
-        
         var resendTimes = await _reportInfoRepository.CountAsync(o=>o.ChainId == info.ChainId && o.ReceiptHash == info.ReceiptHash);
         info.ResendTimes = resendTimes;
         
@@ -247,7 +246,7 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
     private async Task<string> SendQueryTransactionAsync(ReportInfo reportInfo)
     {
         return await _reportContractAppService.QueryOracleAsync(reportInfo.ChainId, reportInfo.TargetChainId,
-            reportInfo.ReceiptId, reportInfo.ReceiptHash);
+            reportInfo.ReceiptId, reportInfo.ReceiptHash,reportInfo.ReceiptInfo);
     }
 
     private async Task<long> GetReportSyncHeightAsync(string chainId)
