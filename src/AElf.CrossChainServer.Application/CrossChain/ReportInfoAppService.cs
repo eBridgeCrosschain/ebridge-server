@@ -6,6 +6,7 @@ using Nest;
 using System.Linq;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Contracts;
+using AElf.CrossChainServer.Contracts.Report;
 using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.Settings;
 using Microsoft.Extensions.Logging;
@@ -27,6 +28,7 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
     private readonly CrossChainOptions _crossChainOptions;
     private readonly ISettingManager _settingManager;
     private readonly ReportQueryTimesOptions _reportQueryTimesOptions;
+    private readonly IReportTransferInfoProvider _reportTransferInfoProvider;
 
 
     public ReportInfoAppService(IReportInfoRepository reportInfoRepository,
@@ -34,7 +36,7 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
         IBlockchainAppService blockchainAppService,
         IReportContractAppService reportContractAppService,
         IOptionsSnapshot<CrossChainOptions> crossChainOptions, IIndexerAppService indexerAppService,
-        ISettingManager settingManager,IOptionsSnapshot<ReportQueryTimesOptions> reportQueryTimesOptions)
+        ISettingManager settingManager,IOptionsSnapshot<ReportQueryTimesOptions> reportQueryTimesOptions, IReportTransferInfoProvider reportTransferInfoProvider)
     {
         _reportInfoRepository = reportInfoRepository;
         _nestRepository = nestRepository;
@@ -43,6 +45,7 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
         _reportContractAppService = reportContractAppService;
         _indexerAppService = indexerAppService;
         _settingManager = settingManager;
+        _reportTransferInfoProvider = reportTransferInfoProvider;
         _crossChainOptions = crossChainOptions.Value;
         _reportQueryTimesOptions = reportQueryTimesOptions.Value;
     }
@@ -58,7 +61,18 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
 
         var info = ObjectMapper.Map<CreateReportInfoInput, ReportInfo>(input);
         info.Step = ReportStep.Proposed;
-        
+        var (amount,targetAddress) = await _reportTransferInfoProvider.GetCrossChainTransferInfoAsync(info.ChainId, info.TargetChainId,
+            info.ReceiptId);
+        info.TargetAddress = targetAddress;
+        if (amount != null)
+        {
+            var res = long.TryParse(amount, out var originAmount);
+            info.Amount = res ? originAmount : 0;
+        }
+        else
+        {
+            info.Amount = 0;
+        }
         var resendTimes = await _reportInfoRepository.CountAsync(o=>o.ChainId == info.ChainId && o.ReceiptHash == info.ReceiptHash);
         info.ResendTimes = resendTimes;
         
@@ -247,7 +261,7 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
     private async Task<string> SendQueryTransactionAsync(ReportInfo reportInfo)
     {
         return await _reportContractAppService.QueryOracleAsync(reportInfo.ChainId, reportInfo.TargetChainId,
-            reportInfo.ReceiptId, reportInfo.ReceiptHash);
+            reportInfo.ReceiptId, reportInfo.ReceiptHash,reportInfo.Amount,reportInfo.TargetAddress);
     }
 
     private async Task<long> GetReportSyncHeightAsync(string chainId)
