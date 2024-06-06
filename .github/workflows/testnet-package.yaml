@@ -84,15 +84,15 @@ jobs:
     - name: Deploy
       uses: actions/github-script@v6
       with:
-      github-token: ${{ secrets.TOK }}
-      script: |
-        await github.rest.actions.createWorkflowDispatch({
-        owner: 'eBridgeCrosschain',
-        repo: 'devops',
-        workflow_id: 'deployment_testnet.yaml',
-        ref: 'main',
-        inputs: {
-          appName: 'ebridge-backend',
-           commit_sha: 'sha-${{ needs.build-and-push-image.outputs.short_sha }}',
-          }
-        })
+        github-token: ${{ secrets.TOK }}
+        script: |
+          await github.rest.actions.createWorkflowDispatch({
+          owner: 'eBridgeCrosschain',
+          repo: 'devops',
+          workflow_id: 'deployment_testnet.yaml',
+          ref: 'main',
+          inputs: {
+            appName: 'ebridge-backend',
+             commit_sha: 'sha-${{ needs.build-and-push-image.outputs.short_sha }}',
+            }
+          })
