@@ -160,6 +160,7 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
     public async Task ReSendQueryAsync()
     {
         var q = await _reportInfoRepository.GetQueryableAsync();
+        Logger.LogInformation("Max report resend times:{time}",_crossChainOptions.MaxReportResendTimes);
         var list = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Step == ReportStep.Proposed && o.ResendTimes < _crossChainOptions.MaxReportResendTimes));
 
