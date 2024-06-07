@@ -164,7 +164,6 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
         Logger.LogInformation("Max report resend times:{time}",_crossChainOptions.MaxReportResendTimes);
         var list = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Step == ReportStep.Proposed && o.ResendTimes < _crossChainOptions.MaxReportResendTimes));
-        Logger.LogInformation("To resend list:{time}",JsonConvert.SerializeObject(list.First()));
 
         if (list.Count == 0)
         {
