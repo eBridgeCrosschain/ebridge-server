@@ -5,10 +5,12 @@ using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Tokens;
 using AElf.Indexing.Elasticsearch;
+using Microsoft.EntityFrameworkCore;
 using Nest;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Microsoft.Extensions.Logging;
+using MySqlConnector;
 
 namespace AElf.CrossChainServer.CrossChain;
 
@@ -45,7 +47,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
     public async Task<PagedResultDto<CrossChainTransferIndexDto>> GetListAsync(GetCrossChainTransfersInput input)
     {
         var mustQuery = new List<Func<QueryContainerDescriptor<CrossChainTransferIndex>, QueryContainer>>();
-        
+
         if (!input.FromChainId.IsNullOrWhiteSpace())
         {
             mustQuery.Add(q => q.Term(i => i.Field(f => f.FromChainId).Value(input.FromChainId)));
@@ -59,14 +61,15 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         if (!input.FromAddress.IsNullOrWhiteSpace())
         {
             var shouldFromQuery = new List<Func<QueryContainerDescriptor<CrossChainTransferIndex>, QueryContainer>>();
-            
-            if (!Base58CheckEncoding.Verify(input.FromAddress) && Nethereum.Util.AddressExtensions.IsValidEthereumAddressHexFormat(input.FromAddress))
+
+            if (!Base58CheckEncoding.Verify(input.FromAddress) &&
+                Nethereum.Util.AddressExtensions.IsValidEthereumAddressHexFormat(input.FromAddress))
             {
                 shouldFromQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(input.FromAddress.ToLower())));
             }
-            
+
             shouldFromQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(input.FromAddress)));
-            
+
             mustQuery.Add(q => q.Bool(bb => bb
                 .MinimumShouldMatch(1)
                 .Should(shouldFromQuery)
@@ -76,14 +79,15 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         if (!input.ToAddress.IsNullOrWhiteSpace())
         {
             var shouldToQuery = new List<Func<QueryContainerDescriptor<CrossChainTransferIndex>, QueryContainer>>();
-            
-            if (!Base58CheckEncoding.Verify(input.ToAddress) && Nethereum.Util.AddressExtensions.IsValidEthereumAddressHexFormat(input.ToAddress))
+
+            if (!Base58CheckEncoding.Verify(input.ToAddress) &&
+                Nethereum.Util.AddressExtensions.IsValidEthereumAddressHexFormat(input.ToAddress))
             {
                 shouldToQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(input.ToAddress.ToLower())));
             }
 
             shouldToQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(input.ToAddress)));
-            
+
             mustQuery.Add(q => q.Bool(bb => bb
                 .MinimumShouldMatch(1)
                 .Should(shouldToQuery)
@@ -132,15 +136,15 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         var transfer = await FindCrossChainTransferAsync(input.FromChainId, input.ToChainId,
             input.TransferTransactionId, input.ReceiptId);
 
+        var isTransferExist = true;
         if (transfer == null)
         {
+            isTransferExist = false;
             transfer = ObjectMapper.Map<CrossChainTransferInput, CrossChainTransfer>(input);
             transfer.Type = await GetCrossChainTypeAsync(input.FromChainId, input.ToChainId);
             transfer.Progress = 0;
             transfer.ProgressUpdateTime = input.TransferTime;
             transfer.Status = CrossChainStatus.Transferred;
-
-            await _crossChainTransferRepository.InsertAsync(transfer);
         }
         else
         {
@@ -149,8 +153,88 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
             transfer.TransferAmount = input.TransferAmount;
             transfer.TransferTime = input.TransferTime;
             transfer.TransferBlockHeight = input.TransferBlockHeight;
+        }
 
-            await _crossChainTransferRepository.UpdateAsync(transfer);
+        try
+        {
+            if (isTransferExist)
+            {
+                await _crossChainTransferRepository.UpdateAsync(transfer);
+            }
+            else
+            {
+                await _crossChainTransferRepository.InsertAsync(transfer,autoSave:true);
+            }
+        }
+        catch (DbUpdateException ex)
+        {
+            Logger.LogInformation(ex,
+                "DbUpdateConcurrencyException when transfer,transfer {TransferTransactionId} and receipt {ReceiptId},error message:{message}.",
+                input.TransferTransactionId, input.ReceiptId, ex.Message);
+            await HandleUniqueTransfer(ex, input);
+        }
+    }
+
+    private async Task HandleUniqueTransfer<T>(DbUpdateException ex, T input)
+    {
+        if (ex.InnerException is MySqlException mySqlEx && mySqlEx.Number == 1062)
+        {
+            if (typeof(T) == typeof(CrossChainTransferInput))
+            {
+                var transferInput = input as CrossChainTransferInput;
+                var transfer = await _crossChainTransferRepository.FindAsync(o =>
+                    o.FromChainId == transferInput.FromChainId && o.ToChainId == transferInput.ToChainId &&
+                    o.TransferTransactionId == transferInput.TransferTransactionId);;
+
+                if (transfer != null)
+                {
+                    transfer.TransferTokenId = transferInput.TransferTokenId;
+                    transfer.TransferTransactionId = transferInput.TransferTransactionId;
+                    transfer.TransferAmount = transferInput.TransferAmount;
+                    transfer.TransferTime = transferInput.TransferTime;
+                    transfer.TransferBlockHeight = transferInput.TransferBlockHeight;
+
+                    await _crossChainTransferRepository.UpdateAsync(transfer);
+                }
+                else
+                {
+                    Logger.LogError(ex,
+                        "Unable to handle unique constraint for transfer {TransferTransactionId} and receipt {ReceiptId},error message:{message}.",
+                        transferInput.TransferTransactionId, transferInput.ReceiptId, ex.Message);
+                }
+            }
+            else if (typeof(T) == typeof(CrossChainReceiveInput))
+            {
+                var receiveInput = input as CrossChainReceiveInput;
+                var transfer = await _crossChainTransferRepository.FindAsync(o =>
+                    o.FromChainId == receiveInput.FromChainId && o.ToChainId == receiveInput.ToChainId &&
+                    o.TransferTransactionId == receiveInput.TransferTransactionId);;
+                if (transfer != null)
+                {
+                    transfer.ReceiveTokenId = receiveInput.ReceiveTokenId;
+                    transfer.ReceiveTransactionId = receiveInput.ReceiveTransactionId;
+                    transfer.ReceiveTime = receiveInput.ReceiveTime;
+                    transfer.ReceiveAmount = receiveInput.ReceiveAmount;
+
+                    transfer.Status = CrossChainStatus.Received;
+                    transfer.Progress = CrossChainServerConsts.FullOfTheProgress;
+                    transfer.ProgressUpdateTime = receiveInput.ReceiveTime;
+
+                    await _crossChainTransferRepository.UpdateAsync(transfer);
+                }
+                else
+                {
+                    Logger.LogError(ex,
+                        "Unable to handle unique constraint for transfer {TransferTransactionId} and receipt {ReceiptId},error message:{message}.",
+                        receiveInput.TransferTransactionId, receiveInput.ReceiptId, ex.Message);
+                }
+            }
+        }
+        else
+        {
+            Logger.LogError(ex,
+                "Failed to insert or update transfer info,error message:{message}.",
+                ex.Message);
         }
     }
 
@@ -178,16 +262,26 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         transfer.Progress = CrossChainServerConsts.FullOfTheProgress;
         transfer.ProgressUpdateTime = input.ReceiveTime;
 
-        if (isTransferExist)
+        try
         {
-            await _crossChainTransferRepository.UpdateAsync(transfer);
+            if (isTransferExist)
+            {
+                await _crossChainTransferRepository.UpdateAsync(transfer);
+            }
+            else
+            {
+                await _crossChainTransferRepository.InsertAsync(transfer,autoSave:true);
+            }
         }
-        else
+        catch (DbUpdateException ex)
         {
-            await _crossChainTransferRepository.InsertAsync(transfer);
+            Logger.LogInformation(ex,
+                "DbUpdateConcurrencyException when receive,transfer {TransferTransactionId} and receipt {ReceiptId},error message:{message}.",
+                input.TransferTransactionId, input.ReceiptId, ex.Message);
+            await HandleUniqueTransfer(ex, input);
         }
     }
-
+    
     private async Task<CrossChainTransfer> FindCrossChainTransferAsync(string fromChainId, string toChainId,
         string transferTransactionId, string receiptId)
     {
@@ -270,12 +364,12 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
     {
         var fromChain = await _chainAppService.GetAsync(fromChainId);
         var toChain = await _chainAppService.GetAsync(toChainId);
-        
+
         if (fromChain == null || toChain == null)
         {
             return CrossChainType.Homogeneous;
         }
-        
+
         return fromChain.Type == toChain.Type ? CrossChainType.Homogeneous : CrossChainType.Heterogeneous;
     }
 
@@ -299,13 +393,14 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         {
             foreach (var transfer in crossChainTransfers)
             {
-                Logger.LogInformation("UpdateReceiveTransaction.Transfer id:{id}",transfer.Id);
+                Logger.LogInformation("UpdateReceiveTransaction.Transfer id:{id}", transfer.Id);
                 try
                 {
                     var txResult =
                         await _blockchainAppService.GetTransactionResultAsync(transfer.ToChainId,
                             transfer.ReceiveTransactionId);
-                    Logger.LogInformation("txResult.Transfer id:{id},is failed:{isFailed}",transfer.Id,txResult.IsFailed);
+                    Logger.LogInformation("txResult.Transfer id:{id},is failed:{isFailed}", transfer.Id,
+                        txResult.IsFailed);
 
                     if (txResult.IsFailed)
                     {
@@ -372,12 +467,14 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
                     {
                         continue;
                     }
+
                     if (toChain.Type != BlockchainType.AElf)
                     {
                         continue;
                     }
-                    Logger.LogInformation("Start to auto receive transfer id:{id}",transfer.Id);
-                    
+
+                    Logger.LogInformation("Start to auto receive transfer id:{id}", transfer.Id);
+
                     // Heterogeneous:check limit.
                     if (transfer.Type == CrossChainType.Heterogeneous &&
                         !await _checkTransferProvider.CheckTransferAsync(
