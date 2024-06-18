@@ -10,7 +10,6 @@ namespace AElf.CrossChainServer.CrossChain
         public EfCoreReportInfoRepository(IDbContextProvider<CrossChainServerDbContext> dbContextProvider)
             : base(dbContextProvider)
         {
-
         }
     }
 }
