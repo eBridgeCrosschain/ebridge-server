@@ -8,9 +8,9 @@ namespace AElf.CrossChainServer.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_AppCrossChainTransfers_FromChainId_ToChainId_TransferTransac~",
-                table: "AppCrossChainTransfers");
+            // migrationBuilder.DropIndex(
+            //     name: "IX_AppCrossChainTransfers_FromChainId_ToChainId_TransferTransac~",
+            //     table: "AppCrossChainTransfers");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AppCrossChainTransfers_FromChainId_ToChainId_TransferTransac~",
@@ -21,9 +21,9 @@ namespace AElf.CrossChainServer.Migrations
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_AppCrossChainTransfers_FromChainId_ToChainId_TransferTransac~",
-                table: "AppCrossChainTransfers");
+            // migrationBuilder.DropIndex(
+            //     name: "IX_AppCrossChainTransfers_FromChainId_ToChainId_TransferTransac~",
+            //     table: "AppCrossChainTransfers");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AppCrossChainTransfers_FromChainId_ToChainId_TransferTransac~",
