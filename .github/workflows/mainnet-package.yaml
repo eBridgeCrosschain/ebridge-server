@@ -13,7 +13,8 @@ jobs:
         servicename:
           [
             AElf.CrossChainServer.EntityHandler,
-            AElf.CrossChainServer.HttpApi.Host
+            AElf.CrossChainServer.HttpApi.Host,
+            AElf.CrossChainServer.DbMigrator
           ]
     steps:
       - uses: actions/checkout@v4
@@ -35,7 +36,8 @@ jobs:
         servicename:
           [
             AElf.CrossChainServer.EntityHandler,
-            AElf.CrossChainServer.HttpApi.Host
+            AElf.CrossChainServer.HttpApi.Host,
+            AElf.CrossChainServer.DbMigrator
           ]
     permissions:
       contents: read
