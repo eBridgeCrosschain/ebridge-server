@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Tokens;
 using AElf.Indexing.Elasticsearch;
+using Microsoft.EntityFrameworkCore;
 using Nest;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
@@ -152,8 +153,6 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
             transfer.TransferAmount = input.TransferAmount;
             transfer.TransferTime = input.TransferTime;
             transfer.TransferBlockHeight = input.TransferBlockHeight;
-
-            await _crossChainTransferRepository.UpdateAsync(transfer);
         }
 
         try
@@ -164,10 +163,10 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
             }
             else
             {
-                await _crossChainTransferRepository.InsertAsync(transfer);
+                await _crossChainTransferRepository.InsertAsync(transfer,autoSave:true);
             }
         }
-        catch (Exception ex)
+        catch (DbUpdateException ex)
         {
             Logger.LogInformation(ex,
                 "DbUpdateConcurrencyException when transfer,transfer {TransferTransactionId} and receipt {ReceiptId},error message:{message}.",
@@ -176,7 +175,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         }
     }
 
-    private async Task HandleUniqueTransfer<T>(Exception ex, T input)
+    private async Task HandleUniqueTransfer<T>(DbUpdateException ex, T input)
     {
         if (ex.InnerException is MySqlException mySqlEx && mySqlEx.Number == 1062)
         {
@@ -269,10 +268,10 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
             }
             else
             {
-                await _crossChainTransferRepository.InsertAsync(transfer);
+                await _crossChainTransferRepository.InsertAsync(transfer,autoSave:true);
             }
         }
-        catch (Exception ex)
+        catch (DbUpdateException ex)
         {
             Logger.LogInformation(ex,
                 "DbUpdateConcurrencyException when receive,transfer {TransferTransactionId} and receipt {ReceiptId},error message:{message}.",
