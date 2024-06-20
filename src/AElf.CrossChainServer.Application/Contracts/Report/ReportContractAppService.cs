@@ -11,7 +11,8 @@ public class ReportContractAppService : CrossChainServerAppService, IReportContr
     private readonly ReportContractOptions _reportContractOptions;
     private readonly AccountOptions _accountOptions;
 
-    public ReportContractAppService(IReportContractProvider reportContractProvider, IOptionsSnapshot<ReportContractOptions> oracleOptions, IOptionsSnapshot<AccountOptions> accountOptions)
+    public ReportContractAppService(IReportContractProvider reportContractProvider,
+        IOptionsSnapshot<ReportContractOptions> oracleOptions, IOptionsSnapshot<AccountOptions> accountOptions)
     {
         _reportContractProvider = reportContractProvider;
         _reportContractOptions = oracleOptions.Value;
@@ -19,11 +20,11 @@ public class ReportContractAppService : CrossChainServerAppService, IReportContr
     }
 
     public async Task<string> QueryOracleAsync(string chainId, string targetChainId, string receiptId,
-        string receiptHash)
+        string receiptHash,string receiptInfo)
     {
         var privateKey = _accountOptions.PrivateKeys[chainId];
         var contractAddress = _reportContractOptions.ContractAddresses[chainId];
         return await _reportContractProvider.QueryOracleAsync(chainId, contractAddress, privateKey, targetChainId,
-            receiptId, receiptHash);
+            receiptId, receiptHash, receiptInfo);
     }
 }

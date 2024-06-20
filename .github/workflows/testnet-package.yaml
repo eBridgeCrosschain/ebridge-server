@@ -2,7 +2,7 @@ name: build and package
 on:
   push:
     branches:
-      - 'release/2.4.1'
+      - 'release/*'
 env:
   DOTNET_INSTALL_DIR: "./.dotnet"
 jobs:

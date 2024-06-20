@@ -3,6 +3,7 @@ using System;
 using AElf.CrossChainServer.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -11,9 +12,10 @@ using Volo.Abp.EntityFrameworkCore;
 namespace AElf.CrossChainServer.Migrations
 {
     [DbContext(typeof(CrossChainServerDbContext))]
-    partial class CrossChainServerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240606155716_Add_Report_ReceiptInfo")]
+    partial class Add_Report_ReceiptInfo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -226,8 +228,7 @@ namespace AElf.CrossChainServer.Migrations
 
                     b.HasIndex("FromChainId", "ToChainId", "ReceiptId");
 
-                    b.HasIndex("FromChainId", "ToChainId", "TransferTransactionId")
-                        .IsUnique();
+                    b.HasIndex("FromChainId", "ToChainId", "TransferTransactionId");
 
                     b.ToTable("AppCrossChainTransfers", (string)null);
                 });

@@ -87,7 +87,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
             }
 
             shouldToQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(input.ToAddress)));
-
+            
             mustQuery.Add(q => q.Bool(bb => bb
                 .MinimumShouldMatch(1)
                 .Should(shouldToQuery)
