@@ -8,10 +8,6 @@ namespace AElf.CrossChainServer.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "TransferNeedToBeApproved",
-                table: "AppCrossChainTransfers");
-
             migrationBuilder.AddColumn<string>(
                 name: "ReceiptInfo",
                 table: "AppReportInfos",
@@ -25,13 +21,6 @@ namespace AElf.CrossChainServer.Migrations
             migrationBuilder.DropColumn(
                 name: "ReceiptInfo",
                 table: "AppReportInfos");
-
-            migrationBuilder.AddColumn<bool>(
-                name: "TransferNeedToBeApproved",
-                table: "AppCrossChainTransfers",
-                type: "tinyint(1)",
-                nullable: false,
-                defaultValue: false);
         }
     }
 }

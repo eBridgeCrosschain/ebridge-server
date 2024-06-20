@@ -208,6 +208,9 @@ namespace AElf.CrossChainServer.Migrations
                     b.Property<long>("TransferBlockHeight")
                         .HasColumnType("bigint");
 
+                    b.Property<bool>("TransferNeedToBeApproved")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<DateTime>("TransferTime")
                         .HasColumnType("datetime(6)");
 

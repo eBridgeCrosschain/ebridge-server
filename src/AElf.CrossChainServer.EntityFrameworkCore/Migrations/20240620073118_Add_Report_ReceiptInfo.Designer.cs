@@ -12,8 +12,8 @@ using Volo.Abp.EntityFrameworkCore;
 namespace AElf.CrossChainServer.Migrations
 {
     [DbContext(typeof(CrossChainServerDbContext))]
-    [Migration("20240617091812_Add_Unique_Index_CrossChainTransfer")]
-    partial class Add_Unique_Index_CrossChainTransfer
+    [Migration("20240620073118_Add_Report_ReceiptInfo")]
+    partial class Add_Report_ReceiptInfo
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -210,6 +210,9 @@ namespace AElf.CrossChainServer.Migrations
                     b.Property<long>("TransferBlockHeight")
                         .HasColumnType("bigint");
 
+                    b.Property<bool>("TransferNeedToBeApproved")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<DateTime>("TransferTime")
                         .HasColumnType("datetime(6)");
 
@@ -282,6 +285,9 @@ namespace AElf.CrossChainServer.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("ReceiptId")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ReceiptInfo")
                         .HasColumnType("longtext");
 
                     b.Property<int>("ResendTimes")
