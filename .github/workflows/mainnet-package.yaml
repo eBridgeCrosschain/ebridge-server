@@ -1,8 +1,8 @@
 name: build and package
 on:
   push:
-    branches:
-      - 'feature/test-mainnet-deploy'
+    tags:
+      - "v*.*.*"
 env:
   DOTNET_INSTALL_DIR: "./.dotnet"
 jobs:
