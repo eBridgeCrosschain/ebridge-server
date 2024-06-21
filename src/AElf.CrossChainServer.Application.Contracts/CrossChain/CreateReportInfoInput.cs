@@ -11,4 +11,6 @@ public class CreateReportInfoInput
     public string ReceiptId { get; set; }
     public string ReceiptHash { get; set; }
     public long LastUpdateHeight { get; set; }
+    public string ReceiptInfo { get; set; }
+
 }

@@ -27,7 +27,8 @@ public class ReportInfoAppServiceTests : CrossChainServerApplicationTestBase
             ReceiptId = "ReceiptId",
             RoundId = 1,
             LastUpdateHeight = 100,
-            TargetChainId = "SideChain_tDVV"
+            TargetChainId = "SideChain_tDVV",
+            ReceiptInfo = "ReceiptInfo"
         };
         await _reportInfoAppService.CreateAsync(input);
 
@@ -75,7 +76,8 @@ public class ReportInfoAppServiceTests : CrossChainServerApplicationTestBase
             ReceiptId = "ReceiptId",
             RoundId = 1,
             LastUpdateHeight = 100,
-            TargetChainId = "SideChain_tDVV"
+            TargetChainId = "SideChain_tDVV",
+            ReceiptInfo = "ReceiptInfo"
         };
         await _reportInfoAppService.CreateAsync(input);
         await _reportInfoAppService.CreateAsync(input);
@@ -95,7 +97,8 @@ public class ReportInfoAppServiceTests : CrossChainServerApplicationTestBase
             ReceiptId = "ReceiptId",
             RoundId = 1,
             LastUpdateHeight = 100,
-            TargetChainId = "SideChain_tDVV"
+            TargetChainId = "SideChain_tDVV",
+            ReceiptInfo = "ReceiptInfo"
         };
         await _reportInfoAppService.CreateAsync(input1);
         var input2 = new CreateReportInfoInput
@@ -106,7 +109,8 @@ public class ReportInfoAppServiceTests : CrossChainServerApplicationTestBase
             ReceiptId = "ReceiptId",
             RoundId = 2,
             LastUpdateHeight = 100,
-            TargetChainId = "SideChain_tDVV"
+            TargetChainId = "SideChain_tDVV",
+            ReceiptInfo = "ReceiptInfo"
         };
         await _reportInfoAppService.CreateAsync(input2);
 

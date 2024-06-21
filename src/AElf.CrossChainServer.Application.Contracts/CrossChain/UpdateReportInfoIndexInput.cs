@@ -16,4 +16,5 @@ public class UpdateReportInfoIndexInput
     public long TransmitHeight { get; set; }
     public long LastUpdateHeight { get; set; }
     public string QueryTransactionId { get; set; }
+    public string ReceiptInfo { get; set; }
 }
