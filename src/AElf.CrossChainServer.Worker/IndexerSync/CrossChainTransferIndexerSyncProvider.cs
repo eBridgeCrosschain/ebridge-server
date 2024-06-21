@@ -17,11 +17,12 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
     private readonly ICrossChainTransferAppService _crossChainTransferAppService;
     private readonly ITokenAppService _tokenAppService;
 
-    public CrossChainTransferIndexerSyncProvider(IGraphQLClientFactory graphQlClientFactory, ISettingManager settingManager,
+    public CrossChainTransferIndexerSyncProvider(IGraphQLClientFactory graphQlClientFactory,
+        ISettingManager settingManager,
         ICrossChainTransferAppService crossChainTransferAppService, IChainAppService chainAppService,
         ITokenAppService tokenAppService, IJsonSerializer jsonSerializer,
         IIndexerAppService indexerAppService) : base(
-        graphQlClientFactory, settingManager,jsonSerializer,indexerAppService,chainAppService)
+        graphQlClientFactory, settingManager, jsonSerializer, indexerAppService, chainAppService)
     {
         _crossChainTransferAppService = crossChainTransferAppService;
         _tokenAppService = tokenAppService;

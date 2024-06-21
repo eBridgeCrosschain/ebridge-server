@@ -16,7 +16,7 @@ public class AElfReportContractProvider : AElfClientProvider, IReportContractPro
     }
 
     public async Task<string> QueryOracleAsync(string chainId, string contractAddress, string privateKey,
-        string targetChainId, string receiptId, string receiptHash)
+        string targetChainId, string receiptId, string receiptHash, string receiptInfo)
     {
         var client = BlockchainClientFactory.GetClient(chainId);
 
@@ -26,7 +26,7 @@ public class AElfReportContractProvider : AElfClientProvider, IReportContractPro
             QueryInfo = new OffChainQueryInfo
             {
                 Title = $"lock_token_{receiptId}",
-                Options = { receiptHash }
+                Options = { receiptHash, receiptInfo }
             },
             ChainId = targetChainId
         };

@@ -10,6 +10,7 @@ using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.Settings;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
 
@@ -58,7 +59,6 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
 
         var info = ObjectMapper.Map<CreateReportInfoInput, ReportInfo>(input);
         info.Step = ReportStep.Proposed;
-        
         var resendTimes = await _reportInfoRepository.CountAsync(o=>o.ChainId == info.ChainId && o.ReceiptHash == info.ReceiptHash);
         info.ResendTimes = resendTimes;
         
@@ -161,6 +161,7 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
     public async Task ReSendQueryAsync()
     {
         var q = await _reportInfoRepository.GetQueryableAsync();
+        Logger.LogInformation("Max report resend times:{time}",_crossChainOptions.MaxReportResendTimes);
         var list = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Step == ReportStep.Proposed && o.ResendTimes < _crossChainOptions.MaxReportResendTimes));
 
@@ -247,7 +248,7 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
     private async Task<string> SendQueryTransactionAsync(ReportInfo reportInfo)
     {
         return await _reportContractAppService.QueryOracleAsync(reportInfo.ChainId, reportInfo.TargetChainId,
-            reportInfo.ReceiptId, reportInfo.ReceiptHash);
+            reportInfo.ReceiptId, reportInfo.ReceiptHash,reportInfo.ReceiptInfo);
     }
 
     private async Task<long> GetReportSyncHeightAsync(string chainId)

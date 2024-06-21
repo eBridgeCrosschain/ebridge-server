@@ -117,7 +117,7 @@ public class CrossChainServerDbContext :
         builder.Entity<CrossChainTransfer>(b =>
         {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "CrossChainTransfers", CrossChainServerConsts.DbSchema);
-            b.HasIndex(o => new { o.FromChainId, o.ToChainId, o.TransferTransactionId });
+            b.HasIndex(o => new { o.FromChainId, o.ToChainId, o.TransferTransactionId }).IsUnique();
             b.HasIndex(o => new { o.FromChainId, o.ToChainId, o.ReceiptId });
             b.HasIndex(o => new { o.Status, o.ProgressUpdateTime });
             b.ConfigureByConvention();
