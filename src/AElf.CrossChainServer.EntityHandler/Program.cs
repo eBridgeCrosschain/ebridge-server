@@ -60,4 +60,5 @@ namespace AElf.CrossChainServer.EntityHandler
                 .UseAutofac()
                 .UseSerilog();
     }
+    
 }

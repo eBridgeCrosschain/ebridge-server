@@ -21,4 +21,5 @@ public class ReportInfo : MultiChainEntity<Guid>
     public long LastUpdateHeight { get; set; }
     public string QueryTransactionId { get; set; }
     public int ResendTimes { get; set; } = 0;
+    public string ReceiptInfo { get; set; }
 }

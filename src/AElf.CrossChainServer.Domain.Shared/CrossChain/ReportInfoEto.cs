@@ -16,4 +16,5 @@ public class ReportInfoEto
     public long TransmitHeight { get; set; }
     public DateTime UpdateTime { get; set; }
     public string QueryOracleTransactionId { get; set; }
+    public string ReceiptInfo { get; set; }
 }
