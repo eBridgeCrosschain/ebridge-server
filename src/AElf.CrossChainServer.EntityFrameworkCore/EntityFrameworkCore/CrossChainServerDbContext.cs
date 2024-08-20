@@ -29,8 +29,7 @@ namespace AElf.CrossChainServer.EntityFrameworkCore;
 public class CrossChainServerDbContext :
     AbpDbContext<CrossChainServerDbContext>,
     IIdentityDbContext,
-    ITenantManagementDbContext,
-    IAElfNodeDbContext
+    ITenantManagementDbContext
 {
     /* Add DbSet properties for your Aggregate Roots / Entities here. */
 

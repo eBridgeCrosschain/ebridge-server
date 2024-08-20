@@ -6,7 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="AElf.AElfNode.EventHandler.TestBase" Version="1.1.5" />
+        <PackageReference Include="AElf.AElfNode.EventHandler.TestBase" Version="1.2.1-19314" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
         <PackageReference Include="coverlet.collector" Version="3.1.2">
             <PrivateAssets>all</PrivateAssets>

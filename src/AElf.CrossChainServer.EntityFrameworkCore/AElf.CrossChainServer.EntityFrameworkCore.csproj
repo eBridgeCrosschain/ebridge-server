@@ -18,7 +18,7 @@
     <PackageReference Include="Volo.Abp.AuditLogging.EntityFrameworkCore" Version="5.3.0" />
     <PackageReference Include="Volo.Abp.TenantManagement.EntityFrameworkCore" Version="5.3.0" />
     <PackageReference Include="Volo.Abp.FeatureManagement.EntityFrameworkCore" Version="5.3.0" />
-    <PackageReference Include="AElf.AElfNode.EventHandler.Core" Version="1.2.1-19314" />
+    <PackageReference Include="AElf.AElfNode.EventHandler.EntityFrameworkCore" Version="1.2.1-19314" />
   </ItemGroup>
 
   <ItemGroup>
