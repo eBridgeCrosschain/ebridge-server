@@ -52,6 +52,7 @@ public class CrossChainIndexingInfoAppService : CrossChainServerAppService, ICro
         await _crossChainIndexingInfoIndexRepository.AddAsync(index);
     }
 
+    
     public async Task DeleteIndexAsync(Guid id)
     {
         await _crossChainIndexingInfoIndexRepository.DeleteAsync(id);
