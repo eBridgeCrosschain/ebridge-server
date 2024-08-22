@@ -8,6 +8,7 @@ using GraphQL;
 using GraphQL.Client.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Nethereum.Model;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Json;
 
@@ -51,6 +52,8 @@ public abstract class IndexerSyncProviderBase : IIndexerSyncProvider, ITransient
         {
             return;
         }
+        Logger.LogDebug("Start to sync chain {ChainId} from {SyncHeight} to {EndHeight}", chainId, syncHeight + 1,
+            endHeight);
         var height = await HandleDataAsync(ChainHelper.ConvertChainIdToBase58(chain.AElfChainId), syncHeight + 1,
             endHeight);
 

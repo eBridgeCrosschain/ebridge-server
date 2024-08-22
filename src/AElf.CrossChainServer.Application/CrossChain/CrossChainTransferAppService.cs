@@ -139,6 +139,8 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         var isTransferExist = true;
         if (transfer == null)
         {
+            Logger.LogDebug("New transfer {TransferTransactionId} from {FromChainId} to {ToChainId}",
+                input.TransferTransactionId, input.FromChainId, input.ToChainId);
             isTransferExist = false;
             transfer = ObjectMapper.Map<CrossChainTransferInput, CrossChainTransfer>(input);
             transfer.Type = await GetCrossChainTypeAsync(input.FromChainId, input.ToChainId);
@@ -148,6 +150,8 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         }
         else
         {
+            Logger.LogDebug("Update transfer {TransferTransactionId} from {FromChainId} to {ToChainId}",
+                input.TransferTransactionId, input.FromChainId, input.ToChainId);
             transfer.TransferTokenId = input.TransferTokenId;
             transfer.TransferTransactionId = input.TransferTransactionId;
             transfer.TransferAmount = input.TransferAmount;
@@ -240,18 +244,24 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
 
     public async Task ReceiveAsync(CrossChainReceiveInput input)
     {
+        Logger.LogDebug("Receive transfer {TransferTransactionId} from {FromChainId} to {ToChainId}",
+            input.TransferTransactionId, input.FromChainId, input.ToChainId);
         var transfer = await FindCrossChainTransferAsync(input.FromChainId, input.ToChainId,
             input.TransferTransactionId, input.ReceiptId);
 
         var isTransferExist = true;
         if (transfer == null)
         {
+            Logger.LogDebug("New receive {TransferTransactionId} from {FromChainId} to {ToChainId}",
+                input.TransferTransactionId, input.FromChainId, input.ToChainId);
             isTransferExist = false;
             transfer = ObjectMapper.Map<CrossChainReceiveInput, CrossChainTransfer>(input);
             transfer.Type = await GetCrossChainTypeAsync(input.FromChainId, input.ToChainId);
         }
         else
         {
+            Logger.LogDebug("Update receive {TransferTransactionId} from {FromChainId} to {ToChainId}",
+                input.TransferTransactionId, input.FromChainId, input.ToChainId);
             transfer.ReceiveTokenId = input.ReceiveTokenId;
             transfer.ReceiveTransactionId = input.ReceiveTransactionId;
             transfer.ReceiveTime = input.ReceiveTime;
@@ -335,14 +345,20 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
             var toUpdate = new List<CrossChainTransfer>();
             foreach (var transfer in crossChainTransfers)
             {
+                Logger.LogDebug("UpdateProgress.FromChainId:{id},toChainId:{toChainId},transferTransactionId:{txId},progress:{progress}", transfer.FromChainId,
+                    transfer.ToChainId,transfer.TransferTransactionId, transfer.Progress);
                 var provider = GetCrossChainTransferProvider(transfer.Type);
                 var progress = await provider.CalculateCrossChainProgressAsync(transfer);
 
                 if (progress == transfer.Progress)
                 {
+                    Logger.LogDebug("Progress not changed. FromChainId:{id},toChainId:{toChainId},transferTransactionId:{txId}", transfer.FromChainId,
+                        transfer.ToChainId, transfer.TransferTransactionId);
                     continue;
                 }
 
+                Logger.LogDebug("Progress changed. FromChainId:{id},toChainId:{toChainId},progress:{progress},transferTransactionId:{txId}", transfer.FromChainId,
+                    transfer.ToChainId, progress, transfer.TransferTransactionId);
                 transfer.Progress = progress;
                 transfer.ProgressUpdateTime = now;
                 if (progress == CrossChainServerConsts.FullOfTheProgress)
@@ -393,13 +409,13 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         {
             foreach (var transfer in crossChainTransfers)
             {
-                Logger.LogInformation("UpdateReceiveTransaction.Transfer id:{id}", transfer.Id);
+                Logger.LogInformation("UpdateReceiveTransaction.TransferTransactionId:{id}", transfer.TransferTransactionId);
                 try
                 {
                     var txResult =
                         await _blockchainAppService.GetTransactionResultAsync(transfer.ToChainId,
                             transfer.ReceiveTransactionId);
-                    Logger.LogInformation("txResult.Transfer id:{id},is failed:{isFailed}", transfer.Id,
+                    Logger.LogInformation("txResult.TransferTransactionId:{id},is failed:{isFailed}", transfer.TransferTransactionId,
                         txResult.IsFailed);
 
                     if (txResult.IsFailed)
@@ -460,6 +476,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         {
             foreach (var transfer in crossChainTransfers)
             {
+                Logger.LogDebug("AutoReceive.TransferTransactionId:{id}", transfer.TransferTransactionId);
                 try
                 {
                     var toChain = await _chainAppService.GetAsync(transfer.ToChainId);
@@ -473,7 +490,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
                         continue;
                     }
 
-                    Logger.LogInformation("Start to auto receive transfer id:{id}", transfer.Id);
+                    Logger.LogInformation("Start to auto receive, transferTransactionId:{id}", transfer.TransferTransactionId);
 
                     // Heterogeneous:check limit.
                     if (transfer.Type == CrossChainType.Heterogeneous &&
@@ -492,12 +509,12 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
                     transfer.ReceiveTransactionId = txId;
                     toUpdate.Add(transfer);
                     Logger.LogDebug(
-                        "Send auto receive tx: {txId}, FromChain: {fromChainId}, ToChain: {toChainId}, Id: {transferId}",
-                        txId, transfer.FromChainId, transfer.ToChainId, transfer.Id);
+                        "Send auto receive tx: {txId}, FromChain: {fromChainId}, ToChain: {toChainId}, TransferTransactionId:{id}", 
+                        txId, transfer.FromChainId, transfer.ToChainId, transfer.TransferTransactionId);
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Send auto receive tx failed. Id: {transferId}, Error: {message}", transfer.Id,
+                    Logger.LogError(ex, "Send auto receive tx failed. FromChain: {fromChainId}, ToChain: {toChainId}, TransferTransactionId:{id}, Error:{message}", transfer.FromChainId, transfer.ToChainId, transfer.TransferTransactionId,
                         ex.Message);
                 }
             }

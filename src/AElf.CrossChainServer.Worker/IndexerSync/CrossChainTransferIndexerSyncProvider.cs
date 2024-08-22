@@ -8,6 +8,8 @@ using AElf.CrossChainServer.Settings;
 using AElf.CrossChainServer.Tokens;
 using GraphQL;
 using GraphQL.Client.Abstractions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Volo.Abp.Json;
 
 namespace AElf.CrossChainServer.Worker.IndexerSync;
@@ -16,6 +18,7 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
 {
     private readonly ICrossChainTransferAppService _crossChainTransferAppService;
     private readonly ITokenAppService _tokenAppService;
+    public ILogger<CrossChainTransferIndexerSyncProvider> Logger { get; set; }
 
     public CrossChainTransferIndexerSyncProvider(IGraphQLClientFactory graphQlClientFactory,
         ISettingManager settingManager,
@@ -26,12 +29,15 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
     {
         _crossChainTransferAppService = crossChainTransferAppService;
         _tokenAppService = tokenAppService;
+        Logger = NullLogger<CrossChainTransferIndexerSyncProvider>.Instance;
     }
 
     protected override string SyncType { get; } = CrossChainServerSettings.CrossChainTransferIndexerSync;
 
     protected override async Task<long> HandleDataAsync(string aelfChainId, long startHeight, long endHeight)
     {
+        Logger.LogDebug("Start to sync cross chain transfer info {ChainId} from {StartHeight} to {EndHeight}",
+            aelfChainId, startHeight, endHeight);
         var data = await QueryDataAsync<CrossChainTransferInfoDto>(GetRequest(aelfChainId, startHeight, endHeight));
         if (data == null || data.CrossChainTransferInfo.Count == 0)
         {
@@ -40,6 +46,11 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
 
         foreach (var crossChainTransfer in data.CrossChainTransferInfo)
         {
+            Logger.LogDebug(
+                "Start to handle cross chain transfer info {ChainId},token {symbol}, transfer type:{transferType},cross chain type:{crossChainType}",
+                crossChainTransfer.ChainId,crossChainTransfer.TransferTokenSymbol,
+                crossChainTransfer.TransferType == TransferType.Transfer ? "Transfer" : "Receive",
+                crossChainTransfer.CrossChainType == CrossChainType.Heterogeneous ? "Heterogeneous" : "Homogeneous");
             await HandleDataAsync(crossChainTransfer);
         }
 
@@ -54,17 +65,19 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
         {
             case TransferType.Transfer:
                 var toChainId = await GetChainIdAsync(transfer.ToChainId, transfer.CrossChainType);
-                if(toChainId == null)
+                if (toChainId == null)
                 {
                     return;
                 }
-                
+
                 var transferToken = await _tokenAppService.GetAsync(new GetTokenInput
                 {
                     ChainId = chain.Id,
                     Symbol = transfer.TransferTokenSymbol
                 });
-                
+
+                Logger.LogDebug("Start to transfer token {symbol} from {fromChainId} to {toChainId}",
+                    transfer.TransferTokenSymbol, chain.Id, toChainId);
                 await _crossChainTransferAppService.TransferAsync(new CrossChainTransferInput
                 {
                     TransferAmount = transfer.TransferAmount / (decimal)Math.Pow(10, transferToken.Decimals),
@@ -81,17 +94,19 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
                 break;
             case TransferType.Receive:
                 var formChainId = await GetChainIdAsync(transfer.FromChainId, transfer.CrossChainType);
-                if(formChainId == null)
+                if (formChainId == null)
                 {
                     return;
                 }
 
                 var receiveToken = await _tokenAppService.GetAsync(new GetTokenInput
                 {
-                    ChainId =chain.Id,
+                    ChainId = chain.Id,
                     Symbol = transfer.ReceiveTokenSymbol
                 });
-                
+
+                Logger.LogDebug("Start to receive token {symbol} from {fromChainId} to {toChainId}",
+                    transfer.ReceiveTokenSymbol, formChainId, chain.Id);
                 await _crossChainTransferAppService.ReceiveAsync(new CrossChainReceiveInput()
                 {
                     ReceiveAmount = transfer.ReceiveAmount / (decimal)Math.Pow(10, receiveToken.Decimals),
