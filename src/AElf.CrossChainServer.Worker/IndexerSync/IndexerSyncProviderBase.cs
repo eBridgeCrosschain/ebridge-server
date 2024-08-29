@@ -8,7 +8,6 @@ using GraphQL;
 using GraphQL.Client.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Nethereum.Model;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Json;
 

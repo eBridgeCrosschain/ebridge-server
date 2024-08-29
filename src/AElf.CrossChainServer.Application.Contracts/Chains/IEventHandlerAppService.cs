@@ -5,5 +5,5 @@ namespace AElf.CrossChainServer.Chains;
 
 public interface IEventHandlerAppService
 {
-    Task<DateTime> GetLatestSyncTimeAsync(string chainId, string jobCategory);
+    // Task<DateTime> GetLatestSyncTimeAsync(string chainId, string jobCategory);
 }

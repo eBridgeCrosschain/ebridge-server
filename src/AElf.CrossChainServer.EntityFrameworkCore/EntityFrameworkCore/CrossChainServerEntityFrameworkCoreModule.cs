@@ -1,5 +1,4 @@
-﻿using AElf.AElfNode.EventHandler.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
 using Volo.Abp.BackgroundJobs.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore;
@@ -24,9 +23,8 @@ namespace AElf.CrossChainServer.EntityFrameworkCore;
     typeof(AbpBackgroundJobsEntityFrameworkCoreModule),
     typeof(AbpAuditLoggingEntityFrameworkCoreModule),
     typeof(AbpTenantManagementEntityFrameworkCoreModule),
-    typeof(AbpFeatureManagementEntityFrameworkCoreModule),
-    typeof(AElfNodeEventHandlerEntityFrameworkCoreModule)
-    )]
+    typeof(AbpFeatureManagementEntityFrameworkCoreModule)
+)]
 public class CrossChainServerEntityFrameworkCoreModule : AbpModule
 {
     public override void PreConfigureServices(ServiceConfigurationContext context)

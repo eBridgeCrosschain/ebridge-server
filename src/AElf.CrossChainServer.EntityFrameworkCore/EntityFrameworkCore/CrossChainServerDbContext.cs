@@ -1,7 +1,4 @@
-﻿using AElf.AElfNode.EventHandler.Core.Domains.Entities;
-using AElf.AElfNode.EventHandler.EntityFrameworkCore;
-using AElf.AElfNode.EventHandler.EntityFrameworkCore.Extensions;
-using AElf.CrossChainServer.BridgeContract;
+﻿using AElf.CrossChainServer.BridgeContract;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.CrossChain;
 using AElf.CrossChainServer.Tokens;
@@ -29,8 +26,7 @@ namespace AElf.CrossChainServer.EntityFrameworkCore;
 public class CrossChainServerDbContext :
     AbpDbContext<CrossChainServerDbContext>,
     IIdentityDbContext,
-    ITenantManagementDbContext,
-    IAElfNodeDbContext
+    ITenantManagementDbContext
 {
     /* Add DbSet properties for your Aggregate Roots / Entities here. */
 
@@ -90,8 +86,6 @@ public class CrossChainServerDbContext :
         builder.ConfigureIdentityServer();
         builder.ConfigureFeatureManagement();
         builder.ConfigureTenantManagement();
-        
-        builder.ConfigureAElfLibTransactionManagement();
 
         /* Configure your own tables/entities inside here */
 
@@ -150,7 +144,4 @@ public class CrossChainServerDbContext :
             b.ConfigureByConvention(); 
         });
     }
-
-    public DbSet<SaveData> SaveData { get; }
-    public DbSet<TransactionWithLogsInfo> TransactionWithLogsInfos { get; }
 }
