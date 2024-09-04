@@ -6,6 +6,9 @@ using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.Settings;
 using GraphQL;
 using GraphQL.Client.Abstractions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Serilog.Core;
 using Volo.Abp.Json;
 
 namespace AElf.CrossChainServer.Worker.IndexerSync;
@@ -13,20 +16,27 @@ namespace AElf.CrossChainServer.Worker.IndexerSync;
 public class CrossChainIndexingInfoIndexerSyncProvider : IndexerSyncProviderBase
 {
     private readonly ICrossChainIndexingInfoAppService _crossChainIndexingInfoAppService;
+    public ILogger<CrossChainIndexingInfoIndexerSyncProvider> Logger { get; set; }
 
-    public CrossChainIndexingInfoIndexerSyncProvider(IGraphQLClientFactory graphQlClientFactory, ISettingManager settingManager,
-        IChainAppService chainAppService,IJsonSerializer jsonSerializer,IIndexerAppService indexerAppService,
+
+    public CrossChainIndexingInfoIndexerSyncProvider(IGraphQLClientFactory graphQlClientFactory,
+        ISettingManager settingManager,
+        IChainAppService chainAppService, IJsonSerializer jsonSerializer, IIndexerAppService indexerAppService,
         ICrossChainIndexingInfoAppService crossChainIndexingInfoAppService) : base(
-        graphQlClientFactory, settingManager,jsonSerializer,indexerAppService, chainAppService)
+        graphQlClientFactory, settingManager, jsonSerializer, indexerAppService, chainAppService)
     {
         _crossChainIndexingInfoAppService = crossChainIndexingInfoAppService;
+        Logger = NullLogger<CrossChainIndexingInfoIndexerSyncProvider>.Instance;
     }
 
     protected override string SyncType { get; } = CrossChainServerSettings.CrossChainIndexingIndexerSync;
 
     protected override async Task<long> HandleDataAsync(string aelfChainId, long startHeight, long endHeight)
     {
-        var data = await QueryDataAsync<CrossChainIndexingInfoResponse>(GetRequest(aelfChainId, startHeight, endHeight));
+        Logger.LogDebug("Start to sync cross chain indexing info {ChainId} from {StartHeight} to {EndHeight}",
+            aelfChainId, startHeight, endHeight);
+        var data = await QueryDataAsync<CrossChainIndexingInfoResponse>(GetRequest(aelfChainId, startHeight,
+            endHeight));
         if (data == null || data.CrossChainIndexingInfo.Count == 0)
         {
             return endHeight;
@@ -42,6 +52,9 @@ public class CrossChainIndexingInfoIndexerSyncProvider : IndexerSyncProviderBase
 
     private async Task HandleDataAsync(CrossChainIndexingInfoDto data)
     {
+        Logger.LogDebug(
+            "Start to handler cross chain indexing info {ChainId},index chain id:{indexChainId},index height:{indexHeight}",
+            data.ChainId, data.IndexChainId, data.IndexBlockHeight);
         var chain = await ChainAppService.GetByAElfChainIdAsync(ChainHelper.ConvertBase58ToChainId(data.ChainId));
         var indexChain =
             await ChainAppService.GetByAElfChainIdAsync(ChainHelper.ConvertBase58ToChainId(data.IndexChainId));
@@ -88,7 +101,7 @@ public class CrossChainIndexingInfoIndexerSyncProvider : IndexerSyncProviderBase
 
 public class CrossChainIndexingInfoResponse
 {
-    public List<CrossChainIndexingInfoDto> CrossChainIndexingInfo { get; set; } = new ();
+    public List<CrossChainIndexingInfoDto> CrossChainIndexingInfo { get; set; } = new();
 }
 
 public class CrossChainIndexingInfoDto : GraphQLDto

@@ -1,5 +1,4 @@
 using AElf.Client.Service;
-using AElf.AElfNode.EventHandler.Core;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Contracts.Bridge;
 using AElf.CrossChainServer.Contracts.CrossChain;
@@ -28,9 +27,8 @@ namespace AElf.CrossChainServer;
     typeof(AbpPermissionManagementApplicationModule),
     typeof(AbpTenantManagementApplicationModule),
     typeof(AbpFeatureManagementApplicationModule),
-    typeof(AbpSettingManagementApplicationModule),
-    typeof(AElfNodeEventHandlerCoreModule)
-    )]
+    typeof(AbpSettingManagementApplicationModule)
+)]
 public class CrossChainServerApplicationModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
