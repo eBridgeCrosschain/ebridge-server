@@ -620,20 +620,74 @@ public class CrossChainTransferAppServiceTests : CrossChainServerApplicationTest
             Status = CrossChainStatus.Transferred,
             Type = CrossChainType.Heterogeneous,
         });
+        transfers.Add(new CrossChainTransfer
+        {
+            FromAddress = "ToAddress3",
+            ToAddress = "FromAddress1",
+            FromChainId = "MainChain_AELF",
+            ToChainId = "SideChain_tDVV",
+            Status = CrossChainStatus.Indexed,
+            Type = CrossChainType.Homogeneous,
+        });
+        transfers.Add(new CrossChainTransfer
+        {
+            FromAddress = "ToAddress1",
+            ToAddress = "FromAddress2",
+            FromChainId = "MainChain_AELF",
+            ToChainId = "SideChain_tDVV",
+            Status = CrossChainStatus.Indexed,
+            Type = CrossChainType.Homogeneous,
+        });
+        transfers.Add(new CrossChainTransfer
+        {
+            FromAddress = "ToAddress1",
+            ToAddress = "FromAddress3",
+            FromChainId = "MainChain_AELF",
+            ToChainId = "SideChain_tDVV",
+            Status = CrossChainStatus.Indexed,
+            Type = CrossChainType.Homogeneous,
+        });
+        transfers.Add(new CrossChainTransfer
+        {
+            FromAddress = "FromAddress2",
+            ToAddress = "ToAddress3",
+            FromChainId = "MainChain_AELF",
+            ToChainId = "SideChain_tDVV",
+            Status = CrossChainStatus.Indexed,
+            Type = CrossChainType.Homogeneous,
+        });
+        transfers.Add(new CrossChainTransfer
+        {
+            FromAddress = "FromAddress1",
+            ToAddress = "ToAddress3",
+            FromChainId = "MainChain_AELF",
+            ToChainId = "SideChain_tDVV",
+            Status = CrossChainStatus.Indexed,
+            Type = CrossChainType.Homogeneous,
+        });
+        transfers.Add(new CrossChainTransfer
+        {
+            FromAddress = "ToAddress1",
+            ToAddress = "FromAddress1",
+            FromChainId = "MainChain_AELF",
+            ToChainId = "SideChain_tDVV",
+            Status = CrossChainStatus.Indexed,
+            Type = CrossChainType.Homogeneous,
+        });
         await _crossChainTransferRepository.InsertManyAsync(transfers);
 
         var list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
         {
             MaxResultCount = 10
         });
-        list.TotalCount.ShouldBe(3);
+        list.TotalCount.ShouldBe(9);
         
         list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
         {
             FromAddress = "FromAddress1",
             MaxResultCount = 10
         });
-        list.TotalCount.ShouldBe(1);
+        list.TotalCount.ShouldBe(2);
         list.Items[0].FromAddress.ShouldBe("FromAddress1");
         
         list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
@@ -665,7 +719,7 @@ public class CrossChainTransferAppServiceTests : CrossChainServerApplicationTest
             Status = CrossChainStatus.Indexed,
             MaxResultCount = 10
         });
-        list.TotalCount.ShouldBe(1);
+        list.TotalCount.ShouldBe(7);
         list.Items[0].Status.ShouldBe(CrossChainStatus.Indexed);
         
         list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
@@ -675,6 +729,14 @@ public class CrossChainTransferAppServiceTests : CrossChainServerApplicationTest
         });
         list.TotalCount.ShouldBe(1);
         list.Items[0].Type.ShouldBe(CrossChainType.Heterogeneous);
+        
+        list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
+        {
+            Addresses = "FromAddress1,ToAddress1,FromAddress2,ToAddress2",
+            MaxResultCount = 10
+        });
+        list.TotalCount.ShouldBe(8);
+
     }
 
     [Fact]

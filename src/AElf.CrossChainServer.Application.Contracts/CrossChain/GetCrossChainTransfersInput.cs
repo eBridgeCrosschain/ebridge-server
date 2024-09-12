@@ -15,4 +15,6 @@ public class GetCrossChainTransfersInput : PagedAndSortedResultRequestDto
     public string ToAddress { get; set; }
     public CrossChainStatus? Status { get; set; }
     public CrossChainType? Type { get; set; }
+
+    public string Addresses { get; set; }
 }
