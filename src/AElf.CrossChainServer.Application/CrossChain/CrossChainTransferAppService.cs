@@ -11,6 +11,7 @@ using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Microsoft.Extensions.Logging;
 using MySqlConnector;
+using Nethereum.Model;
 
 namespace AElf.CrossChainServer.CrossChain;
 
@@ -94,12 +95,14 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
             ));
         }
 
+        Logger.LogInformation("Addresses:{addresses}", input.Addresses);
         if (!input.Addresses.IsNullOrWhiteSpace())
         {
             var addressList = input.Addresses.Split(',');
             var shouldAddressesQuery = new List<Func<QueryContainerDescriptor<CrossChainTransferIndex>, QueryContainer>>();
             foreach (var address in addressList)
             {
+                Logger.LogInformation("Address:{address}", address);
                 if (!Base58CheckEncoding.Verify(address) &&
                     Nethereum.Util.AddressExtensions.IsValidEthereumAddressHexFormat(address))
                 {
