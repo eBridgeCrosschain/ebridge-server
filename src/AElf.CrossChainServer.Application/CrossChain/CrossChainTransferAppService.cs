@@ -25,6 +25,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
     private readonly IBlockchainAppService _blockchainAppService;
     private readonly ICheckTransferProvider _checkTransferProvider;
     private readonly IEnumerable<ICrossChainTransferProvider> _crossChainTransferProviders;
+    private readonly ILogger<CrossChainTransferAppService> _logger;
 
     private const int PageCount = 1000;
 
@@ -34,7 +35,8 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         ITokenRepository tokenRepository,
         IBlockchainAppService blockchainAppService,
         ICheckTransferProvider checkTransferProvider,
-        IEnumerable<ICrossChainTransferProvider> crossChainTransferProviders)
+        IEnumerable<ICrossChainTransferProvider> crossChainTransferProviders, 
+        ILogger<CrossChainTransferAppService> logger)
     {
         _crossChainTransferRepository = crossChainTransferRepository;
         _chainAppService = chainAppService;
@@ -42,12 +44,13 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         _tokenRepository = tokenRepository;
         _blockchainAppService = blockchainAppService;
         _checkTransferProvider = checkTransferProvider;
+        _logger = logger;
         _crossChainTransferProviders = crossChainTransferProviders.ToList();
     }
 
     public async Task<PagedResultDto<CrossChainTransferIndexDto>> GetListAsync(GetCrossChainTransfersInput input)
     {
-        Logger.LogInformation("get cross chain transfer list:{addresses}", input.Addresses);
+        _logger.LogInformation("get cross chain transfer list:{addresses}", input.Addresses);
         var mustQuery = new List<Func<QueryContainerDescriptor<CrossChainTransferIndex>, QueryContainer>>();
 
         if (!input.FromChainId.IsNullOrWhiteSpace())
