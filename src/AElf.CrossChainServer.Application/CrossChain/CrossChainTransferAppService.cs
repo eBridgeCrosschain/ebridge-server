@@ -94,6 +94,31 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
             ));
         }
 
+        if (!input.Addresses.IsNullOrWhiteSpace())
+        {
+            var addressList = input.Addresses.Split(',');
+            var shouldAddressesQuery = new List<Func<QueryContainerDescriptor<CrossChainTransferIndex>, QueryContainer>>();
+            foreach (var address in addressList)
+            {
+                if (!Base58CheckEncoding.Verify(address) &&
+                    Nethereum.Util.AddressExtensions.IsValidEthereumAddressHexFormat(address))
+                {
+                    shouldAddressesQuery.Add(q => q.Bool(b => b.Should(
+                        s => s.Term(i => i.Field(f => f.FromAddress).Value(address.ToLower())),
+                        s => s.Term(i => i.Field(f => f.ToAddress).Value(address.ToLower()))
+                    )));
+                }
+                shouldAddressesQuery.Add(q => q.Bool(b => b.Should(
+                    s => s.Term(i => i.Field(f => f.FromAddress).Value(address)),
+                    s => s.Term(i => i.Field(f => f.ToAddress).Value(address))
+                )));
+                mustQuery.Add(q => q.Bool(bb => bb
+                    .MinimumShouldMatch(1)
+                    .Should(shouldAddressesQuery)
+                ));
+            }
+        }
+
         if (input.Status.HasValue)
         {
             mustQuery.Add(q => q.Term(i => i.Field(f => f.Status).Value(input.Status.Value)));
