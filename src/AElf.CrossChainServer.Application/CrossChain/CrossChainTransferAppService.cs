@@ -50,7 +50,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
 
     public async Task<PagedResultDto<CrossChainTransferIndexDto>> GetListAsync(GetCrossChainTransfersInput input)
     {
-        _logger.LogInformation("get cross chain transfer list:{addresses}", input.Addresses);
+        _logger.LogInformation("Start to get cross chain transfer list:{addresses}", input.Addresses);
         var mustQuery = new List<Func<QueryContainerDescriptor<CrossChainTransferIndex>, QueryContainer>>();
 
         if (!input.FromChainId.IsNullOrWhiteSpace())
