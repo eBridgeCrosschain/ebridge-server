@@ -108,14 +108,10 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
                         s => s.Term(i => i.Field(f => f.ToAddress).Value(address.ToLower()))
                     )));
                 }
-                else
-                {
-                    shouldAddressesQuery.Add(q => q.Bool(b => b.Should(
+                shouldAddressesQuery.Add(q => q.Bool(b => b.Should(
                         s => s.Term(i => i.Field(f => f.FromAddress).Value(address)),
                         s => s.Term(i => i.Field(f => f.ToAddress).Value(address))
                     )));
-                }
-                
             }
             mustQuery.Add(q => q.Bool(bb => bb
                 .MinimumShouldMatch(1)
