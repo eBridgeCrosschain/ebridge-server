@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
+using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.Tokens;
 using AElf.Indexing.Elasticsearch;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,7 @@ using Nest;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using MySqlConnector;
 
 namespace AElf.CrossChainServer.CrossChain;
@@ -24,6 +26,9 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
     private readonly IBlockchainAppService _blockchainAppService;
     private readonly ICheckTransferProvider _checkTransferProvider;
     private readonly IEnumerable<ICrossChainTransferProvider> _crossChainTransferProviders;
+    private readonly IIndexerAppService _indexerAppService;
+    private readonly ITokenAppService _tokenAppService;
+    private readonly AutoReceiveConfigOptions _autoReceiveConfigOptions;
 
     private const int PageCount = 1000;
 
@@ -33,7 +38,9 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         ITokenRepository tokenRepository,
         IBlockchainAppService blockchainAppService,
         ICheckTransferProvider checkTransferProvider,
-        IEnumerable<ICrossChainTransferProvider> crossChainTransferProviders)
+        IEnumerable<ICrossChainTransferProvider> crossChainTransferProviders,
+        IIndexerAppService indexerAppService, ITokenAppService tokenAppService,
+        IOptionsSnapshot<AutoReceiveConfigOptions> autoReceiveConfigOptions)
     {
         _crossChainTransferRepository = crossChainTransferRepository;
         _chainAppService = chainAppService;
@@ -41,6 +48,9 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         _tokenRepository = tokenRepository;
         _blockchainAppService = blockchainAppService;
         _checkTransferProvider = checkTransferProvider;
+        _indexerAppService = indexerAppService;
+        _tokenAppService = tokenAppService;
+        _autoReceiveConfigOptions = autoReceiveConfigOptions.Value;
         _crossChainTransferProviders = crossChainTransferProviders.ToList();
     }
 
@@ -519,6 +529,11 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
 
                     Logger.LogInformation("Start to auto receive, transferTransactionId:{id}", transfer.TransferTransactionId);
 
+                    if (!await _checkTransferProvider.CheckTokenExistAsync(transfer.FromChainId,transfer.ToChainId,transfer.TransferTokenId))
+                    {
+                        Logger.LogInformation("Token not exist. From chain:{fromChain}, to chain:{toChain}, Id: {transferId}", transfer.FromChainId, transfer.ToChainId, transfer.TransferTransactionId);
+                        continue; 
+                    }
                     // Heterogeneous:check limit.
                     if (transfer.Type == CrossChainType.Heterogeneous &&
                         !await _checkTransferProvider.CheckTransferAsync(
@@ -534,6 +549,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
                     var provider = GetCrossChainTransferProvider(transfer.Type);
                     var txId = await provider.SendReceiveTransactionAsync(transfer);
                     transfer.ReceiveTransactionId = txId;
+                    transfer.ReceiveTransactionAttemptTimes += 1;
                     toUpdate.Add(transfer);
                     Logger.LogDebug(
                         "Send auto receive tx: {txId}, FromChain: {fromChainId}, ToChain: {toChainId}, TransferTransactionId:{id}", 
@@ -556,11 +572,60 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         }
     }
 
+    public async Task CheckReceiveTransactionAsync()
+    {
+        var page = 0;
+        var toUpdate = new List<CrossChainTransfer>();
+        var crossChainTransfers = await GetToCheckReceivedTransactionAsync(page);
+        while (crossChainTransfers.Count != 0)
+        {
+            foreach (var transfer in crossChainTransfers)
+            {
+                Logger.LogInformation("Check if the transaction has been received.TransferTransactionId:{id}", transfer.TransferTransactionId);
+                var crossChainTransferInfo = await _indexerAppService.GetPendingTransactionAsync(transfer.ToChainId, transfer.TransferTransactionId);
+                if (crossChainTransferInfo == null)
+                {
+                    continue;
+                }
+                var receiveToken = await _tokenAppService.GetAsync(new GetTokenInput
+                {
+                    ChainId = crossChainTransferInfo.ToChainId,
+                    Symbol = crossChainTransferInfo.ReceiveTokenSymbol
+                });
+                transfer.ReceiveTokenId = receiveToken.Id;
+                transfer.ReceiveTransactionId = crossChainTransferInfo.ReceiveTransactionId;
+                transfer.ReceiveTime = crossChainTransferInfo.ReceiveTime;
+                transfer.ReceiveAmount = crossChainTransferInfo.ReceiveAmount;
+                transfer.Status = CrossChainStatus.Received;
+                toUpdate.Add(transfer);
+            }
+
+            page++;
+            crossChainTransfers = await GetToCheckReceivedTransactionAsync(page);
+        }
+
+        if (toUpdate.Count > 0)
+        {
+            await _crossChainTransferRepository.UpdateManyAsync(toUpdate);
+        }
+    }
+    
+    private async Task<List<CrossChainTransfer>> GetToCheckReceivedTransactionAsync(int page)
+    {
+        var q = await _crossChainTransferRepository.GetQueryableAsync();
+        var crossChainTransfers = await AsyncExecuter.ToListAsync(q
+            .Where(o => o.Progress == CrossChainServerConsts.FullOfTheProgress && o.Status == CrossChainStatus.Transferred && o.Type == CrossChainType.Homogeneous)
+            .OrderBy(o => o.ProgressUpdateTime)
+            .Skip(PageCount * page)
+            .Take(PageCount));
+        return crossChainTransfers;
+    }
+    
     private async Task<List<CrossChainTransfer>> GetToReceivedAsync(int page)
     {
         var q = await _crossChainTransferRepository.GetQueryableAsync();
         var crossChainTransfers = await AsyncExecuter.ToListAsync(q
-            .Where(o => o.Progress == CrossChainServerConsts.FullOfTheProgress && o.ReceiveTransactionId == null)
+            .Where(o => o.Progress == CrossChainServerConsts.FullOfTheProgress && o.ReceiveTransactionId == null && o.ReceiveTransactionAttemptTimes < _autoReceiveConfigOptions.ReceiveRetryTimes)
             .OrderBy(o => o.ProgressUpdateTime)
             .Skip(PageCount * page)
             .Take(PageCount));

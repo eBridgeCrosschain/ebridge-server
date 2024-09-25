@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
+using AElf.CrossChainServer.CrossChain;
 using GraphQL;
 using GraphQL.Client.Abstractions;
 using Microsoft.Extensions.Logging;
@@ -43,7 +44,54 @@ public class IndexerAppService: CrossChainServerAppService, IIndexerAppService
 
         return data.SyncState.ConfirmedBlockHeight;
     }
+
+    public async Task<CrossChainTransferDto> GetPendingTransactionAsync(string chainId,string transferTransactionId)
+    {
+        var data = await QueryDataAsync<CrossChainTransferDto>(GetCrossChainTransferRequest(chainId, transferTransactionId));
+        if (data != null && !string.IsNullOrWhiteSpace(data.ReceiveTransactionId))
+        {
+            return data;
+        }
+        return null;
+    }
     
+    private GraphQLRequest GetCrossChainTransferRequest(string chainId, string transferTransactionId)
+    {
+        return new GraphQLRequest
+        {
+            Query =
+                @"query($chainId:String,$transferTransactionId:String){
+            homogeneousCrossChainTransferInfo(dto: {chainId:$chainId,transferTransactionId:$transferTransactionId}){
+                    id,
+                    chainId,
+                    blockHash,
+                    blockHeight,
+                    blockTime,
+                    crossChainType,
+                    transferType,
+                    fromChainId,
+                    toChainId,
+                    transferTokenSymbol,
+                    transferAmount,
+                    transferTime,
+                    transferTransactionId,
+                    fromAddress,
+                    toAddress,
+                    receiveTokenSymbol,
+                    receiveAmount,
+                    receiveTime,
+                    receiveTransactionId,
+                    receiptId
+            }
+        }",
+            Variables = new
+            {
+                chainId = chainId,
+                transferTransactionId = transferTransactionId
+            }
+        };
+    }
+
     private async Task<T> QueryDataAsync<T>(GraphQLRequest request)
     {
         var data = await _graphQlClient.SendQueryAsync<T>(request);

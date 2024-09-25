@@ -41,16 +41,9 @@ jobs:
           ]
     permissions:
       contents: read
-    outputs:
-      short_sha: ${{ steps.vars.outputs.short_sha }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set short git commit SHA
-        id: vars
-        run: |
-          calculatedSha=$(git rev-parse --short ${{ github.sha }})
-          echo "short_sha=$calculatedSha" >> "$GITHUB_OUTPUT"
       - name: Download a single artifact
         uses: actions/download-artifact@v4
         with:
@@ -62,7 +55,7 @@ jobs:
         with:
           images: ${{ secrets.REPOSITORY_REGION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.REPOSITORY }}/${{ matrix.servicename }}
           tags: |
-            type=sha
+            type=ref,event=tag
       - # Setting up Docker Buildx with docker-container driver is required
         # at the moment to be able to use a subdirectory with Git context
         name: Set up Docker Buildx
