@@ -574,9 +574,11 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
 
     public async Task CheckReceiveTransactionAsync()
     {
+        Logger.LogInformation("Start to check receive transaction.");
         var page = 0;
         var toUpdate = new List<CrossChainTransfer>();
         var crossChainTransfers = await GetToCheckReceivedTransactionAsync(page);
+        Logger.LogInformation("Check receive transaction. Count:{count}", crossChainTransfers.Count);
         while (crossChainTransfers.Count != 0)
         {
             foreach (var transfer in crossChainTransfers)
