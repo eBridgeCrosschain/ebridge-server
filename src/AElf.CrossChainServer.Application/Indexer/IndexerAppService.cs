@@ -61,7 +61,7 @@ public class IndexerAppService: CrossChainServerAppService, IIndexerAppService
         {
             Query =
                 @"query($chainId:String,$transferTransactionId:String){
-            homogeneousCrossChainTransferInfo(dto: {chainId:$chainId,transferTransactionId:$transferTransactionId}){
+            homogeneousCrossChainTransferInfo(input: {chainId:$chainId,transferTransactionId:$transferTransactionId}){
                     id,
                     chainId,
                     blockHash,

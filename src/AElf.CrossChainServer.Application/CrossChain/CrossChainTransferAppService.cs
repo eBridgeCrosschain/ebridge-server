@@ -549,7 +549,9 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
                     var provider = GetCrossChainTransferProvider(transfer.Type);
                     var txId = await provider.SendReceiveTransactionAsync(transfer);
                     transfer.ReceiveTransactionId = txId;
+                    Logger.LogInformation("Receive times before:{time}", transfer.ReceiveTransactionAttemptTimes);
                     transfer.ReceiveTransactionAttemptTimes += 1;
+                    Logger.LogInformation("Receive times after:{time}", transfer.ReceiveTransactionAttemptTimes);
                     toUpdate.Add(transfer);
                     Logger.LogDebug(
                         "Send auto receive tx: {txId}, FromChain: {fromChainId}, ToChain: {toChainId}, TransferTransactionId:{id}", 
@@ -559,6 +561,8 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
                 {
                     Logger.LogError(ex, "Send auto receive tx failed. FromChain: {fromChainId}, ToChain: {toChainId}, TransferTransactionId:{id}, Error:{message}", transfer.FromChainId, transfer.ToChainId, transfer.TransferTransactionId,
                         ex.Message);
+                    transfer.ReceiveTransactionAttemptTimes += 1;
+                    toUpdate.Add(transfer);
                 }
             }
 
@@ -581,14 +585,17 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         Logger.LogInformation("Check receive transaction. Count:{count}", crossChainTransfers.Count);
         while (crossChainTransfers.Count != 0)
         {
+            Logger.LogInformation("Has transaction to receive.");
             foreach (var transfer in crossChainTransfers)
             {
                 Logger.LogInformation("Check if the transaction has been received.TransferTransactionId:{id}", transfer.TransferTransactionId);
                 var crossChainTransferInfo = await _indexerAppService.GetPendingTransactionAsync(transfer.ToChainId, transfer.TransferTransactionId);
                 if (crossChainTransferInfo == null)
                 {
+                    Logger.LogInformation("Transaction not exist. TransferTransactionId:{id}", transfer.TransferTransactionId);
                     continue;
                 }
+                Logger.LogInformation("Transaction exist. TransferTransactionId:{id}", transfer.TransferTransactionId);
                 var receiveToken = await _tokenAppService.GetAsync(new GetTokenInput
                 {
                     ChainId = crossChainTransferInfo.ToChainId,
