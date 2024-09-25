@@ -616,7 +616,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
     {
         var q = await _crossChainTransferRepository.GetQueryableAsync();
         var crossChainTransfers = await AsyncExecuter.ToListAsync(q
-            .Where(o => o.Progress == CrossChainServerConsts.FullOfTheProgress && o.Status == CrossChainStatus.Transferred && o.Type == CrossChainType.Homogeneous)
+            .Where(o => o.Progress == CrossChainServerConsts.FullOfTheProgress && o.Status == CrossChainStatus.Indexed && o.Type == CrossChainType.Homogeneous)
             .OrderBy(o => o.ProgressUpdateTime)
             .Skip(PageCount * page)
             .Take(PageCount));
