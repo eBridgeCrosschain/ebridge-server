@@ -12,8 +12,8 @@ using Volo.Abp.EntityFrameworkCore;
 namespace AElf.CrossChainServer.Migrations
 {
     [DbContext(typeof(CrossChainServerDbContext))]
-    [Migration("20240620073118_Add_Report_ReceiptInfo")]
-    partial class Add_Report_ReceiptInfo
+    [Migration("20240925041517_Add_Receive_Retry_Times")]
+    partial class Add_Receive_Retry_Times
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -22,69 +22,6 @@ namespace AElf.CrossChainServer.Migrations
                 .HasAnnotation("_Abp_DatabaseProvider", EfCoreDatabaseProvider.MySql)
                 .HasAnnotation("ProductVersion", "6.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
-
-            modelBuilder.Entity("AElf.AElfNode.EventHandler.Core.Domains.Entities.SaveData", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<string>("Data")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
-
-                    b.Property<string>("Key")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AELFSaveData", (string)null);
-                });
-
-            modelBuilder.Entity("AElf.AElfNode.EventHandler.Core.Domains.Entities.TransactionWithLogsInfo", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("BlockHash")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("varchar(128)");
-
-                    b.Property<long>("BlockNumber")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("BlockTime")
-                        .HasMaxLength(16)
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Category")
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("ChainId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsFork")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<long>("SaveTicks")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("TransactionId")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SaveTicks");
-
-                    b.ToTable("AELFTransactionWithLogsInfo", (string)null);
-                });
 
             modelBuilder.Entity("AElf.CrossChainServer.BridgeContract.BridgeContractSyncInfo", b =>
                 {
@@ -191,6 +128,9 @@ namespace AElf.CrossChainServer.Migrations
 
                     b.Property<Guid>("ReceiveTokenId")
                         .HasColumnType("char(36)");
+
+                    b.Property<int>("ReceiveTransactionAttemptTimes")
+                        .HasColumnType("int");
 
                     b.Property<string>("ReceiveTransactionId")
                         .HasColumnType("longtext");

@@ -190,6 +190,9 @@ namespace AElf.CrossChainServer.Migrations
                     b.Property<Guid>("ReceiveTokenId")
                         .HasColumnType("char(36)");
 
+                    b.Property<int>("ReceiveTransactionAttemptTimes")
+                        .HasColumnType("int");
+
                     b.Property<string>("ReceiveTransactionId")
                         .HasColumnType("longtext");
 
