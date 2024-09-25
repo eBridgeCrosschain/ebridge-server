@@ -532,6 +532,8 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
                     if (!await _checkTransferProvider.CheckTokenExistAsync(transfer.FromChainId,transfer.ToChainId,transfer.TransferTokenId))
                     {
                         Logger.LogInformation("Token not exist. From chain:{fromChain}, to chain:{toChain}, Id: {transferId}", transfer.FromChainId, transfer.ToChainId, transfer.TransferTransactionId);
+                        transfer.ReceiveTransactionAttemptTimes += 1;
+                        toUpdate.Add(transfer);
                         continue; 
                     }
                     // Heterogeneous:check limit.
