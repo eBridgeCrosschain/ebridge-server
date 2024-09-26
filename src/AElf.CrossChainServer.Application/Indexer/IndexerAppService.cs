@@ -47,9 +47,11 @@ public class IndexerAppService: CrossChainServerAppService, IIndexerAppService
 
     public async Task<CrossChainTransferDto> GetPendingTransactionAsync(string chainId,string transferTransactionId)
     {
+        Logger.LogInformation("Get pending transaction. chainId: {chainId}, transferTransactionId: {transferTransactionId}",chainId,transferTransactionId);
         var data = await QueryDataAsync<CrossChainTransferDto>(GetCrossChainTransferRequest(chainId, transferTransactionId));
         if (data != null && !string.IsNullOrWhiteSpace(data.ReceiveTransactionId))
         {
+            Logger.LogInformation("Get pending transaction success. chainId: {chainId}, transferTransactionId: {transferTransactionId}",chainId,transferTransactionId);
             return data;
         }
         return null;
