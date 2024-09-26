@@ -11,7 +11,7 @@ public class MockIndexerAppService: CrossChainServerAppService, IIndexerAppServi
         return 100;
     }
 
-    public Task<CrossChainTransferDto> GetPendingTransactionAsync(string chainId, string transferTransactionId)
+    public Task<CrossChainTransferInfoDto> GetPendingTransactionAsync(string chainId, string transferTransactionId)
     {
         throw new System.NotImplementedException();
     }

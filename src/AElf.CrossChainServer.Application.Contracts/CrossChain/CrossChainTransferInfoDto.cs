@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace AElf.CrossChainServer.CrossChain;
 
-public class CrossChainTransferDto : GraphQLDto
+public class CrossChainTransferInfoDto : GraphQLDto
 {
     public string FromChainId { get; set; }
     public string ToChainId { get; set; }

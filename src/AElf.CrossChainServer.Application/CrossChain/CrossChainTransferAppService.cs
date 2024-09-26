@@ -601,7 +601,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
                 Logger.LogInformation("Transaction exist. TransferTransactionId:{id},receiveTransactionId:{receiveId}", transfer.TransferTransactionId, crossChainTransferInfo.ReceiveTransactionId);
                 var receiveToken = await _tokenAppService.GetAsync(new GetTokenInput
                 {
-                    ChainId = crossChainTransferInfo.ToChainId,
+                    ChainId = transfer.ToChainId,
                     Symbol = crossChainTransferInfo.ReceiveTokenSymbol
                 });
                 transfer.ReceiveTokenId = receiveToken.Id;

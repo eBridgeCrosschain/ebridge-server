@@ -46,10 +46,10 @@ public class IndexerAppService: CrossChainServerAppService, IIndexerAppService
         return data.SyncState.ConfirmedBlockHeight;
     }
 
-    public async Task<CrossChainTransferDto> GetPendingTransactionAsync(string chainId,string transferTransactionId)
+    public async Task<CrossChainTransferInfoDto> GetPendingTransactionAsync(string chainId,string transferTransactionId)
     {
         Logger.LogInformation("Get pending transaction. chainId: {chainId}, transferTransactionId: {transferTransactionId}",chainId,transferTransactionId);
-        var data = await QueryDataAsync<CrossChainTransferDto>(GetCrossChainTransferRequest(chainId, transferTransactionId));
+        var data = await QueryDataAsync<GraphQLResponse<CrossChainTransferInfoDto>>(GetRequest(chainId, transferTransactionId));
         if (data == null)
         {
             Logger.LogInformation("Get pending transaction failed. chainId: {chainId}, transferTransactionId: {transferTransactionId}",chainId,transferTransactionId);
@@ -57,16 +57,24 @@ public class IndexerAppService: CrossChainServerAppService, IIndexerAppService
         }
 
         Logger.LogInformation("Get pending transaction success. chainId: {chainId}, transferTransactionId: {transferTransactionId}",chainId,transferTransactionId);
-        return data;
+        return data.Data;
     }
     
-    private GraphQLRequest GetCrossChainTransferRequest(string chainId, string transactionId)
+    private GraphQLRequest GetRequest(string chainId, string transactionId)
     {
         return new GraphQLRequest
         {
             Query =
-                @"query($chainId:String,$transactionId:String){
-            homogeneousCrossChainTransferInfo(input:{chainId:$chainId,transactionId:$transactionId}){
+                @"query(
+                    $chainId:String,
+                    $transactionId:String
+                ) {
+                    data:homogeneousCrossChainTransferInfo(
+                        input: {
+                            chainId:$chainId,
+                            transactionId:$transactionId
+                        }
+                    ){
                     id,
                     chainId,
                     blockHash,

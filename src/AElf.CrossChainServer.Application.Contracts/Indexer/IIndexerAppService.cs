@@ -6,5 +6,5 @@ namespace AElf.CrossChainServer.Indexer;
 public interface IIndexerAppService
 {
     Task<long> GetLatestIndexHeightAsync(string chainId);
-    Task<CrossChainTransferDto> GetPendingTransactionAsync(string chainId,string transferTransactionId);
+    Task<CrossChainTransferInfoDto> GetPendingTransactionAsync(string chainId,string transferTransactionId);
 }
