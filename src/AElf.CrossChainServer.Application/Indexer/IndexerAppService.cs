@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
@@ -49,13 +50,14 @@ public class IndexerAppService: CrossChainServerAppService, IIndexerAppService
     {
         Logger.LogInformation("Get pending transaction. chainId: {chainId}, transferTransactionId: {transferTransactionId}",chainId,transferTransactionId);
         var data = await QueryDataAsync<CrossChainTransferDto>(GetCrossChainTransferRequest(chainId, transferTransactionId));
-        Logger.LogInformation("Query data: {data}",data);
-        if (data != null && !string.IsNullOrWhiteSpace(data.ReceiveTransactionId))
+        if (data == null)
         {
-            Logger.LogInformation("Get pending transaction success. chainId: {chainId}, transferTransactionId: {transferTransactionId}",chainId,transferTransactionId);
-            return data;
+            Logger.LogInformation("Get pending transaction failed. chainId: {chainId}, transferTransactionId: {transferTransactionId}",chainId,transferTransactionId);
+            return null;
         }
-        return null;
+
+        Logger.LogInformation("Get pending transaction success. chainId: {chainId}, transferTransactionId: {transferTransactionId}",chainId,transferTransactionId);
+        return data;
     }
     
     private GraphQLRequest GetCrossChainTransferRequest(string chainId, string transferTransactionId)
@@ -64,7 +66,7 @@ public class IndexerAppService: CrossChainServerAppService, IIndexerAppService
         {
             Query =
                 @"query($chainId:String,$transactionId:String){
-            homogeneousCrossChainTransferInfo(input: {chainId:$chainId,transactionId:$transactionId}){
+            homogeneousCrossChainTransferInfo(input:{chainId:$chainId,transactionId:$transactionId}){
                     id,
                     chainId,
                     blockHash,
@@ -105,7 +107,7 @@ public class IndexerAppService: CrossChainServerAppService, IIndexerAppService
 
         Logger.LogError("Query indexer failed. errors: {Errors}",
             string.Join(",", data.Errors.Select(e => e.Message).ToList()));
-        return default;
+        throw new Exception("Query indexer failed. "); 
     }
 }
 
