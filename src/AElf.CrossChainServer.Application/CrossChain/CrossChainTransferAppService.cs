@@ -591,7 +591,8 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
             foreach (var transfer in crossChainTransfers)
             {
                 Logger.LogInformation("Check if the transaction has been received.TransferTransactionId:{id}", transfer.TransferTransactionId);
-                var crossChainTransferInfo = await _indexerAppService.GetPendingTransactionAsync(transfer.ToChainId, transfer.TransferTransactionId);
+                var chain = await _chainAppService.GetAsync(transfer.ToChainId);
+                var crossChainTransferInfo = await _indexerAppService.GetPendingTransactionAsync(ChainHelper.ConvertChainIdToBase58(chain.AElfChainId), transfer.TransferTransactionId);
                 if (crossChainTransferInfo == null)
                 {
                     Logger.LogInformation("Transaction not exist. TransferTransactionId:{id}", transfer.TransferTransactionId);
