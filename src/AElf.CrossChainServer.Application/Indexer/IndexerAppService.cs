@@ -60,7 +60,7 @@ public class IndexerAppService: CrossChainServerAppService, IIndexerAppService
         return data;
     }
     
-    private GraphQLRequest GetCrossChainTransferRequest(string chainId, string transferTransactionId)
+    private GraphQLRequest GetCrossChainTransferRequest(string chainId, string transactionId)
     {
         return new GraphQLRequest
         {
@@ -92,7 +92,7 @@ public class IndexerAppService: CrossChainServerAppService, IIndexerAppService
             Variables = new
             {
                 chainId = chainId,
-                transactionId = transferTransactionId
+                transactionId = transactionId
             }
         };
     }
