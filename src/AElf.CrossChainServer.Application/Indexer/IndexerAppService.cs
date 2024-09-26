@@ -49,6 +49,7 @@ public class IndexerAppService: CrossChainServerAppService, IIndexerAppService
     {
         Logger.LogInformation("Get pending transaction. chainId: {chainId}, transferTransactionId: {transferTransactionId}",chainId,transferTransactionId);
         var data = await QueryDataAsync<CrossChainTransferDto>(GetCrossChainTransferRequest(chainId, transferTransactionId));
+        Logger.LogInformation("Query data: {data}",data);
         if (data != null && !string.IsNullOrWhiteSpace(data.ReceiveTransactionId))
         {
             Logger.LogInformation("Get pending transaction success. chainId: {chainId}, transferTransactionId: {transferTransactionId}",chainId,transferTransactionId);
@@ -62,8 +63,8 @@ public class IndexerAppService: CrossChainServerAppService, IIndexerAppService
         return new GraphQLRequest
         {
             Query =
-                @"query($chainId:String,$transferTransactionId:String){
-            homogeneousCrossChainTransferInfo(input: {chainId:$chainId,transactionId:$transferTransactionId}){
+                @"query($chainId:String,$transactionId:String){
+            homogeneousCrossChainTransferInfo(input: {chainId:$chainId,transactionId:$transactionId}){
                     id,
                     chainId,
                     blockHash,
@@ -89,7 +90,7 @@ public class IndexerAppService: CrossChainServerAppService, IIndexerAppService
             Variables = new
             {
                 chainId = chainId,
-                transferTransactionId = transferTransactionId
+                transactionId = transferTransactionId
             }
         };
     }
