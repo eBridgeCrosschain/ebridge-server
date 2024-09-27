@@ -50,7 +50,7 @@ public class IndexerAppService: CrossChainServerAppService, IIndexerAppService
     public async Task<CrossChainTransferInfoDto> GetPendingTransactionAsync(string chainId,string transferTransactionId)
     {
         Logger.LogInformation("Get pending transaction. chainId: {chainId}, transferTransactionId: {transferTransactionId}",chainId,transferTransactionId);
-        var data = await QueryDataAsync<GraphQLResponse<CrossChainTransferInfoDto>>(GetRequest(chainId, transferTransactionId));
+        var data = await QueryDataAsync<CrossChainTransferInfoDto>(GetRequest(chainId, transferTransactionId));
         if (data == null)
         {
             Logger.LogInformation("Get pending transaction failed. chainId: {chainId}, transferTransactionId: {transferTransactionId}",chainId,transferTransactionId);
@@ -58,8 +58,8 @@ public class IndexerAppService: CrossChainServerAppService, IIndexerAppService
         }
 
         Logger.LogInformation("Get pending transaction success. chainId: {chainId}, transferTransactionId: {transferTransactionId}",chainId,transferTransactionId);
-        Logger.LogInformation("Get pending transaction success. data: {data}",JsonConvert.SerializeObject(data.Data));
-        return data.Data;
+        Logger.LogInformation("Get pending transaction success. data: {data}",JsonConvert.SerializeObject(data));
+        return data;
     }
     
     private GraphQLRequest GetRequest(string chainId, string transactionId)
