@@ -6,6 +6,7 @@ using AElf.CrossChainServer.CrossChain;
 using GraphQL;
 using GraphQL.Client.Abstractions;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Volo.Abp;
 
 namespace AElf.CrossChainServer.Indexer;
@@ -57,6 +58,7 @@ public class IndexerAppService: CrossChainServerAppService, IIndexerAppService
         }
 
         Logger.LogInformation("Get pending transaction success. chainId: {chainId}, transferTransactionId: {transferTransactionId}",chainId,transferTransactionId);
+        Logger.LogInformation("Get pending transaction success. data: {data}",JsonConvert.SerializeObject(data.Data));
         return data.Data;
     }
     
