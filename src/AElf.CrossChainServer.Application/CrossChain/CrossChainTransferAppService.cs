@@ -598,6 +598,11 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
                     Logger.LogInformation("Transaction not exist. TransferTransactionId:{id}", transfer.TransferTransactionId);
                     continue;
                 }
+                if (crossChainTransferInfo.ReceiveTransactionId == null)
+                {
+                    Logger.LogInformation("Transaction not received. TransferTransactionId:{id}", transfer.TransferTransactionId);
+                    continue;
+                }
                 Logger.LogInformation("Transaction exist. TransferTransactionId:{id},receiveTransactionId:{receiveId}", transfer.TransferTransactionId, crossChainTransferInfo.ReceiveTransactionId);
                 var receiveToken = await _tokenAppService.GetAsync(new GetTokenInput
                 {
