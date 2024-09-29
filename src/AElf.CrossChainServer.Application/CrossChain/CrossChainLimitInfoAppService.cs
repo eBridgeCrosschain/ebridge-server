@@ -175,6 +175,7 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
             new Dictionary<CrossChainLimitKey, Dictionary<string, IndexerCrossChainLimitInfo>>();
         var indexerCrossChainLimitInfos =
             await _indexerCrossChainLimitInfoService.GetAllCrossChainLimitInfoIndexAsync();
+        indexerCrossChainLimitInfos = indexerCrossChainLimitInfos.Where(info => info.FromChainId != "Nile" && info.ToChainId != "Nile").ToList();
         var crossChainLimitInfos = indexerCrossChainLimitInfos
             .OrderBy(item => crossChainLimits.GetChainSortWeight(item.FromChainId, item.ToChainId))
             .ThenBy(item => crossChainLimits.GetTokenSortWeight(item.Symbol))
