@@ -52,6 +52,7 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
         var indexerCrossChainLimitInfos =
             await _indexerCrossChainLimitInfoService.GetAllCrossChainLimitInfoIndexAsync();
         //sort by config fromChainId first.
+        indexerCrossChainLimitInfos = indexerCrossChainLimitInfos.Where(info => info.FromChainId != "Nile" && info.ToChainId != "Nile").ToList();
         var crossChainLimitInfos = indexerCrossChainLimitInfos
             .Where(item => toChainIds.Contains(item.ToChainId))
             .OrderByDescending(item => item.FromChainId == crossChainLimits.ChainIdInfo.TokenFirstChainId)
