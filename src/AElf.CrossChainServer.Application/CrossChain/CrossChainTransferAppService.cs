@@ -452,7 +452,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
                     var txResult =
                         await _blockchainAppService.GetTransactionResultAsync(transfer.ToChainId,
                             transfer.ReceiveTransactionId);
-                    Logger.LogInformation("txResult.TransferTransactionId:{id},is failed:{isFailed}", transfer.TransferTransactionId,
+                    Logger.LogInformation("txResult.TransferTransactionId:{id},receive transaction id:{receiveId},is failed:{isFailed}", transfer.TransferTransactionId, transfer.ReceiveTransactionId,
                         txResult.IsFailed);
 
                     if (txResult.IsFailed)
