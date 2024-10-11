@@ -1,4 +1,5 @@
-﻿using Volo.Abp.Account;
+﻿using AElf.ExceptionHandler;
+using Volo.Abp.Account;
 using Volo.Abp.FeatureManagement;
 using Volo.Abp.Identity;
 using Volo.Abp.Modularity;
@@ -17,7 +18,8 @@ namespace AElf.CrossChainServer;
     typeof(AbpPermissionManagementApplicationContractsModule),
     typeof(AbpSettingManagementApplicationContractsModule),
     typeof(AbpTenantManagementApplicationContractsModule),
-    typeof(AbpObjectExtendingModule)
+    typeof(AbpObjectExtendingModule),
+    typeof(AOPExceptionModule)
 )]
 public class CrossChainServerApplicationContractsModule : AbpModule
 {
