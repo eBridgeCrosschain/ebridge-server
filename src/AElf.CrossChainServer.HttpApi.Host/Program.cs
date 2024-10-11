@@ -17,21 +17,24 @@ public class Program
         var configuration = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json")
             .Build();
-        
         Log.Logger = new LoggerConfiguration()
-#if DEBUG
-            .MinimumLevel.Debug()
-#else
-            .MinimumLevel.Information()
-#endif
-            .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
-            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
-            .Enrich.FromLogContext()
             .ReadFrom.Configuration(configuration)
-#if DEBUG
-            .WriteTo.Async(c => c.Console())
-#endif
+            .Enrich.FromLogContext()
             .CreateLogger();
+//         Log.Logger = new LoggerConfiguration()
+// #if DEBUG
+//             .MinimumLevel.Debug()
+// #else
+//             .MinimumLevel.Information()
+// #endif
+//             .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+//             .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
+//             .Enrich.FromLogContext()
+//             .ReadFrom.Configuration(configuration)
+// #if DEBUG
+//             .WriteTo.Async(c => c.Console())
+// #endif
+//             .CreateLogger();
 
         try
         {

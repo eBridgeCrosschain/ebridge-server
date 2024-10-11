@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AElf.CrossChainServer.ExceptionHandler;
+using AElf.ExceptionHandler;
 using AElf.Indexing.Elasticsearch;
 using Nest;
 using Volo.Abp;
@@ -21,18 +23,11 @@ namespace AElf.CrossChainServer.Chains
             _chainIndexRepository = chainIndexRepository;
         }
 
+        // [ExceptionHandler(typeof(EntityNotFoundException),TargetType = typeof(ExceptionHandlingService),MethodName = nameof(ExceptionHandlingService.HandleException))]
         public async Task<ChainDto> GetAsync(string id)
         {
-            try
-            {
-                var chain = await _chainRepository.GetAsync(id);
-                return ObjectMapper.Map<Chain, ChainDto>(chain);
-            }
-            catch (EntityNotFoundException e)
-            {
-                Console.WriteLine(e);
-                return null;
-            }
+            var chain = await _chainRepository.GetAsync(id);
+            return ObjectMapper.Map<Chain, ChainDto>(chain);
         }
         
         public async Task<ChainDto> GetByNameAsync(string name)

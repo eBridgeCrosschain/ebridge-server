@@ -4,6 +4,7 @@ using AElf.CrossChainServer.Chains;
 using GraphQL;
 using GraphQL.Client.Abstractions;
 using Microsoft.Extensions.Logging;
+using Serilog;
 using Volo.Abp;
 
 namespace AElf.CrossChainServer.Indexer;
@@ -52,7 +53,7 @@ public class IndexerAppService: CrossChainServerAppService, IIndexerAppService
             return data.Data;
         }
 
-        Logger.LogError("Query indexer failed. errors: {Errors}",
+        Log.Error("Query indexer failed. errors: {Errors}",
             string.Join(",", data.Errors.Select(e => e.Message).ToList()));
         return default;
     }

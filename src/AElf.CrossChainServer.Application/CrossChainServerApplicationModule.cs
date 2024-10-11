@@ -7,6 +7,7 @@ using AElf.CrossChainServer.Contracts.Token;
 using AElf.CrossChainServer.CrossChain;
 using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.Tokens;
+using AElf.ExceptionHandler;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Account;
 using Volo.Abp.AutoMapper;
@@ -27,7 +28,8 @@ namespace AElf.CrossChainServer;
     typeof(AbpPermissionManagementApplicationModule),
     typeof(AbpTenantManagementApplicationModule),
     typeof(AbpFeatureManagementApplicationModule),
-    typeof(AbpSettingManagementApplicationModule)
+    typeof(AbpSettingManagementApplicationModule),
+    typeof(AOPExceptionModule)
 )]
 public class CrossChainServerApplicationModule : AbpModule
 {

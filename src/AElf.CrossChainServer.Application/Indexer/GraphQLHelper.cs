@@ -2,7 +2,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using GraphQL;
 using GraphQL.Client.Abstractions;
-using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace AElf.CrossChainServer.Indexer;
 
@@ -16,12 +16,10 @@ public class GraphQLHelper : IGraphQLHelper
     public const int PageCount = 1000;
 
     private readonly IGraphQLClient _graphQLClient;
-    private readonly ILogger _logger;
 
-    public GraphQLHelper(IGraphQLClient graphQLClient, ILogger logger)
+    public GraphQLHelper(IGraphQLClient graphQLClient)
     {
         _graphQLClient = graphQLClient;
-        _logger = logger;
     }
 
     public async Task<T> QueryAsync<T>(GraphQLRequest request)
@@ -32,8 +30,9 @@ public class GraphQLHelper : IGraphQLHelper
             return graphQlResponse.Data;
         }
 
-        _logger.LogError("query graphQL err, errors = {Errors}",
+        Log.Error("query graphQL err, errors = {Errors}",
             string.Join(",", graphQlResponse.Errors.Select(e => e.Message).ToList()));
+       
         return default;
     }
 }

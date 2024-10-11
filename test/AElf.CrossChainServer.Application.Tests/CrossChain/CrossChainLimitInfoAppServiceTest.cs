@@ -31,7 +31,6 @@ public class CrossChainLimitInfoAppServiceTest
 
     public CrossChainLimitInfoAppServiceTest()
     {
-        _mockLogger = Substitute.For<ILogger<CrossChainLimitInfoAppService>>();
         _mockObjectMapper = Substitute.For<IObjectMapper>();
         _mockIndexerCrossChainLimitInfoService = Substitute.For<IIndexerCrossChainLimitInfoService>();
         _mockBridgeContractAppService = Substitute.For<IBridgeContractAppService>();
@@ -42,7 +41,6 @@ public class CrossChainLimitInfoAppServiceTest
         _mockTokenSymbolMappingProvider = Substitute.For<ITokenSymbolMappingProvider>();
 
         _service = new CrossChainLimitInfoAppService(
-            _mockLogger,
             _mockIndexerCrossChainLimitInfoService,
             _mockBridgeContractAppService,
             _mockEvmTokensOptions,

@@ -8,6 +8,7 @@ using GraphQL;
 using GraphQL.Client.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Serilog;
 using Serilog.Core;
 using Volo.Abp.Json;
 
@@ -16,7 +17,6 @@ namespace AElf.CrossChainServer.Worker.IndexerSync;
 public class CrossChainIndexingInfoIndexerSyncProvider : IndexerSyncProviderBase
 {
     private readonly ICrossChainIndexingInfoAppService _crossChainIndexingInfoAppService;
-    public ILogger<CrossChainIndexingInfoIndexerSyncProvider> Logger { get; set; }
 
 
     public CrossChainIndexingInfoIndexerSyncProvider(IGraphQLClientFactory graphQlClientFactory,
@@ -26,14 +26,13 @@ public class CrossChainIndexingInfoIndexerSyncProvider : IndexerSyncProviderBase
         graphQlClientFactory, settingManager, jsonSerializer, indexerAppService, chainAppService)
     {
         _crossChainIndexingInfoAppService = crossChainIndexingInfoAppService;
-        Logger = NullLogger<CrossChainIndexingInfoIndexerSyncProvider>.Instance;
     }
 
     protected override string SyncType { get; } = CrossChainServerSettings.CrossChainIndexingIndexerSync;
 
     protected override async Task<long> HandleDataAsync(string aelfChainId, long startHeight, long endHeight)
     {
-        Logger.LogDebug("Start to sync cross chain indexing info {ChainId} from {StartHeight} to {EndHeight}",
+        Log.ForContext("chainId", aelfChainId).Information("Start to sync cross chain indexing info {ChainId} from {StartHeight} to {EndHeight}",
             aelfChainId, startHeight, endHeight);
         var data = await QueryDataAsync<CrossChainIndexingInfoResponse>(GetRequest(aelfChainId, startHeight,
             endHeight));
@@ -52,7 +51,7 @@ public class CrossChainIndexingInfoIndexerSyncProvider : IndexerSyncProviderBase
 
     private async Task HandleDataAsync(CrossChainIndexingInfoDto data)
     {
-        Logger.LogDebug(
+        Log.ForContext("chainId", data.ChainId).Information(
             "Start to handler cross chain indexing info {ChainId},index chain id:{indexChainId},index height:{indexHeight}",
             data.ChainId, data.IndexChainId, data.IndexBlockHeight);
         var chain = await ChainAppService.GetByAElfChainIdAsync(ChainHelper.ConvertBase58ToChainId(data.ChainId));

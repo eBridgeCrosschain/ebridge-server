@@ -1,7 +1,10 @@
 using System;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
+using AElf.CrossChainServer.ExceptionHandler;
+using AElf.ExceptionHandler;
 using Microsoft.Extensions.Logging;
+using Serilog;
 using Volo.Abp;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
@@ -37,9 +40,10 @@ namespace AElf.CrossChainServer.Tokens
                 var tokenDto = await _blockchainAppService.GetTokenInfoAsync(input.ChainId, input.Address, input.Symbol);
                 if (tokenDto == null)
                 {
-                    Logger.LogWarning(
+                    Log.ForContext("chainId", input.ChainId).Warning(
                         "Cannot get token! chain: {chainId}, address: {address}, symbol: {symbol}.", input.ChainId,
                         input.Address ?? string.Empty, input.Symbol ?? string.Empty);
+                   
                     throw new EntityNotFoundException("Token not exist.");
                 }
 

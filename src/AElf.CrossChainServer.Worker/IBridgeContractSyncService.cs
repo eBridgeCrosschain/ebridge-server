@@ -6,6 +6,7 @@ using AElf.CrossChainServer.Tokens;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Serilog;
 using Volo.Abp.DependencyInjection;
 
 namespace AElf.CrossChainServer.Worker;
@@ -21,8 +22,6 @@ public class BridgeContractSyncService : IBridgeContractSyncService, ITransientD
     private readonly ITokenAppService _tokenAppService;
     private readonly IEnumerable<IBridgeContractSyncProvider> _bridgeContractSyncProviders;
     
-    public ILogger<BridgeContractSyncService> Logger { get; set; }
-
     public BridgeContractSyncService(IOptionsSnapshot<BridgeContractSyncOptions> bridgeContractSyncOptions,
         ITokenAppService tokenAppService, IEnumerable<IBridgeContractSyncProvider> bridgeContractSyncProviders)
     {
@@ -30,7 +29,6 @@ public class BridgeContractSyncService : IBridgeContractSyncService, ITransientD
         _tokenAppService = tokenAppService;
         _bridgeContractSyncProviders = bridgeContractSyncProviders.ToList();
         
-        Logger = NullLogger<BridgeContractSyncService>.Instance;
     }
     
     public async Task ExecuteAsync()
@@ -61,9 +59,9 @@ public class BridgeContractSyncService : IBridgeContractSyncService, ITransientD
                     await provider.SyncAsync(chainId, tokenIds, targetChainIds);
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Logger.LogError(e,"Bridge contract sync failed, ChainId: {key}, Message: {message}", key, e.Message);
+                Log.ForContext("chainId",key).Error(ex,"Bridge contract sync failed.");
             }
         }
     }

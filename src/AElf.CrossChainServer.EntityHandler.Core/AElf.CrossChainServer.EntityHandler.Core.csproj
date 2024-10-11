@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>
@@ -9,9 +9,9 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Volo.Abp.Core" Version="5.3.0" />
-      <PackageReference Include="Volo.Abp.Ddd.Domain" Version="5.3.0" />
-      <PackageReference Include="Volo.Abp.ObjectMapping" Version="5.3.0" />
+      <PackageReference Include="Volo.Abp.Core" Version="8.2.0" />
+      <PackageReference Include="Volo.Abp.Ddd.Domain" Version="8.2.0" />
+      <PackageReference Include="Volo.Abp.ObjectMapping" Version="8.2.0" />
     </ItemGroup>
 
 </Project>
