@@ -3,7 +3,7 @@ name: Test with code coverage
 on:
   push:
     branches:
-      - '**'
+      - 'release/*'
 
 env:
   DOTNET_INSTALL_DIR: "./.dotnet"
