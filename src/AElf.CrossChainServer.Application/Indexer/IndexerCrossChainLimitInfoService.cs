@@ -34,7 +34,7 @@ public class IndexerCrossChainLimitInfoService : CrossChainServerAppService, IIn
         do
         {
             Log.ForContext("toChainId", toChainId)
-                .Information(
+                .Debug(
                     "To get cross chain limit infos skipCount:{skipCount} toChainId:{toChainId} symbol:{symbol}",
                     skipCount, toChainId, symbol);
 

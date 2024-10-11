@@ -32,7 +32,7 @@ public class CrossChainIndexingInfoIndexerSyncProvider : IndexerSyncProviderBase
 
     protected override async Task<long> HandleDataAsync(string aelfChainId, long startHeight, long endHeight)
     {
-        Log.ForContext("chainId", aelfChainId).Information("Start to sync cross chain indexing info {ChainId} from {StartHeight} to {EndHeight}",
+        Log.ForContext("chainId", aelfChainId).Debug("Start to sync cross chain indexing info {ChainId} from {StartHeight} to {EndHeight}",
             aelfChainId, startHeight, endHeight);
         var data = await QueryDataAsync<CrossChainIndexingInfoResponse>(GetRequest(aelfChainId, startHeight,
             endHeight));
@@ -51,7 +51,7 @@ public class CrossChainIndexingInfoIndexerSyncProvider : IndexerSyncProviderBase
 
     private async Task HandleDataAsync(CrossChainIndexingInfoDto data)
     {
-        Log.ForContext("chainId", data.ChainId).Information(
+        Log.ForContext("chainId", data.ChainId).Debug(
             "Start to handler cross chain indexing info {ChainId},index chain id:{indexChainId},index height:{indexHeight}",
             data.ChainId, data.IndexChainId, data.IndexBlockHeight);
         var chain = await ChainAppService.GetByAElfChainIdAsync(ChainHelper.ConvertBase58ToChainId(data.ChainId));

@@ -1,10 +1,14 @@
+using System;
 using System.Numerics;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Contracts;
+using AElf.CrossChainServer.ExceptionHandler;
 using AElf.CrossChainServer.Tokens;
+using AElf.ExceptionHandler;
 using Nethereum.Util;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.Domain.Entities;
 
 namespace AElf.CrossChainServer.CrossChain;
 
@@ -56,6 +60,9 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
         return await _reportInfoAppService.CalculateCrossChainProgressAsync(transfer.FromChainId, transfer.ReceiptId);
     }
 
+    [ExceptionHandler(typeof(Exception),Message = "SendReceiveTransaction failed.",
+        TargetType = typeof(ExceptionHandlingService),
+        MethodName = nameof(ExceptionHandlingService.HandleException))]
     public async Task<string> SendReceiveTransactionAsync(CrossChainTransfer transfer)
     {
         var transferToken = await _tokenRepository.GetAsync(transfer.TransferTokenId);

@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
+using AElf.CrossChainServer.ExceptionHandler;
+using AElf.ExceptionHandler;
 using Volo.Abp.DependencyInjection;
 
 namespace AElf.CrossChainServer.Contracts.Bridge;
@@ -18,6 +21,9 @@ public class BridgeContractProviderFactory : IBridgeContractProviderFactory, ITr
         _chainAppService = chainAppService;
     }
 
+    [ExceptionHandler(typeof(Exception), Message = "Get bridge contract provider failed.",
+        TargetType = typeof(ExceptionHandlingService),
+        MethodName = nameof(ExceptionHandlingService.HandleException))]
     public async Task<IBridgeContractProvider> GetBridgeContractProviderAsync(string chainId)
     {
         var chain = await _chainAppService.GetAsync(chainId);

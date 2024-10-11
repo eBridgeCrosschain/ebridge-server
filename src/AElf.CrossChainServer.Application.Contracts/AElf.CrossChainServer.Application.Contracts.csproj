@@ -26,4 +26,10 @@
     <PackageReference Include="GraphQL.Client" Version="5.1.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="AElf.ExceptionHandler">
+      <HintPath>..\..\..\..\.nuget\packages\aelf.exceptionhandler\1.3.0\lib\net8.0\AElf.ExceptionHandler.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

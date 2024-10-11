@@ -17,22 +17,25 @@ namespace AElf.CrossChainServer.Chains
         private readonly IChainRepository _chainRepository;
         private readonly INESTRepository<ChainIndex, string> _chainIndexRepository;
 
-        public ChainAppService(IChainRepository chainRepository, INESTRepository<ChainIndex, string> chainIndexRepository)
+        public ChainAppService(IChainRepository chainRepository,
+            INESTRepository<ChainIndex, string> chainIndexRepository)
         {
             _chainRepository = chainRepository;
             _chainIndexRepository = chainIndexRepository;
         }
 
-        // [ExceptionHandler(typeof(EntityNotFoundException),TargetType = typeof(ExceptionHandlingService),MethodName = nameof(ExceptionHandlingService.HandleException))]
+        [ExceptionHandler(typeof(Exception), typeof(EntityNotFoundException),Message = "Chain not found.",
+            TargetType = typeof(ExceptionHandlingService),
+            MethodName = nameof(ExceptionHandlingService.HandleException))]
         public async Task<ChainDto> GetAsync(string id)
         {
             var chain = await _chainRepository.GetAsync(id);
             return ObjectMapper.Map<Chain, ChainDto>(chain);
         }
-        
+
         public async Task<ChainDto> GetByNameAsync(string name)
         {
-            var chain = await _chainRepository.FindAsync(o=>o.Name == name);
+            var chain = await _chainRepository.FindAsync(o => o.Name == name);
             return ObjectMapper.Map<Chain, ChainDto>(chain);
         }
 

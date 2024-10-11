@@ -35,7 +35,7 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
 
     protected override async Task<long> HandleDataAsync(string aelfChainId, long startHeight, long endHeight)
     {
-        Log.ForContext("chainId", aelfChainId).Information("Start to sync cross chain transfer info {chainId} from {StartHeight} to {EndHeight}",
+        Log.ForContext("chainId", aelfChainId).Debug("Start to sync cross chain transfer info {chainId} from {StartHeight} to {EndHeight}",
             aelfChainId, startHeight, endHeight);
         var data = await QueryDataAsync<CrossChainTransferInfoDto>(GetRequest(aelfChainId, startHeight, endHeight));
         if (data == null || data.CrossChainTransferInfo.Count == 0)
@@ -45,7 +45,7 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
 
         foreach (var crossChainTransfer in data.CrossChainTransferInfo)
         {
-            Log.ForContext("chainId", crossChainTransfer.ChainId).Information(
+            Log.ForContext("chainId", crossChainTransfer.ChainId).Debug(
                 "Start to handle cross chain transfer info {ChainId},token {symbol}, transfer type:{transferType},cross chain type:{crossChainType}",
                 crossChainTransfer.ChainId, crossChainTransfer.TransferTokenSymbol,
                 crossChainTransfer.TransferType == TransferType.Transfer ? "Transfer" : "Receive",

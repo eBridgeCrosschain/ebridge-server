@@ -1,13 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 using AElf.Client.Dto;
 using AElf.Client.Service;
 using AElf.Contracts.Bridge;
 using AElf.CrossChainServer.Chains;
+using AElf.CrossChainServer.ExceptionHandler;
+using AElf.ExceptionHandler;
 using AElf.Types;
 using Google.Protobuf;
 using Microsoft.Extensions.Options;
+using Volo.Abp.Domain.Entities;
 
 namespace AElf.CrossChainServer.Contracts.Bridge;
 
@@ -68,6 +72,9 @@ public class AElfBridgeContractProvider: AElfClientProvider, IBridgeContractProv
         return swapId.ToHex();
     }
 
+    [ExceptionHandler(typeof(Exception), typeof(InvalidOperationException),typeof(WebException),Message = "swap token failed.",
+        TargetType = typeof(ExceptionHandlingService),
+        MethodName = nameof(ExceptionHandlingService.ThrowException))]
     public async Task<string> SwapTokenAsync(string chainId, string contractAddress, string privateKey, string swapId, string receiptId, string originAmount,
         string receiverAddress)
     {

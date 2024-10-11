@@ -39,7 +39,7 @@ public class CheckTransferProvider : ICheckTransferProvider
         decimal transferAmount)
     {
         var (amount,symbol) = await GetTokenInfoAsync(fromChainId, toChainId, tokenId, transferAmount);
-        Log.ForContext("fromChainId", fromChainId).ForContext("toChainId", toChainId).Information(
+        Log.ForContext("fromChainId", fromChainId).ForContext("toChainId", toChainId).Debug(
             "Start to check limit. From chain:{fromChainId}, to chain:{toChainId}, token symbol:{symbol}, transfer amount:{amount}",
             fromChainId, toChainId, symbol, amount);
         var chain = await _chainAppService.GetAsync(toChainId);
@@ -60,7 +60,7 @@ public class CheckTransferProvider : ICheckTransferProvider
         var time = DateTime.UtcNow;
         if (time.Subtract(limitInfo.RefreshTime).TotalSeconds >= CrossChainServerConsts.DefaultDailyLimitRefreshTime)
         {
-            Log.Information("Daily limit refresh.");
+            Log.Debug("Daily limit refresh.");
             limitInfo.CurrentDailyLimit = limitInfo.DefaultDailyLimit;
         }
         if (limitInfo.Capacity == 0)

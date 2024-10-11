@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using AElf.CrossChainServer.BridgeContract;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Contracts;
+using AElf.CrossChainServer.ExceptionHandler;
+using AElf.ExceptionHandler;
 using Volo.Abp.Uow;
 
 namespace AElf.CrossChainServer.Worker;
@@ -58,6 +60,9 @@ public abstract class BridgeContractSyncProviderBase : IBridgeContractSyncProvid
             fromIndex + result.Count - 1);
     }
 
+    [ExceptionHandler(typeof(Exception),Message = "Get confirmed height failed.",
+        TargetType = typeof(ExceptionHandlingService),
+        MethodName = nameof(ExceptionHandlingService.ThrowException))]    
     protected async Task<long> GetConfirmedHeightAsync(string chainId)
     {
         var chainStatus = await BlockchainAppService.GetChainStatusAsync(chainId);

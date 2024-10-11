@@ -118,7 +118,6 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
     public async Task UpdateStepAsync()
     {
         var q = await _reportInfoRepository.GetQueryableAsync();
-        Log.Information("Report query times: {queryTimes}", _reportQueryTimesOptions.QueryTimes);
         var list = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Step == ReportStep.Confirmed && o.QueryTimes < _reportQueryTimesOptions.QueryTimes));
 
@@ -162,7 +161,6 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
     public async Task ReSendQueryAsync()
     {
         var q = await _reportInfoRepository.GetQueryableAsync();
-        Log.Information("Max report resend times:{time}",_crossChainOptions.MaxReportResendTimes);
         var list = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Step == ReportStep.Proposed && o.ResendTimes < _crossChainOptions.MaxReportResendTimes));
 

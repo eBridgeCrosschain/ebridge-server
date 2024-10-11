@@ -2,7 +2,9 @@ using System;
 using System.Threading.Tasks;
 using AElf.Client.Dto;
 using AElf.Client.Service;
+using AElf.CrossChainServer.ExceptionHandler;
 using AElf.CrossChainServer.Tokens;
+using AElf.ExceptionHandler;
 using AElf.Types;
 using Google.Protobuf;
 using Microsoft.Extensions.Options;
@@ -48,6 +50,9 @@ namespace AElf.CrossChainServer.Chains
             };
         }
 
+        [ExceptionHandler(typeof(Exception),Message = "Get block height failed.",
+            TargetType = typeof(ExceptionHandlingService),
+            MethodName = nameof(ExceptionHandlingService.ThrowException))]
         public async Task<BlockDto> GetBlockByHeightAsync(string chainId, long height, bool includeTransactions = false)
         {
             var client = BlockchainClientFactory.GetClient(chainId);
@@ -76,6 +81,9 @@ namespace AElf.CrossChainServer.Chains
             throw new NotImplementedException();
         }
 
+        [ExceptionHandler(typeof(Exception),Message = "Get chain status failed.",
+            TargetType = typeof(ExceptionHandlingService),
+            MethodName = nameof(ExceptionHandlingService.ThrowException))]
         public async Task<ChainStatusDto> GetChainStatusAsync(string chainId)
         {
             var client = BlockchainClientFactory.GetClient(chainId);
@@ -88,6 +96,9 @@ namespace AElf.CrossChainServer.Chains
             };
         }
 
+        [ExceptionHandler(typeof(Exception),Message = "Get transaction result failed.",
+            TargetType = typeof(ExceptionHandlingService),
+            MethodName = nameof(ExceptionHandlingService.ThrowException))]
         public async Task<TransactionResultDto> GetTransactionResultAsync(string chainId, string transactionId)
         {
             var client = BlockchainClientFactory.GetClient(chainId);

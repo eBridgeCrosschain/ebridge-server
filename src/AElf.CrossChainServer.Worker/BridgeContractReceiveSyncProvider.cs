@@ -4,6 +4,9 @@ using System.Threading.Tasks;
 using AElf.CrossChainServer.BridgeContract;
 using AElf.CrossChainServer.Contracts;
 using AElf.CrossChainServer.CrossChain;
+using AElf.CrossChainServer.ExceptionHandler;
+using AElf.ExceptionHandler;
+using Volo.Abp.Domain.Entities;
 
 namespace AElf.CrossChainServer.Worker;
 
@@ -24,6 +27,9 @@ public class BridgeContractReceiveSyncProvider :BridgeContractSyncProviderBase
         return await BridgeContractAppService.GetReceiveReceiptIndexAsync(chainId, tokenIds, targetChainIds);
     }
 
+    [ExceptionHandler(typeof(Exception), typeof(EntityNotFoundException),Message = "Handle receipt failed.",
+        TargetType = typeof(ExceptionHandlingService),
+        MethodName = nameof(ExceptionHandlingService.ThrowException))]
     protected override async Task<HandleReceiptResult> HandleReceiptAsync(string chainId, string targetChainId, Guid tokenId, long fromIndex, long endIndex)
     {
         var result = new HandleReceiptResult();

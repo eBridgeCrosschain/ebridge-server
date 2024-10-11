@@ -4,7 +4,9 @@ using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
+using AElf.CrossChainServer.ExceptionHandler;
 using AElf.CrossChainServer.Tokens;
+using AElf.ExceptionHandler;
 using Nethereum.Util;
 using Nethereum.Web3;
 
@@ -57,7 +59,9 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
 
         return result;
     }
-
+    [ExceptionHandler(typeof(Exception),Message = "Get receive receipt from evm failed.",
+        TargetType = typeof(ExceptionHandlingService),
+        MethodName = nameof(ExceptionHandlingService.ThrowException))]
     public async Task<List<ReceivedReceiptInfoDto>> GetReceivedReceiptInfosAsync(string chainId, string contractAddress,
         string fromChainId, Guid tokenId,
         long fromIndex, long endIndex)
@@ -95,6 +99,9 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
         return result;
     }
 
+    [ExceptionHandler(typeof(Exception),Message = "Get transfer receipt from evm failed.",
+        TargetType = typeof(ExceptionHandlingService),
+        MethodName = nameof(ExceptionHandlingService.ThrowException))]
     public async Task<List<ReceiptIndexDto>> GetTransferReceiptIndexAsync(string chainId, string contractAddress,
         List<Guid> tokenIds, List<string> targetChainIds)
     {
@@ -179,6 +186,9 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
         throw new NotImplementedException();
     }
 
+    [ExceptionHandler(typeof(Exception),Message = "Get current receipt token bucket from evm failed.",
+        TargetType = typeof(ExceptionHandlingService),
+        MethodName = nameof(ExceptionHandlingService.ThrowException))]
     public async Task<List<TokenBucketDto>> GetCurrentReceiptTokenBucketStatesAsync(string chainId,
         string contractAddress, List<Guid> tokenIds,
         List<string> targetChainIds)
@@ -205,7 +215,10 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
             GetTokenBuckets(t.TokenCapacity, t.Rate, tokenDecimals[i])).ToList();
         return tokenBuckets;
     }
-
+    
+    [ExceptionHandler(typeof(Exception),Message = "Get current swap token bucket from evm failed.",
+        TargetType = typeof(ExceptionHandlingService),
+        MethodName = nameof(ExceptionHandlingService.ThrowException))]
     public async Task<List<TokenBucketDto>> GetCurrentSwapTokenBucketStatesAsync(string chainId, string contractAddress,
         List<Guid> tokenIds, List<string> fromChainIds)
     {
