@@ -9,4 +9,9 @@ public class MockCheckTransferProvider : ICheckTransferProvider
     {
         return true;
     }
+
+    public async Task<bool> CheckTokenExistAsync(string fromChainId, string toChainId, Guid tokenId)
+    {
+        return true;
+    }
 }

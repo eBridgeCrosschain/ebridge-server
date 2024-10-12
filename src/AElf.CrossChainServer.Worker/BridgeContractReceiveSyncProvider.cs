@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using AElf.CrossChainServer.BridgeContract;
 using AElf.CrossChainServer.Contracts;
 using AElf.CrossChainServer.CrossChain;
+using TransferType = AElf.CrossChainServer.BridgeContract.TransferType;
 
 namespace AElf.CrossChainServer.Worker;
 

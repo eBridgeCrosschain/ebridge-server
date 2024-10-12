@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AElf.Indexing.Elasticsearch;
+using Microsoft.Extensions.Logging;
 using Nest;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
@@ -30,7 +31,7 @@ namespace AElf.CrossChainServer.Chains
             }
             catch (EntityNotFoundException e)
             {
-                Console.WriteLine(e);
+                Logger.LogError("Chain not exist.message:{message}",e.Message);
                 return null;
             }
         }
