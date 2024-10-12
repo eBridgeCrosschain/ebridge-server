@@ -14,4 +14,5 @@ public interface ICrossChainTransferAppService
     Task UpdateIndexAsync(UpdateCrossChainTransferIndexInput input);
     Task UpdateReceiveTransactionAsync();
     Task AutoReceiveAsync();
+    Task CheckReceiveTransactionAsync();
 }

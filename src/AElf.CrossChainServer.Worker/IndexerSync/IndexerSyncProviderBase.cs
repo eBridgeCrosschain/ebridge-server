@@ -23,7 +23,7 @@ public abstract class IndexerSyncProviderBase : IIndexerSyncProvider, ITransient
 
     public ILogger<IndexerSyncProviderBase> Logger { get; set; }
 
-    private const int MaxRequestCount = 1000;
+    protected const int MaxRequestCount = 1000;
 
     protected IndexerSyncProviderBase(IGraphQLClientFactory graphQlClientFactory, ISettingManager settingManager,
         IJsonSerializer jsonSerializer, IIndexerAppService indexerAppService, IChainAppService chainAppService)

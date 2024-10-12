@@ -71,8 +71,8 @@ public class ReportInfoIndexerSyncProvider : IndexerSyncProviderBase
         return new GraphQLRequest
         {
             Query =
-                @"query($chainId:String,$startBlockHeight:Long!,$endBlockHeight:Long!){
-            reportInfo(dto: {chainId:$chainId,startBlockHeight:$startBlockHeight,endBlockHeight:$endBlockHeight}){
+                @"query($chainId:String,$startBlockHeight:Long!,$endBlockHeight:Long!,$maxMaxResultCount:Int!){
+            reportInfo(input: {chainId:$chainId,startBlockHeight:$startBlockHeight,endBlockHeight:$endBlockHeight,maxMaxResultCount:$maxMaxResultCount}){
                     id,
                     chainId,
                     blockHash,
@@ -91,7 +91,8 @@ public class ReportInfoIndexerSyncProvider : IndexerSyncProviderBase
             {
                 chainId = chainId,
                 startBlockHeight = startHeight,
-                endBlockHeight = endHeight
+                endBlockHeight = endHeight,
+                maxMaxResultCount = MaxRequestCount
             }
         };
     }

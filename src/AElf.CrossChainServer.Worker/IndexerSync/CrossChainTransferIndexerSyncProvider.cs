@@ -149,8 +149,8 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
         return new GraphQLRequest
         {
             Query =
-                @"query($chainId:String,$startBlockHeight:Long!,$endBlockHeight:Long!){
-            crossChainTransferInfo(dto: {chainId:$chainId,startBlockHeight:$startBlockHeight,endBlockHeight:$endBlockHeight}){
+                @"query($chainId:String,$startBlockHeight:Long!,$endBlockHeight:Long!,$maxMaxResultCount:Int!){
+            crossChainTransferInfo(input: {chainId:$chainId,startBlockHeight:$startBlockHeight,endBlockHeight:$endBlockHeight,maxMaxResultCount:$maxMaxResultCount}){
                     id,
                     chainId,
                     blockHash,
@@ -177,7 +177,8 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
             {
                 chainId = chainId,
                 startBlockHeight = startHeight,
-                endBlockHeight = endHeight
+                endBlockHeight = endHeight,
+                maxMaxResultCount = MaxRequestCount
             }
         };
     }
