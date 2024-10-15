@@ -12,7 +12,7 @@ using GetTokenInfoInput = AElf.Client.MultiToken.GetTokenInfoInput;
 
 namespace AElf.CrossChainServer.Chains
 {
-    public class AElfClientProvider : IBlockchainClientProvider
+    public partial class AElfClientProvider : IBlockchainClientProvider
     {
         protected readonly IBlockchainClientFactory<AElfClient> BlockchainClientFactory;
         private readonly AccountOptions _accountOptions;
@@ -96,9 +96,9 @@ namespace AElf.CrossChainServer.Chains
             };
         }
 
-        [ExceptionHandler(typeof(Exception),Message = "Get transaction result failed.",
-            TargetType = typeof(ExceptionHandlingService),
-            MethodName = nameof(ExceptionHandlingService.ThrowException))]
+        [ExceptionHandler(typeof(Exception),
+            TargetType = typeof(AElfClientProvider),
+            MethodName = nameof(HandleGetTransactionResultException))]
         public async Task<TransactionResultDto> GetTransactionResultAsync(string chainId, string transactionId)
         {
             var client = BlockchainClientFactory.GetClient(chainId);

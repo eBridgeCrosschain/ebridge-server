@@ -35,9 +35,7 @@ namespace AElf.CrossChainServer.Chains
                 Symbol = await contractHandler.QueryAsync<SymbolFunction, string>()
             };
         }
-        [ExceptionHandler(typeof(Exception),Message = "Get evm block height failed.",
-            TargetType = typeof(ExceptionHandlingService),
-            MethodName = nameof(ExceptionHandlingService.ThrowException))]
+
         public Task<BlockDto> GetBlockByHeightAsync(string chainId, long height, bool includeTransactions = false)
         {
             throw new NotImplementedException();

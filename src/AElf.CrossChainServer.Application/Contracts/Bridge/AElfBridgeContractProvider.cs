@@ -11,6 +11,7 @@ using AElf.ExceptionHandler;
 using AElf.Types;
 using Google.Protobuf;
 using Microsoft.Extensions.Options;
+using Serilog;
 using Volo.Abp.Domain.Entities;
 
 namespace AElf.CrossChainServer.Contracts.Bridge;
@@ -72,9 +73,9 @@ public class AElfBridgeContractProvider: AElfClientProvider, IBridgeContractProv
         return swapId.ToHex();
     }
 
-    [ExceptionHandler(typeof(Exception), typeof(InvalidOperationException),typeof(WebException),Message = "swap token failed.",
-        TargetType = typeof(ExceptionHandlingService),
-        MethodName = nameof(ExceptionHandlingService.ThrowException))]
+    [ExceptionHandler(typeof(Exception), typeof(InvalidOperationException),typeof(WebException),
+        TargetType = typeof(AElfBridgeContractProvider),
+        MethodName = nameof(HandleSwapTokenException))]
     public async Task<string> SwapTokenAsync(string chainId, string contractAddress, string privateKey, string swapId, string receiptId, string originAmount,
         string receiverAddress)
     {
@@ -108,5 +109,16 @@ public class AElfBridgeContractProvider: AElfClientProvider, IBridgeContractProv
     public Task<List<TokenBucketDto>> GetCurrentSwapTokenBucketStatesAsync(string chainId, string contractAddress, List<Guid> tokenIds, List<string> fromChainIds)
     {
         throw new NotImplementedException();
+    }
+
+    private static async Task<FlowBehavior> HandleSwapTokenException(Exception ex,string chainId, string contractAddress, string privateKey, string swapId, string receiptId, string originAmount,
+        string receiverAddress)
+    {
+        Log.ForContext("chainId",chainId).Error(ex,$"swap token failed.{chainId},{contractAddress},{swapId}",chainId,contractAddress,swapId);
+        return new FlowBehavior
+        {
+            ExceptionHandlingStrategy = ExceptionHandlingStrategy.Throw,
+            ReturnValue = null
+        };
     }
 }

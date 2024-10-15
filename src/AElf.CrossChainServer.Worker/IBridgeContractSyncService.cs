@@ -46,8 +46,11 @@ public class BridgeContractSyncService : IBridgeContractSyncService, ITransientD
                     var targetChainIds = new List<string>();
                     foreach (var token in tokenInfos)
                     {
-                        // todo: add return default
                         var tokenInfo = await GetTokenInfoAsync(chainId, token.Address, token.Symbol);
+                        if (tokenInfo == null)
+                        {
+                            continue;
+                        }
                         tokenIds.Add(tokenInfo.Id);
                         targetChainIds.Add(token.TargetChainId);
                     }
@@ -60,7 +63,7 @@ public class BridgeContractSyncService : IBridgeContractSyncService, ITransientD
     
     [ExceptionHandler(typeof(Exception), typeof(EntityNotFoundException),Message = "Token not found.",
         TargetType = typeof(ExceptionHandlingService),
-        MethodName = nameof(ExceptionHandlingService.ThrowException))]
+        MethodName = nameof(ExceptionHandlingService.HandleException))]
     private async Task<TokenDto> GetTokenInfoAsync(string chainId, string address, string symbol)
     {
         var tokenDto = await _tokenAppService.GetAsync(new GetTokenInput

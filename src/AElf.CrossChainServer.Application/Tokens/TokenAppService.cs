@@ -40,7 +40,7 @@ namespace AElf.CrossChainServer.Tokens
                 var tokenDto = await _blockchainAppService.GetTokenInfoAsync(input.ChainId, input.Address, input.Symbol);
                 if (tokenDto == null)
                 {
-                    Log.ForContext("chainId", input.ChainId).Warning(
+                    Log.ForContext("chainId", input.ChainId).Error(
                         "Cannot get token! chain: {chainId}, address: {address}, symbol: {symbol}.", input.ChainId,
                         input.Address ?? string.Empty, input.Symbol ?? string.Empty);
                    

@@ -18,7 +18,7 @@ using Serilog;
 namespace AElf.CrossChainServer.CrossChain;
 
 [RemoteService(IsEnabled = false)]
-public class CrossChainTransferAppService : CrossChainServerAppService, ICrossChainTransferAppService
+public partial class CrossChainTransferAppService : CrossChainServerAppService, ICrossChainTransferAppService
 {
     private readonly ICrossChainTransferRepository _crossChainTransferRepository;
     private readonly IChainAppService _chainAppService;
@@ -170,8 +170,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         var isTransferExist = true;
         if (transfer == null)
         {
-            Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId)
-                .Information(
+            Log.Information(
                 "New transfer {TransferTransactionId}", input.TransferTransactionId);
             isTransferExist = false;
             transfer = ObjectMapper.Map<CrossChainTransferInput, CrossChainTransfer>(input);
@@ -200,34 +199,25 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         {
             await InsertCrossChainTransferAsync(transfer);
         }
-        // catch (DbUpdateException ex)
-        // {
-        //     Logger.LogInformation(ex,
-        //         "DbUpdateConcurrencyException when transfer,transfer {TransferTransactionId} and receipt {ReceiptId},error message:{message}.",
-        //         input.TransferTransactionId, input.ReceiptId, ex.Message);
-        //     await HandleUniqueTransfer(ex, input);
-        // }
     }
 
     [ExceptionHandler(typeof(DbUpdateConcurrencyException), typeof(DbUpdateException),
-        TargetType = typeof(ExceptionHandlingService),
-        MethodName = nameof(ExceptionHandlingService.ThrowException))]
-    //todo: add exception handler logic - HandleUniqueTransfer
+        TargetType = typeof(CrossChainTransferAppService),
+        MethodName = nameof(HandleDbException))]
     private Task UpdateCrossChainTransferAsync(CrossChainTransfer transfer)
     {
         return _crossChainTransferRepository.UpdateAsync(transfer);
     }
 
     [ExceptionHandler(typeof(DbUpdateConcurrencyException), typeof(DbUpdateException),
-        TargetType = typeof(ExceptionHandlingService),
-        MethodName = nameof(ExceptionHandlingService.ThrowException))]
-    //todo: add exception handler logic - HandleUniqueTransfer
+        TargetType = typeof(CrossChainTransferAppService),
+        MethodName = nameof(HandleDbException))]
     private Task InsertCrossChainTransferAsync(CrossChainTransfer transfer)
     {
         return _crossChainTransferRepository.InsertAsync(transfer, autoSave: true);
     }
 
-    private async Task HandleUniqueTransfer<T>(DbUpdateException ex, T input)
+    private async Task HandleUniqueTransfer<T>(Exception ex, T input)
     {
         if (ex.InnerException is MySqlException mySqlEx && mySqlEx.Number == 1062)
         {
@@ -303,8 +293,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         var isTransferExist = true;
         if (transfer == null)
         {
-            Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId)
-                .Debug(
+            Log.Debug(
                     "New receive {TransferTransactionId}", input.TransferTransactionId);
             isTransferExist = false;
             transfer = ObjectMapper.Map<CrossChainReceiveInput, CrossChainTransfer>(input);
@@ -324,9 +313,6 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         transfer.Status = CrossChainStatus.Received;
         transfer.Progress = CrossChainServerConsts.FullOfTheProgress;
         transfer.ProgressUpdateTime = input.ReceiveTime;
-        //
-        // try
-        // {
         if (isTransferExist)
         {
             await UpdateCrossChainTransferAsync(transfer);
@@ -335,19 +321,11 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         {
             await InsertCrossChainTransferAsync(transfer);
         }
-        // }
-        // catch (DbUpdateException ex)
-        // {
-        //     Logger.LogInformation(ex,
-        //         "DbUpdateConcurrencyException when receive,transfer {TransferTransactionId} and receipt {ReceiptId},error message:{message}.",
-        //         input.TransferTransactionId, input.ReceiptId, ex.Message);
-        //     await HandleUniqueTransfer(ex, input);
-        // }
     }
 
     [ExceptionHandler(typeof(Exception),typeof(InvalidOperationException),Message = "Get cross chain transfer failed.",
         TargetType = typeof(ExceptionHandlingService),
-        MethodName = nameof(ExceptionHandlingService.ThrowException))]
+        MethodName = nameof(ExceptionHandlingService.HandleException))]
     private async Task<CrossChainTransfer> FindCrossChainTransferAsync(string fromChainId, string toChainId,
         string transferTransactionId, string receiptId)
     {
@@ -462,9 +440,9 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         return crossChainTransfers;
     }
     
-    [ExceptionHandler(typeof(Exception),Message = "Update receive transacation failed.",
+    [ExceptionHandler(typeof(Exception),Message = "Update receive transaction failed.",
         TargetType = typeof(ExceptionHandlingService),
-        MethodName = nameof(ExceptionHandlingService.HandleException))]
+        MethodName = nameof(ExceptionHandlingService.HandleExceptionWithOutReturnValue))]
     public async Task UpdateReceiveTransactionAsync()
     {
         var page = 0;
@@ -477,9 +455,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
                 Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId)
                     .Debug(
                         "UpdateReceiveTransaction.TransferTransactionId:{id}", transfer.TransferTransactionId);
-                // try
-                // {
-                    var txResult =
+                var txResult =
                         await _blockchainAppService.GetTransactionResultAsync(transfer.ToChainId,
                             transfer.ReceiveTransactionId);
                     Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId)
@@ -506,14 +482,6 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
                             }
                         }
                     }
-                // }
-                // catch (Exception ex)
-                // {
-                //     Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId)
-                //         .Error(ex,
-                //             "Update receive transaction failed. Id: {transferId}, Error: {message}",
-                //             transfer.Id, ex.Message);
-                // }
             }
 
             page++;
@@ -537,7 +505,10 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
             .Take(PageCount));
         return crossChainTransfers;
     }
-
+    
+    [ExceptionHandler(typeof(Exception),Message = "Auto receive transaction failed.",
+        TargetType = typeof(ExceptionHandlingService),
+        MethodName = nameof(ExceptionHandlingService.HandleExceptionWithOutReturnValue))]
     public async Task AutoReceiveAsync()
     {
         var page = 0;
@@ -550,9 +521,7 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
                 Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId)
                     .Debug(
                         "AutoReceive.TransferTransactionId:{id}", transfer.TransferTransactionId);
-                // try
-                // {
-                    var toChain = await _chainAppService.GetAsync(transfer.ToChainId);
+                var toChain = await _chainAppService.GetAsync(transfer.ToChainId);
                     if (toChain == null)
                     {
                         continue;
@@ -582,20 +551,16 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
 
                     var provider = GetCrossChainTransferProvider(transfer.Type);
                     var txId = await provider.SendReceiveTransactionAsync(transfer);
+                    if (string.IsNullOrWhiteSpace(txId))
+                    {
+                        continue;
+                    }
                     transfer.ReceiveTransactionId = txId;
                     toUpdate.Add(transfer);
                     Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId)
                         .Information(
                             "Send auto receive tx: {txId}, Id:{id},TransferTransactionId:{transferId}",
                             txId, transfer.Id,transfer.TransferTransactionId);
-                // }
-                // catch (Exception ex)
-                // {
-                //     Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId)
-                //         .Error(ex,
-                //             "Send auto receive tx failed. FromChain: {fromChainId}, ToChain: {toChainId}, TransferTransactionId:{id}, Error:{message}",
-                //             transfer.FromChainId, transfer.ToChainId, transfer.TransferTransactionId, ex.Message);
-                // }
             }
 
             page++;
@@ -608,6 +573,25 @@ public class CrossChainTransferAppService : CrossChainServerAppService, ICrossCh
         }
     }
 
+    
+    public async Task Test()
+    {
+        await TestB();
+    }
+
+    [ExceptionHandler(typeof(Exception),Message = "failed.",
+        TargetType = typeof(ExceptionHandlingService),
+        MethodName = nameof(ExceptionHandlingService.HandleExceptionWithOutReturnValue))]
+    public virtual async Task TestB()
+    {
+        await TestC();
+    }
+    
+    public async Task TestC()
+    {
+        throw new Exception();
+    }
+    
     private async Task<List<CrossChainTransfer>> GetToReceivedAsync(int page)
     {
         var q = await _crossChainTransferRepository.GetQueryableAsync();

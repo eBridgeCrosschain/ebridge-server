@@ -6,13 +6,14 @@ using Nest;
 using System.Linq;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Contracts;
+using AElf.CrossChainServer.ExceptionHandler;
 using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.Settings;
-using Microsoft.Extensions.Logging;
+using AElf.ExceptionHandler;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using Serilog;
 using Volo.Abp;
+using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 
 namespace AElf.CrossChainServer.CrossChain;
@@ -73,7 +74,7 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
 
         if (info == null || info.Step >= step)
         {
-            Log.ForContext("chainId",info.ChainId).Debug(
+            Log.Debug(
                 "Invalid report step. ChainId: {chainId}, RoundId: {roundId}, Step: {oldStep}, Input Step: {newStep}",
                 info?.ChainId, roundId, info?.Step, step);
             return;
@@ -202,6 +203,9 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
         }
     }
 
+    [ExceptionHandler(typeof(Exception),Message = "Check query transaction failed.",
+        TargetType = typeof(ExceptionHandlingService),
+        MethodName = nameof(ExceptionHandlingService.HandleExceptionWithOutReturnValue))]
     public async Task CheckQueryTransactionAsync()
     {
         var q = await _reportInfoRepository.GetQueryableAsync();

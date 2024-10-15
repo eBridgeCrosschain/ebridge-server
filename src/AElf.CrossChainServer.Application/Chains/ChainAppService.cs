@@ -5,6 +5,7 @@ using AElf.CrossChainServer.ExceptionHandler;
 using AElf.ExceptionHandler;
 using AElf.Indexing.Elasticsearch;
 using Nest;
+using Serilog;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Entities;
@@ -24,9 +25,9 @@ namespace AElf.CrossChainServer.Chains
             _chainIndexRepository = chainIndexRepository;
         }
 
-        [ExceptionHandler(typeof(Exception), typeof(EntityNotFoundException),Message = "Chain not found.",
-            TargetType = typeof(ExceptionHandlingService),
-            MethodName = nameof(ExceptionHandlingService.HandleException))]
+        [ExceptionHandler(typeof(Exception), typeof(EntityNotFoundException),
+            TargetType = typeof(ChainAppService),
+            MethodName = nameof(HandleChainException))]
         public async Task<ChainDto> GetAsync(string id)
         {
             var chain = await _chainRepository.GetAsync(id);
@@ -60,6 +61,17 @@ namespace AElf.CrossChainServer.Chains
             return new ListResultDto<ChainDto>
             {
                 Items = ObjectMapper.Map<List<ChainIndex>, List<ChainDto>>(list.Item2)
+            };
+        }
+        
+        public async Task<FlowBehavior> HandleChainException(Exception ex, string id)
+        {
+            Log.ForContext("chainId", id).Error(ex,
+                "Chain not found.{id}", id);
+            return new FlowBehavior
+            {
+                ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,
+                ReturnValue = null
             };
         }
     }

@@ -1,15 +1,15 @@
 using System;
 using System.Threading.Tasks;
 using AElf.ExceptionHandler;
+using Serilog;
 
 namespace AElf.CrossChainServer.ExceptionHandler;
 
-public class ExceptionHandlingService
+public static class ExceptionHandlingService
 {
     public static async Task<FlowBehavior> HandleException(Exception ex, string message)
     {
-        Console.WriteLine($"Handled exception: {ex.Message}");
-        await Task.Delay(100);
+        Log.Error(ex,$"Handled exception: {message}",ex.Message);
         return new FlowBehavior
         {
             ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,
@@ -17,10 +17,10 @@ public class ExceptionHandlingService
         };
     }
     
-    public static async Task<FlowBehavior> HandleExceptionWithOutReturnValue(Exception ex, string message)
+    
+    public static async Task<FlowBehavior> HandleExceptionWithOutReturnValue(Exception ex)
     {
-        Console.WriteLine($"Handled exception: {ex.Message}");
-        await Task.Delay(100);
+        // Log.Error(ex,$"Handled exception: {message}",ex.Message);
         return new FlowBehavior
         {
             ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,
@@ -29,11 +29,20 @@ public class ExceptionHandlingService
     
     public static async Task<FlowBehavior> ThrowException(Exception ex, string message)
     {
-        Console.WriteLine($"Handled exception: {ex.Message}");
-        await Task.Delay(100);
+        Log.Error(ex,$"Handled exception: {message}",ex.Message);
         return new FlowBehavior
         {
             ExceptionHandlingStrategy = ExceptionHandlingStrategy.Throw,
+            ReturnValue = null
+        };
+    }
+    
+    public static async Task<FlowBehavior> HandleExceptionAndContinue(Exception ex, string message)
+    {
+        Log.Error(ex,$"Handled exception: {message}",ex.Message);
+        return new FlowBehavior
+        {
+            ExceptionHandlingStrategy = ExceptionHandlingStrategy.Continue,
             ReturnValue = null
         };
     }

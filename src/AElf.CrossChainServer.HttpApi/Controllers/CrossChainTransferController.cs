@@ -35,11 +35,11 @@ public class CrossChainTransferController
     {
         return _crossChainTransferAppService.GetStatusAsync(input);
     }
-    
+
     [HttpGet]
-    [Route("test")]
-    public Task<long> GetTestAsync()
+    [Route("testA")]
+    public Task Test()
     {
-        return _indexerAppService.GetLatestIndexHeightAsync("MainChain_AELF");
+        return _crossChainTransferAppService.Test();
     }
 }
