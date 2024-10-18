@@ -21,8 +21,8 @@ public abstract class IndexerSyncProviderBase : IIndexerSyncProvider, ITransient
     protected readonly IJsonSerializer JsonSerializer;
     protected readonly IIndexerAppService IndexerAppService;
     protected readonly IChainAppService ChainAppService;
-    
-    private const int MaxRequestCount = 1000;
+
+    protected const int MaxRequestCount = 1000;
 
     protected IndexerSyncProviderBase(IGraphQLClientFactory graphQlClientFactory, ISettingManager settingManager,
         IJsonSerializer jsonSerializer, IIndexerAppService indexerAppService, IChainAppService chainAppService)

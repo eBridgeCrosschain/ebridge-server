@@ -60,7 +60,7 @@ public class IndexerCrossChainLimitInfoService : CrossChainServerAppService, IIn
         {
             Query = @"
 			    query($skipCount:Int!,$fromChainId:String,$toChainId:String,$symbol:String) {
-                    data:queryCrossChainLimitInfos(dto:{skipCount: $skipCount,fromChainId: $fromChainId,toChainId: $toChainId,symbol: $symbol}){
+                    data:queryCrossChainLimitInfos(input:{skipCount: $skipCount,fromChainId: $fromChainId,toChainId: $toChainId,symbol: $symbol}){
                         totalRecordCount,
                         dataList:data {
                                             id,

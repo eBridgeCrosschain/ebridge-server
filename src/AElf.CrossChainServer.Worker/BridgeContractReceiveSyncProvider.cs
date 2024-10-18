@@ -8,6 +8,7 @@ using AElf.CrossChainServer.ExceptionHandler;
 using AElf.ExceptionHandler;
 using Serilog;
 using Volo.Abp.Domain.Entities;
+using TransferType = AElf.CrossChainServer.BridgeContract.TransferType;
 
 namespace AElf.CrossChainServer.Worker;
 

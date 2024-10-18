@@ -76,8 +76,8 @@ public class OracleQueryInfoIndexerSyncProvider : IndexerSyncProviderBase
         return new GraphQLRequest
         {
             Query =
-                @"query($chainId:String,$startBlockHeight:Long!,$endBlockHeight:Long!){
-            oracleQueryInfo(dto: {chainId:$chainId,startBlockHeight:$startBlockHeight,endBlockHeight:$endBlockHeight}){
+                @"query($chainId:String,$startBlockHeight:Long!,$endBlockHeight:Long!,$maxMaxResultCount:Int!){
+            oracleQueryInfo(input: {chainId:$chainId,startBlockHeight:$startBlockHeight,endBlockHeight:$endBlockHeight,maxMaxResultCount:$maxMaxResultCount}){
                     id,
                     chainId,
                     blockHash,
@@ -94,7 +94,8 @@ public class OracleQueryInfoIndexerSyncProvider : IndexerSyncProviderBase
             {
                 chainId = chainId,
                 startBlockHeight = startHeight,
-                endBlockHeight = endHeight
+                endBlockHeight = endHeight,
+                maxMaxResultCount = MaxRequestCount
             }
         };
     }

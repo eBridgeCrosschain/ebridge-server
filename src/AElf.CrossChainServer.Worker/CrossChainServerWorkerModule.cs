@@ -28,6 +28,7 @@ namespace AElf.CrossChainServer.Worker
             context.AddBackgroundWorkerAsync<ReportCheckWorker>();
             context.AddBackgroundWorkerAsync<TransferAutoReceiveWorker>();
             context.AddBackgroundWorkerAsync<IndexerSyncWorker>();
+            context.AddBackgroundWorkerAsync<CheckReceiveWorker>();
         }
     }
 }

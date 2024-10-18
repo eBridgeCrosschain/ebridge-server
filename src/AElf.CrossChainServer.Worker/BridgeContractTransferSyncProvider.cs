@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AElf.CrossChainServer.BridgeContract;
 using AElf.CrossChainServer.Contracts;
 using AElf.CrossChainServer.CrossChain;
 using AElf.CrossChainServer.ExceptionHandler;
 using AElf.ExceptionHandler;
 using Serilog;
 using Volo.Abp.Domain.Entities;
+using TransferType = AElf.CrossChainServer.BridgeContract.TransferType;
 
 namespace AElf.CrossChainServer.Worker;
 

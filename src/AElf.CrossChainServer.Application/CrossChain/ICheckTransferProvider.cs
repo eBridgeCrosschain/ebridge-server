@@ -9,12 +9,14 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Nethereum.Util;
 using Serilog;
+using Volo.Abp.Domain.Entities;
 
 namespace AElf.CrossChainServer.CrossChain;
 
 public interface ICheckTransferProvider
 {
     Task<bool> CheckTransferAsync(string fromChainId, string toChainId, Guid tokenId, decimal transferAmount);
+    Task<bool> CheckTokenExistAsync(string fromChainId, string toChainId, Guid tokenId);
 }
 
 public class CheckTransferProvider : ICheckTransferProvider
@@ -40,6 +42,8 @@ public class CheckTransferProvider : ICheckTransferProvider
     {
         var (amount,symbol) = await GetTokenInfoAsync(fromChainId, toChainId, tokenId, transferAmount);
         Log.ForContext("fromChainId", fromChainId).ForContext("toChainId", toChainId).Debug(
+        var (amount,symbol) = await GetTokenTransferAmountAsync(fromChainId, toChainId, tokenId, transferAmount);
+        Logger.LogInformation(
             "Start to check limit. From chain:{fromChainId}, to chain:{toChainId}, token symbol:{symbol}, transfer amount:{amount}",
             fromChainId, toChainId, symbol, amount);
         var chain = await _chainAppService.GetAsync(toChainId);
@@ -79,17 +83,43 @@ public class CheckTransferProvider : ICheckTransferProvider
         return amount <= limitInfo.CurrentDailyLimit && amount <= (decimal)rateLimit;
     }
 
-    private async Task<(decimal,string)> GetTokenInfoAsync(string fromChainId, string toChainId, Guid tokenId,
+    // todo:exception
+    private async Task<(decimal,string)> GetTokenTransferAmountAsync(string fromChainId, string toChainId, Guid tokenId,
         decimal transferAmount)
+    {
+        var token = await GetTokenInfoAsync(fromChainId, toChainId, tokenId);
+        if (token == null)
+        {
+            throw new EntityNotFoundException("Token not exist.");
+        }
+        return (transferAmount * (decimal)Math.Pow(10, token.Decimals),token.Symbol);
+    }
+
+    private async Task<TokenDto> GetTokenInfoAsync(string fromChainId, string toChainId, Guid tokenId)
     {
         var transferToken = await _tokenAppService.GetAsync(tokenId);
         var symbol =
             _tokenSymbolMappingProvider.GetMappingSymbol(fromChainId, toChainId, transferToken.Symbol);
-        var token = await _tokenAppService.GetAsync(new GetTokenInput
+        try
         {
-            ChainId = toChainId,
-            Symbol = symbol
-        });
-        return (transferAmount * (decimal)Math.Pow(10, token.Decimals),symbol);
+            var token = await _tokenAppService.GetAsync(new GetTokenInput
+            {
+                ChainId = toChainId,
+                Symbol = symbol
+            });
+            return token;
+        }
+        catch (Exception e)
+        {
+            Logger.LogError("Get token info error:{error}", e.Message);
+            return null;
+        }
     }
+    public async Task<bool> CheckTokenExistAsync(string fromChainId, string toChainId, Guid tokenId)
+    {
+        var token = await GetTokenInfoAsync(fromChainId, toChainId, tokenId);
+        return token != null;
+    }
+    
+
 }

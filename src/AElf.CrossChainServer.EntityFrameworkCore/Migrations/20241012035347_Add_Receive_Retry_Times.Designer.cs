@@ -3,7 +3,7 @@ using System;
 using AElf.CrossChainServer.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -12,17 +12,16 @@ using Volo.Abp.EntityFrameworkCore;
 namespace AElf.CrossChainServer.Migrations
 {
     [DbContext(typeof(CrossChainServerDbContext))]
-    partial class CrossChainServerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241012035347_Add_Receive_Retry_Times")]
+    partial class Add_Receive_Retry_Times
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("_Abp_DatabaseProvider", EfCoreDatabaseProvider.MySql)
-                .HasAnnotation("ProductVersion", "8.0.4")
+                .HasAnnotation("ProductVersion", "6.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
-
-            MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
             modelBuilder.Entity("AElf.CrossChainServer.BridgeContract.BridgeContractSyncInfo", b =>
                 {
@@ -337,7 +336,6 @@ namespace AElf.CrossChainServer.Migrations
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("varchar(40)")
                         .HasColumnName("ConcurrencyStamp");
@@ -358,7 +356,6 @@ namespace AElf.CrossChainServer.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("ExtraProperties")
-                        .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("ExtraProperties");
 
@@ -490,6 +487,7 @@ namespace AElf.CrossChainServer.Migrations
                         .HasColumnName("ChangeType");
 
                     b.Property<string>("EntityId")
+                        .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("varchar(128)")
                         .HasColumnName("EntityId");
@@ -570,7 +568,6 @@ namespace AElf.CrossChainServer.Migrations
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("varchar(40)")
                         .HasColumnName("ConcurrencyStamp");
@@ -621,95 +618,6 @@ namespace AElf.CrossChainServer.Migrations
                     b.ToTable("AbpBackgroundJobs", (string)null);
                 });
 
-            modelBuilder.Entity("Volo.Abp.FeatureManagement.FeatureDefinitionRecord", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("AllowedProviders")
-                        .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
-
-                    b.Property<string>("DefaultValue")
-                        .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
-
-                    b.Property<string>("DisplayName")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
-
-                    b.Property<string>("ExtraProperties")
-                        .HasColumnType("longtext")
-                        .HasColumnName("ExtraProperties");
-
-                    b.Property<string>("GroupName")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("varchar(128)");
-
-                    b.Property<bool>("IsAvailableToHost")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<bool>("IsVisibleToClients")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("varchar(128)");
-
-                    b.Property<string>("ParentName")
-                        .HasMaxLength(128)
-                        .HasColumnType("varchar(128)");
-
-                    b.Property<string>("ValueType")
-                        .HasMaxLength(2048)
-                        .HasColumnType("varchar(2048)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GroupName");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("AbpFeatures", (string)null);
-                });
-
-            modelBuilder.Entity("Volo.Abp.FeatureManagement.FeatureGroupDefinitionRecord", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("DisplayName")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
-
-                    b.Property<string>("ExtraProperties")
-                        .HasColumnType("longtext")
-                        .HasColumnName("ExtraProperties");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("varchar(128)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("AbpFeatureGroups", (string)null);
-                });
-
             modelBuilder.Entity("Volo.Abp.FeatureManagement.FeatureValue", b =>
                 {
                     b.Property<Guid>("Id")
@@ -749,7 +657,6 @@ namespace AElf.CrossChainServer.Migrations
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("varchar(40)")
                         .HasColumnName("ConcurrencyStamp");
@@ -759,7 +666,6 @@ namespace AElf.CrossChainServer.Migrations
                         .HasColumnType("varchar(256)");
 
                     b.Property<string>("ExtraProperties")
-                        .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("ExtraProperties");
 
@@ -822,16 +728,11 @@ namespace AElf.CrossChainServer.Migrations
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("varchar(40)")
                         .HasColumnName("ConcurrencyStamp");
 
-                    b.Property<int>("EntityVersion")
-                        .HasColumnType("int");
-
                     b.Property<string>("ExtraProperties")
-                        .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("ExtraProperties");
 
@@ -923,7 +824,6 @@ namespace AElf.CrossChainServer.Migrations
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("varchar(40)")
                         .HasColumnName("ConcurrencyStamp");
@@ -936,7 +836,6 @@ namespace AElf.CrossChainServer.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("ExtraProperties")
-                        .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("ExtraProperties");
 
@@ -972,57 +871,6 @@ namespace AElf.CrossChainServer.Migrations
                     b.ToTable("AbpSecurityLogs", (string)null);
                 });
 
-            modelBuilder.Entity("Volo.Abp.Identity.IdentitySession", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("ClientId")
-                        .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
-
-                    b.Property<string>("Device")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
-
-                    b.Property<string>("DeviceInfo")
-                        .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
-
-                    b.Property<string>("IpAddresses")
-                        .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
-
-                    b.Property<DateTime?>("LastAccessed")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("SessionId")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("varchar(128)");
-
-                    b.Property<DateTime>("SignedIn")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<Guid?>("TenantId")
-                        .HasColumnType("char(36)")
-                        .HasColumnName("TenantId");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("char(36)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Device");
-
-                    b.HasIndex("SessionId");
-
-                    b.HasIndex("TenantId", "UserId");
-
-                    b.ToTable("AbpSessions", (string)null);
-                });
-
             modelBuilder.Entity("Volo.Abp.Identity.IdentityUser", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1036,7 +884,6 @@ namespace AElf.CrossChainServer.Migrations
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("varchar(40)")
                         .HasColumnName("ConcurrencyStamp");
@@ -1069,17 +916,12 @@ namespace AElf.CrossChainServer.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("EmailConfirmed");
 
-                    b.Property<int>("EntityVersion")
-                        .HasColumnType("int");
-
                     b.Property<string>("ExtraProperties")
-                        .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("ExtraProperties");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("tinyint(1)")
-                        .HasColumnName("IsActive");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
@@ -1100,9 +942,6 @@ namespace AElf.CrossChainServer.Migrations
                     b.Property<Guid?>("LastModifierId")
                         .HasColumnType("char(36)")
                         .HasColumnName("LastModifierId");
-
-                    b.Property<DateTimeOffset?>("LastPasswordChangeTime")
-                        .HasColumnType("datetime(6)");
 
                     b.Property<bool>("LockoutEnabled")
                         .ValueGeneratedOnAdd()
@@ -1151,9 +990,6 @@ namespace AElf.CrossChainServer.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("varchar(256)")
                         .HasColumnName("SecurityStamp");
-
-                    b.Property<bool>("ShouldChangePasswordOnNextLogin")
-                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Surname")
                         .HasMaxLength(64)
@@ -1215,32 +1051,6 @@ namespace AElf.CrossChainServer.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("AbpUserClaims", (string)null);
-                });
-
-            modelBuilder.Entity("Volo.Abp.Identity.IdentityUserDelegation", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("char(36)");
-
-                    b.Property<DateTime>("EndTime")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<Guid>("SourceUserId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<DateTime>("StartTime")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<Guid>("TargetUserId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid?>("TenantId")
-                        .HasColumnType("char(36)")
-                        .HasColumnName("TenantId");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AbpUserDelegations", (string)null);
                 });
 
             modelBuilder.Entity("Volo.Abp.Identity.IdentityUserLogin", b =>
@@ -1356,7 +1166,6 @@ namespace AElf.CrossChainServer.Migrations
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("varchar(40)")
                         .HasColumnName("ConcurrencyStamp");
@@ -1383,11 +1192,7 @@ namespace AElf.CrossChainServer.Migrations
                         .HasColumnType("varchar(128)")
                         .HasColumnName("DisplayName");
 
-                    b.Property<int>("EntityVersion")
-                        .HasColumnType("int");
-
                     b.Property<string>("ExtraProperties")
-                        .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("ExtraProperties");
 
@@ -1460,7 +1265,6 @@ namespace AElf.CrossChainServer.Migrations
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("varchar(40)")
                         .HasColumnName("ConcurrencyStamp");
@@ -1493,7 +1297,6 @@ namespace AElf.CrossChainServer.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("ExtraProperties")
-                        .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("ExtraProperties");
 
@@ -1603,7 +1406,6 @@ namespace AElf.CrossChainServer.Migrations
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("varchar(40)")
                         .HasColumnName("ConcurrencyStamp");
@@ -1639,7 +1441,6 @@ namespace AElf.CrossChainServer.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("ExtraProperties")
-                        .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("ExtraProperties");
 
@@ -1771,7 +1572,6 @@ namespace AElf.CrossChainServer.Migrations
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("varchar(40)")
                         .HasColumnName("ConcurrencyStamp");
@@ -1809,7 +1609,6 @@ namespace AElf.CrossChainServer.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("ExtraProperties")
-                        .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("ExtraProperties");
 
@@ -2049,7 +1848,6 @@ namespace AElf.CrossChainServer.Migrations
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("varchar(40)")
                         .HasColumnName("ConcurrencyStamp");
@@ -2081,7 +1879,6 @@ namespace AElf.CrossChainServer.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("ExtraProperties")
-                        .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("ExtraProperties");
 
@@ -2123,7 +1920,6 @@ namespace AElf.CrossChainServer.Migrations
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("varchar(40)")
                         .HasColumnName("ConcurrencyStamp");
@@ -2147,7 +1943,6 @@ namespace AElf.CrossChainServer.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("ExtraProperties")
-                        .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("ExtraProperties");
 
@@ -2186,7 +1981,6 @@ namespace AElf.CrossChainServer.Migrations
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("varchar(40)")
                         .HasColumnName("ConcurrencyStamp");
@@ -2222,7 +2016,6 @@ namespace AElf.CrossChainServer.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("ExtraProperties")
-                        .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("ExtraProperties");
 
@@ -2288,59 +2081,6 @@ namespace AElf.CrossChainServer.Migrations
                     b.ToTable("IdentityServerIdentityResourceProperties", (string)null);
                 });
 
-            modelBuilder.Entity("Volo.Abp.PermissionManagement.PermissionDefinitionRecord", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("DisplayName")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
-
-                    b.Property<string>("ExtraProperties")
-                        .HasColumnType("longtext")
-                        .HasColumnName("ExtraProperties");
-
-                    b.Property<string>("GroupName")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("varchar(128)");
-
-                    b.Property<bool>("IsEnabled")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<byte>("MultiTenancySide")
-                        .HasColumnType("tinyint unsigned");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("varchar(128)");
-
-                    b.Property<string>("ParentName")
-                        .HasMaxLength(128)
-                        .HasColumnType("varchar(128)");
-
-                    b.Property<string>("Providers")
-                        .HasMaxLength(128)
-                        .HasColumnType("varchar(128)");
-
-                    b.Property<string>("StateCheckers")
-                        .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GroupName");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("AbpPermissions", (string)null);
-                });
-
             modelBuilder.Entity("Volo.Abp.PermissionManagement.PermissionGrant", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2372,34 +2112,6 @@ namespace AElf.CrossChainServer.Migrations
                         .IsUnique();
 
                     b.ToTable("AbpPermissionGrants", (string)null);
-                });
-
-            modelBuilder.Entity("Volo.Abp.PermissionManagement.PermissionGroupDefinitionRecord", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("DisplayName")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
-
-                    b.Property<string>("ExtraProperties")
-                        .HasColumnType("longtext")
-                        .HasColumnName("ExtraProperties");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("varchar(128)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("AbpPermissionGroups", (string)null);
                 });
 
             modelBuilder.Entity("Volo.Abp.SettingManagement.Setting", b =>
@@ -2434,55 +2146,6 @@ namespace AElf.CrossChainServer.Migrations
                     b.ToTable("AbpSettings", (string)null);
                 });
 
-            modelBuilder.Entity("Volo.Abp.SettingManagement.SettingDefinitionRecord", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("DefaultValue")
-                        .HasMaxLength(2048)
-                        .HasColumnType("varchar(2048)");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(512)
-                        .HasColumnType("varchar(512)");
-
-                    b.Property<string>("DisplayName")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
-
-                    b.Property<string>("ExtraProperties")
-                        .HasColumnType("longtext")
-                        .HasColumnName("ExtraProperties");
-
-                    b.Property<bool>("IsEncrypted")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<bool>("IsInherited")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<bool>("IsVisibleToClients")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("varchar(128)");
-
-                    b.Property<string>("Providers")
-                        .HasMaxLength(1024)
-                        .HasColumnType("varchar(1024)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("AbpSettingDefinitions", (string)null);
-                });
-
             modelBuilder.Entity("Volo.Abp.TenantManagement.Tenant", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2490,7 +2153,6 @@ namespace AElf.CrossChainServer.Migrations
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("varchar(40)")
                         .HasColumnName("ConcurrencyStamp");
@@ -2511,11 +2173,7 @@ namespace AElf.CrossChainServer.Migrations
                         .HasColumnType("datetime(6)")
                         .HasColumnName("DeletionTime");
 
-                    b.Property<int>("EntityVersion")
-                        .HasColumnType("int");
-
                     b.Property<string>("ExtraProperties")
-                        .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("ExtraProperties");
 
@@ -2534,11 +2192,6 @@ namespace AElf.CrossChainServer.Migrations
                         .HasColumnName("LastModifierId");
 
                     b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
-
-                    b.Property<string>("NormalizedName")
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("varchar(64)");
