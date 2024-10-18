@@ -53,7 +53,7 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
     [ExceptionHandler(typeof(Exception),typeof(InvalidOperationException),typeof(WebException),Message = "SendReceiveTransaction failed.",
         TargetType = typeof(HomogeneousCrossChainTransferProvider),
         MethodName = nameof(HandleSendReceiveTransactionException))]
-    public async Task<string> SendReceiveTransactionAsync(CrossChainTransfer transfer)
+    public virtual async Task<string> SendReceiveTransactionAsync(CrossChainTransfer transfer)
     {
         var txResult =
                 await _blockchainAppService.GetTransactionResultAsync(transfer.FromChainId,

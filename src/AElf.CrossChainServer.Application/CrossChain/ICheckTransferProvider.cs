@@ -52,7 +52,7 @@ public class CheckTransferProvider : ICheckTransferProvider
         var chain = await _chainAppService.GetAsync(toChainId);
         if (chain == null)
         {
-            Log.Warning("No chain info.");
+            Logger.LogInformation("No chain info.");
             return false;
         }
 
@@ -90,8 +90,7 @@ public class CheckTransferProvider : ICheckTransferProvider
         return amount <= limitInfo.CurrentDailyLimit && amount <= (decimal)rateLimit;
     }
 
-    private async Task<(decimal, string)> GetTokenTransferAmountAsync(string fromChainId, string toChainId,
-        Guid tokenId,
+    private async Task<(decimal,string)> GetTokenTransferAmountAsync(string fromChainId, string toChainId, Guid tokenId,
         decimal transferAmount)
     {
         var token = await GetTokenInfoAsync(fromChainId, toChainId, tokenId);

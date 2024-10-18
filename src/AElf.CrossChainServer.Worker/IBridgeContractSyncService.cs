@@ -64,7 +64,7 @@ public class BridgeContractSyncService : IBridgeContractSyncService, ITransientD
     [ExceptionHandler(typeof(Exception), typeof(EntityNotFoundException),Message = "Token not found.",
         TargetType = typeof(ExceptionHandlingService),
         MethodName = nameof(ExceptionHandlingService.HandleException))]
-    private async Task<TokenDto> GetTokenInfoAsync(string chainId, string address, string symbol)
+    public virtual async Task<TokenDto> GetTokenInfoAsync(string chainId, string address, string symbol)
     {
         var tokenDto = await _tokenAppService.GetAsync(new GetTokenInput
         {

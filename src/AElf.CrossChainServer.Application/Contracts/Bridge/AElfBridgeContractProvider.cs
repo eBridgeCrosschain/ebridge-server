@@ -76,7 +76,7 @@ public class AElfBridgeContractProvider: AElfClientProvider, IBridgeContractProv
     [ExceptionHandler(typeof(Exception), typeof(InvalidOperationException),typeof(WebException),
         TargetType = typeof(AElfBridgeContractProvider),
         MethodName = nameof(HandleSwapTokenException))]
-    public async Task<string> SwapTokenAsync(string chainId, string contractAddress, string privateKey, string swapId, string receiptId, string originAmount,
+    public virtual async Task<string> SwapTokenAsync(string chainId, string contractAddress, string privateKey, string swapId, string receiptId, string originAmount,
         string receiverAddress)
     {
         var client = BlockchainClientFactory.GetClient(chainId);

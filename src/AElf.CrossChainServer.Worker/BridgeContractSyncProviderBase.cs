@@ -7,6 +7,8 @@ using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Contracts;
 using AElf.CrossChainServer.ExceptionHandler;
 using AElf.ExceptionHandler;
+using Serilog;
+using Volo.Abp.Domain.Entities;
 using Volo.Abp.Uow;
 
 namespace AElf.CrossChainServer.Worker;
@@ -63,7 +65,7 @@ public abstract class BridgeContractSyncProviderBase : IBridgeContractSyncProvid
     [ExceptionHandler(typeof(Exception),Message = "Get confirmed height failed.",
         TargetType = typeof(ExceptionHandlingService),
         MethodName = nameof(ExceptionHandlingService.ThrowException))]    
-    protected async Task<long> GetConfirmedHeightAsync(string chainId)
+    public virtual async Task<long> GetConfirmedHeightAsync(string chainId)
     {
         var chainStatus = await BlockchainAppService.GetChainStatusAsync(chainId);
         return chainStatus.ConfirmedBlockHeight;
@@ -71,7 +73,22 @@ public abstract class BridgeContractSyncProviderBase : IBridgeContractSyncProvid
 
     protected abstract Task<List<ReceiptIndexDto>> GetReceiveReceiptIndexAsync(string chainId, List<Guid> tokenIds,
         List<string> targetChainIds);
+    
+    [ExceptionHandler(typeof(Exception), typeof(EntityNotFoundException),
+        TargetType = typeof(BridgeContractSyncProviderBase),
+        MethodName = nameof(HandleReceiptException))]
     protected abstract Task<HandleReceiptResult> HandleReceiptAsync(string chainId, string targetChainId, Guid tokenId, long fromIndex, long endIndex);
+    
+    public static async Task<FlowBehavior> HandleReceiptException(Exception ex, string chainId, string targetChainId, Guid tokenId, long fromIndex, long endIndex)
+    {
+        Log.ForContext("chainId", chainId).Error(ex,
+            "Handle receipt failed, ChainId: {key}, TargetChainId: {targetChainId}, TokenId: {tokenId}, FromIndex: {fromIndex}, EndIndex: {endIndex}", chainId, targetChainId, tokenId, fromIndex, endIndex);
+        return new FlowBehavior
+        {
+            ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,
+            ReturnValue = new HandleReceiptResult()
+        };
+    }
 }
 
 public class HandleReceiptResult

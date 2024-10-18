@@ -206,7 +206,7 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
     [ExceptionHandler(typeof(Exception),Message = "Check query transaction failed.",
         TargetType = typeof(ExceptionHandlingService),
         MethodName = nameof(ExceptionHandlingService.HandleExceptionWithOutReturnValue))]
-    public async Task CheckQueryTransactionAsync()
+    public virtual async Task CheckQueryTransactionAsync()
     {
         var q = await _reportInfoRepository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(q

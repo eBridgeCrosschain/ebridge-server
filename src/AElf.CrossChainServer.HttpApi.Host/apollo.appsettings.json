@@ -1,7 +1,7 @@
 {
   "ClientId": "CrossChainServer_HttpApi",
   "apollo": {
-    "UseApollo" : true,
+    "UseApollo" : false,
     "AppId": "CrossChainServer",
     "MetaServer": "http://localhost:8080",
     "ConfigServer": [

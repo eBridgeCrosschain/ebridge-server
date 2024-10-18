@@ -96,7 +96,7 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
     [ExceptionHandler(typeof(Exception), typeof(InvalidOperationException), typeof(ArgumentNullException), Message = "Insert bridge sync info failed.",
         TargetType = typeof(ExceptionHandlingService),
         MethodName = nameof(ExceptionHandlingService.HandleExceptionWithOutReturnValue))]
-    private async Task InsertBridgeSyncInfoAsync(BridgeContractSyncInfo info)
+    public virtual async Task InsertBridgeSyncInfoAsync(BridgeContractSyncInfo info)
     {
         await _bridgeContractSyncInfoRepository.InsertAsync(info);
     }
@@ -104,7 +104,7 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
     [ExceptionHandler(typeof(Exception), typeof(InvalidOperationException), typeof(ArgumentNullException), Message = "update bridge sync info failed.",
         TargetType = typeof(ExceptionHandlingService),
         MethodName = nameof(ExceptionHandlingService.HandleExceptionWithOutReturnValue))]
-    private async Task UpdateBridgeSyncInfoAsync(BridgeContractSyncInfo info)
+    public virtual async Task UpdateBridgeSyncInfoAsync(BridgeContractSyncInfo info)
     {
         await _bridgeContractSyncInfoRepository.UpdateAsync(info);
     }
@@ -116,7 +116,6 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
         {
             return new List<ReceiptIndexDto>();
         }
-
         return await provider.GetTransferReceiptIndexAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].BridgeInContract, tokenIds, targetChainIds);
     }
@@ -129,7 +128,6 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
         {
             return new List<ReceiptIndexDto>();
         }
-
         return await provider.GetReceiveReceiptIndexAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].BridgeOutContract, tokenIds, targetChainIds);
     }
@@ -141,7 +139,6 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
         {
             return false;
         }
-
         return await provider.CheckTransmitAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].BridgeOutContract, receiptHash);
     }
@@ -153,7 +150,6 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
         {
             return "";
         }
-
         return await provider.GetSwapIdByTokenAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].BridgeOutContract, fromChainId, symbol);
     }
@@ -167,7 +163,6 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
         {
             return "";
         }
-
         return await provider.SwapTokenAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].BridgeOutContract, privateKey, swapId, receiptId,
             originAmount, receiverAddress);
@@ -181,7 +176,6 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
         {
             return new List<TokenBucketDto>();
         }
-
         return await provider.GetCurrentReceiptTokenBucketStatesAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].LimiterContract, tokenIds, targetChainIds);
     }
@@ -194,7 +188,6 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
         {
             return new List<TokenBucketDto>();
         }
-
         return await provider.GetCurrentSwapTokenBucketStatesAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].LimiterContract, tokenIds, fromChainIds);
     }

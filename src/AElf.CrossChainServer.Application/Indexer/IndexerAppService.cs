@@ -64,9 +64,7 @@ public class IndexerAppService : CrossChainServerAppService, IIndexerAppService
             transferTransactionId));
         if (data == null)
         {
-            Log.ForContext("chainId",chainId).Warning(
-                "Get pending transaction failed. chainId: {chainId}, transferTransactionId: {transferTransactionId}",
-                chainId, transferTransactionId);
+            Logger.LogInformation("Get pending transaction failed. chainId: {chainId}, transferTransactionId: {transferTransactionId}",chainId,transferTransactionId);
             return null;
         }
 

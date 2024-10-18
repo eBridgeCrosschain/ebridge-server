@@ -28,7 +28,7 @@ namespace AElf.CrossChainServer.Chains
         [ExceptionHandler(typeof(Exception), typeof(EntityNotFoundException),
             TargetType = typeof(ChainAppService),
             MethodName = nameof(HandleChainException))]
-        public async Task<ChainDto> GetAsync(string id)
+        public virtual async Task<ChainDto> GetAsync(string id)
         {
             var chain = await _chainRepository.GetAsync(id);
             return ObjectMapper.Map<Chain, ChainDto>(chain);

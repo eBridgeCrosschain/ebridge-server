@@ -51,7 +51,7 @@ namespace AElf.CrossChainServer.Chains
         [ExceptionHandler(typeof(Exception),Message = "Get evm chain status failed.",
             TargetType = typeof(ExceptionHandlingService),
             MethodName = nameof(ExceptionHandlingService.ThrowException))]
-        public async Task<ChainStatusDto> GetChainStatusAsync(string chainId)
+        public virtual async Task<ChainStatusDto> GetChainStatusAsync(string chainId)
         {
             var client = BlockchainClientFactory.GetClient(chainId);
             var latestBlockNumber = await client.Eth.Blocks.GetBlockNumber.SendRequestAsync();
