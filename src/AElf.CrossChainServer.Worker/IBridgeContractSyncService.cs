@@ -2,11 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AElf.CrossChainServer.ExceptionHandler;
 using AElf.CrossChainServer.Tokens;
+using AElf.ExceptionHandler;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Serilog;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.Domain.Entities;
 
 namespace AElf.CrossChainServer.Worker;
 
@@ -21,8 +25,6 @@ public class BridgeContractSyncService : IBridgeContractSyncService, ITransientD
     private readonly ITokenAppService _tokenAppService;
     private readonly IEnumerable<IBridgeContractSyncProvider> _bridgeContractSyncProviders;
     
-    public ILogger<BridgeContractSyncService> Logger { get; set; }
-
     public BridgeContractSyncService(IOptionsSnapshot<BridgeContractSyncOptions> bridgeContractSyncOptions,
         ITokenAppService tokenAppService, IEnumerable<IBridgeContractSyncProvider> bridgeContractSyncProviders)
     {
@@ -30,29 +32,25 @@ public class BridgeContractSyncService : IBridgeContractSyncService, ITransientD
         _tokenAppService = tokenAppService;
         _bridgeContractSyncProviders = bridgeContractSyncProviders.ToList();
         
-        Logger = NullLogger<BridgeContractSyncService>.Instance;
     }
+    
     
     public async Task ExecuteAsync()
     {
         foreach (var (key, value) in _bridgeContractSyncOptions.Tokens)
         {
-            try
-            {
-                var chainId = key;
+            var chainId = key;
                 foreach (var (transferType, tokenInfos) in value)
                 {
                     var tokenIds = new List<Guid>();
                     var targetChainIds = new List<string>();
                     foreach (var token in tokenInfos)
                     {
-                        var tokenInfo = await _tokenAppService.GetAsync(new GetTokenInput
+                        var tokenInfo = await GetTokenInfoAsync(chainId, token.Address, token.Symbol);
+                        if (tokenInfo == null)
                         {
-                            Address = token.Address,
-                            Symbol = token.Symbol,
-                            ChainId = chainId
-                        });
-
+                            continue;
+                        }
                         tokenIds.Add(tokenInfo.Id);
                         targetChainIds.Add(token.TargetChainId);
                     }
@@ -60,11 +58,20 @@ public class BridgeContractSyncService : IBridgeContractSyncService, ITransientD
                     var provider = _bridgeContractSyncProviders.First(o => o.Type == transferType);
                     await provider.SyncAsync(chainId, tokenIds, targetChainIds);
                 }
-            }
-            catch (Exception e)
-            {
-                Logger.LogError(e,"Bridge contract sync failed, ChainId: {key}, Message: {message}", key, e.Message);
-            }
         }
+    }
+    
+    [ExceptionHandler(typeof(Exception), typeof(EntityNotFoundException),Message = "Token not found.",
+        TargetType = typeof(ExceptionHandlingService),
+        MethodName = nameof(ExceptionHandlingService.HandleException))]
+    private async Task<TokenDto> GetTokenInfoAsync(string chainId, string address, string symbol)
+    {
+        var tokenDto = await _tokenAppService.GetAsync(new GetTokenInput
+        {
+            Address = address,
+            Symbol = symbol,
+            ChainId = chainId
+        });
+        return tokenDto;
     }
 }

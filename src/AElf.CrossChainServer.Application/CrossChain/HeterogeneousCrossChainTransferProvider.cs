@@ -1,10 +1,16 @@
+using System;
+using System.Net;
 using System.Numerics;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Contracts;
+using AElf.CrossChainServer.ExceptionHandler;
 using AElf.CrossChainServer.Tokens;
+using AElf.ExceptionHandler;
 using Nethereum.Util;
+using Serilog;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.Domain.Entities;
 
 namespace AElf.CrossChainServer.CrossChain;
 
@@ -56,6 +62,9 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
         return await _reportInfoAppService.CalculateCrossChainProgressAsync(transfer.FromChainId, transfer.ReceiptId);
     }
 
+    [ExceptionHandler(typeof(Exception),typeof(InvalidOperationException),typeof(WebException),Message = "SendReceiveTransaction failed.",
+        TargetType = typeof(HeterogeneousCrossChainTransferProvider),
+        MethodName = nameof(HandleSendReceiveTransactionException))]
     public async Task<string> SendReceiveTransactionAsync(CrossChainTransfer transfer)
     {
         var transferToken = await _tokenRepository.GetAsync(transfer.TransferTokenId);
@@ -72,5 +81,17 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
         return await _bridgeContractAppService.SwapTokenAsync(transfer.ToChainId, swapId, transfer.ReceiptId,
             amount.ToString(),
             transfer.ToAddress);
+    }
+    
+    public async Task<FlowBehavior> HandleSendReceiveTransactionException(Exception ex, CrossChainTransfer transfer)
+    {
+        Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId).Error(ex,
+            "SendReceiveTransaction failed.{fromChainId},{toChainId},{transferTokenId},{transferAmount},{toAddress}",
+            transfer.FromChainId, transfer.ToChainId, transfer.TransferTokenId, transfer.TransferAmount,transfer.ToAddress);
+        return new FlowBehavior
+        {
+            ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,
+            ReturnValue = null
+        };
     }
 }

@@ -1,7 +1,9 @@
 using System;
 using System.Threading.Tasks;
 using AElf.Client.Dto;
+using AElf.CrossChainServer.ExceptionHandler;
 using AElf.CrossChainServer.Tokens;
+using AElf.ExceptionHandler;
 using Microsoft.Extensions.Options;
 using Nethereum.BlockchainProcessing.BlockStorage.Entities.Mapping;
 using Nethereum.Contracts.Standards.ERC20.ContractDefinition;
@@ -46,6 +48,9 @@ namespace AElf.CrossChainServer.Chains
             return latestBlockNumber.ToLong();
         }
         
+        [ExceptionHandler(typeof(Exception),Message = "Get evm chain status failed.",
+            TargetType = typeof(ExceptionHandlingService),
+            MethodName = nameof(ExceptionHandlingService.ThrowException))]
         public async Task<ChainStatusDto> GetChainStatusAsync(string chainId)
         {
             var client = BlockchainClientFactory.GetClient(chainId);
@@ -59,7 +64,7 @@ namespace AElf.CrossChainServer.Chains
                 ConfirmedBlockHeight = blockNumber - BlockConfirmationOptions.Value.ConfirmationCount[chainId]
             };
         }
-
+        
         public Task<TransactionResultDto> GetTransactionResultAsync(string chainId, string transactionId)
         {
             throw new NotImplementedException();

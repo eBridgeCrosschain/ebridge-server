@@ -1,9 +1,13 @@
+using System;
+using System.Net;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Contracts;
+using AElf.ExceptionHandler;
 using AElf.Types;
 using Google.Protobuf;
+using Serilog;
 using Volo.Abp.DependencyInjection;
 
 namespace AElf.CrossChainServer.CrossChain;
@@ -46,6 +50,9 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
             transfer.TransferTime);
     }
 
+    [ExceptionHandler(typeof(Exception),typeof(InvalidOperationException),typeof(WebException),Message = "SendReceiveTransaction failed.",
+        TargetType = typeof(HomogeneousCrossChainTransferProvider),
+        MethodName = nameof(HandleSendReceiveTransactionException))]
     public async Task<string> SendReceiveTransactionAsync(CrossChainTransfer transfer)
     {
         var txResult =
@@ -109,5 +116,17 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
         }
 
         return merklePath;
+    }
+    
+    private FlowBehavior HandleSendReceiveTransactionException(Exception ex, CrossChainTransfer transfer)
+    {
+        Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId).Error(ex,
+            "SendReceiveTransaction failed.{fromChainId},{toChainId},{transferTokenId},{transferAmount},{toAddress}",
+            transfer.FromChainId, transfer.ToChainId, transfer.TransferTokenId, transfer.TransferAmount,transfer.ToAddress);
+        return new FlowBehavior
+        {
+            ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,
+            ReturnValue = null
+        };
     }
 }

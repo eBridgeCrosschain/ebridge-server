@@ -3,24 +3,21 @@ using System.Threading.Tasks;
 using AElf.CrossChainServer.CrossChain;
 using GraphQL;
 using Microsoft.Extensions.Logging;
+using Serilog;
 using Volo.Abp;
 
 namespace AElf.CrossChainServer.Indexer;
 
 [RemoteService(IsEnabled = false)]
-
 public class IndexerCrossChainLimitInfoService : CrossChainServerAppService, IIndexerCrossChainLimitInfoService
 {
-    private readonly ILogger<IndexerCrossChainLimitInfoService> _logger;
 
     private readonly IGraphQLHelper _graphQlHelper;
 
-    public IndexerCrossChainLimitInfoService(IGraphQLClientFactory graphQlClientFactory,
-        ILogger<IndexerCrossChainLimitInfoService> logger)
+    public IndexerCrossChainLimitInfoService(IGraphQLClientFactory graphQlClientFactory)
     {
-        _logger = logger;
         _graphQlHelper =
-            new GraphQLHelper(graphQlClientFactory.GetClient(GraphQLClientEnum.CrossChainClient), _logger);
+            new GraphQLHelper(graphQlClientFactory.GetClient(GraphQLClientEnum.CrossChainClient));
     }
 
     public async Task<List<IndexerCrossChainLimitInfo>> GetAllCrossChainLimitInfoIndexAsync()
@@ -28,15 +25,19 @@ public class IndexerCrossChainLimitInfoService : CrossChainServerAppService, IIn
         return await GetCrossChainLimitInfoIndexAsync(null, null, null);
     }
 
-    public async Task<List<IndexerCrossChainLimitInfo>> GetCrossChainLimitInfoIndexAsync(string fromChainId, string toChainId, string symbol)
+    public async Task<List<IndexerCrossChainLimitInfo>> GetCrossChainLimitInfoIndexAsync(string fromChainId,
+        string toChainId, string symbol)
     {
         var skipCount = 0;
         var crossChainLimitInfos = new List<IndexerCrossChainLimitInfo>();
         List<IndexerCrossChainLimitInfo> crossChainLimitInfosTemp;
         do
         {
-            _logger.LogInformation(
-                "To get cross chain limit infos skipCount:{skipCount} toChainId:{toChainId} symbol:{symbol}", skipCount, toChainId, symbol);
+            Log.ForContext("toChainId", toChainId)
+                .Debug(
+                    "To get cross chain limit infos skipCount:{skipCount} toChainId:{toChainId} symbol:{symbol}",
+                    skipCount, toChainId, symbol);
+
             var indexerCrossChainLimitInfos =
                 await QueryCrossChainLimitInfoIndexAsync(skipCount, fromChainId, toChainId, symbol);
             if (indexerCrossChainLimitInfos?.DataList.IsNullOrEmpty() != false)
@@ -48,9 +49,10 @@ public class IndexerCrossChainLimitInfoService : CrossChainServerAppService, IIn
             crossChainLimitInfosTemp = indexerCrossChainLimitInfos.DataList;
             crossChainLimitInfos.AddRange(crossChainLimitInfosTemp);
         } while (crossChainLimitInfosTemp.Count == GraphQLHelper.PageCount);
+
         return crossChainLimitInfos;
     }
-    
+
     private async Task<IndexerCrossChainLimitInfos> QueryCrossChainLimitInfoIndexAsync(int skipCount,
         string fromChainId, string toChainId, string symbol)
     {

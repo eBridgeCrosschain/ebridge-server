@@ -4,6 +4,7 @@ using AElf.CrossChainServer.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace AElf.CrossChainServer.Migrations
 {
     [DbContext(typeof(CrossChainServerDbContext))]
-    partial class CrossChainServerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241014164424_Update_Abp")]
+    partial class Update_Abp
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -129,9 +132,6 @@ namespace AElf.CrossChainServer.Migrations
 
                     b.Property<Guid>("ReceiveTokenId")
                         .HasColumnType("char(36)");
-
-                    b.Property<int>("ReceiveTransactionAttemptTimes")
-                        .HasColumnType("int");
 
                     b.Property<string>("ReceiveTransactionId")
                         .HasColumnType("longtext");
@@ -580,6 +580,7 @@ namespace AElf.CrossChainServer.Migrations
                         .HasColumnName("CreationTime");
 
                     b.Property<string>("ExtraProperties")
+                        .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("ExtraProperties");
 
@@ -2546,6 +2547,8 @@ namespace AElf.CrossChainServer.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Name");
+
+                    b.HasIndex("NormalizedName");
 
                     b.ToTable("AbpTenants", (string)null);
                 });

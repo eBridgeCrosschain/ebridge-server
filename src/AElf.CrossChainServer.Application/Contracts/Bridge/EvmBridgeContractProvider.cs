@@ -4,13 +4,16 @@ using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
+using AElf.CrossChainServer.ExceptionHandler;
 using AElf.CrossChainServer.Tokens;
+using AElf.ExceptionHandler;
 using Nethereum.Util;
 using Nethereum.Web3;
+using Serilog;
 
 namespace AElf.CrossChainServer.Contracts.Bridge;
 
-public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvider
+public partial class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvider
 {
     private readonly ITokenAppService _tokenAppService;
 
@@ -57,7 +60,9 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
 
         return result;
     }
-
+    [ExceptionHandler(typeof(Exception),
+        TargetType = typeof(EvmBridgeContractProvider),
+        MethodName = nameof(HandleGetReceivedReceiptInfosException))]
     public async Task<List<ReceivedReceiptInfoDto>> GetReceivedReceiptInfosAsync(string chainId, string contractAddress,
         string fromChainId, Guid tokenId,
         long fromIndex, long endIndex)
@@ -95,6 +100,9 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
         return result;
     }
 
+    [ExceptionHandler(typeof(Exception),
+        TargetType = typeof(EvmBridgeContractProvider),
+        MethodName = nameof(HandleGetTransferReceiptInfosException))]
     public async Task<List<ReceiptIndexDto>> GetTransferReceiptIndexAsync(string chainId, string contractAddress,
         List<Guid> tokenIds, List<string> targetChainIds)
     {
@@ -179,6 +187,9 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
         throw new NotImplementedException();
     }
 
+    [ExceptionHandler(typeof(Exception),
+        TargetType = typeof(EvmBridgeContractProvider),
+        MethodName = nameof(HandleGetCurrentReceiptTokenBucketStatesException))]
     public async Task<List<TokenBucketDto>> GetCurrentReceiptTokenBucketStatesAsync(string chainId,
         string contractAddress, List<Guid> tokenIds,
         List<string> targetChainIds)
@@ -205,7 +216,10 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
             GetTokenBuckets(t.TokenCapacity, t.Rate, tokenDecimals[i])).ToList();
         return tokenBuckets;
     }
-
+    
+    [ExceptionHandler(typeof(Exception),
+        TargetType = typeof(EvmBridgeContractProvider),
+        MethodName = nameof(HandleGetCurrentSwapTokenBucketStatesException))]
     public async Task<List<TokenBucketDto>> GetCurrentSwapTokenBucketStatesAsync(string chainId, string contractAddress,
         List<Guid> tokenIds, List<string> fromChainIds)
     {

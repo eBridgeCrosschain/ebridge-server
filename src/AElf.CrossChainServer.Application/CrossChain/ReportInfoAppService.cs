@@ -6,12 +6,14 @@ using Nest;
 using System.Linq;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Contracts;
+using AElf.CrossChainServer.ExceptionHandler;
 using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.Settings;
-using Microsoft.Extensions.Logging;
+using AElf.ExceptionHandler;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
+using Serilog;
 using Volo.Abp;
+using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 
 namespace AElf.CrossChainServer.CrossChain;
@@ -72,7 +74,7 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
 
         if (info == null || info.Step >= step)
         {
-            Logger.LogDebug(
+            Log.Debug(
                 "Invalid report step. ChainId: {chainId}, RoundId: {roundId}, Step: {oldStep}, Input Step: {newStep}",
                 info?.ChainId, roundId, info?.Step, step);
             return;
@@ -117,7 +119,6 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
     public async Task UpdateStepAsync()
     {
         var q = await _reportInfoRepository.GetQueryableAsync();
-        Logger.LogInformation("Report query times: {queryTimes}", _reportQueryTimesOptions.QueryTimes);
         var list = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Step == ReportStep.Confirmed && o.QueryTimes < _reportQueryTimesOptions.QueryTimes));
 
@@ -161,7 +162,6 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
     public async Task ReSendQueryAsync()
     {
         var q = await _reportInfoRepository.GetQueryableAsync();
-        Logger.LogInformation("Max report resend times:{time}",_crossChainOptions.MaxReportResendTimes);
         var list = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Step == ReportStep.Proposed && o.ResendTimes < _crossChainOptions.MaxReportResendTimes));
 
@@ -188,8 +188,8 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
             else
             {
                 var txId = await SendQueryTransactionAsync(item);
-                Logger.LogInformation("ReSend Query, Resending Report: {reportId}, Query Tx Id: {txId}", item.Id, txId);
-
+                Log.ForContext("txId",txId)
+                    .Information("ReSend Query, Resending Report: {reportId}, Query Tx Id: {txId}", item.Id, txId);
                 item.QueryTransactionId = txId;
                 item.Step = ReportStep.Resending;
             }
@@ -203,6 +203,9 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
         }
     }
 
+    [ExceptionHandler(typeof(Exception),Message = "Check query transaction failed.",
+        TargetType = typeof(ExceptionHandlingService),
+        MethodName = nameof(ExceptionHandlingService.HandleExceptionWithOutReturnValue))]
     public async Task CheckQueryTransactionAsync()
     {
         var q = await _reportInfoRepository.GetQueryableAsync();

@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Serilog;
 using Volo.Abp;
 using Volo.Abp.Authorization;
 using Volo.Abp.Autofac;
@@ -7,6 +9,7 @@ using Volo.Abp.Data;
 using Volo.Abp.IdentityServer;
 using Volo.Abp.Modularity;
 using Volo.Abp.Threading;
+using Volo.Abp.Uow;
 
 namespace AElf.CrossChainServer;
 
@@ -52,9 +55,16 @@ public class CrossChainServerTestBaseModule : AbpModule
         {
             using (var scope = context.ServiceProvider.CreateScope())
             {
-                await scope.ServiceProvider
-                    .GetRequiredService<IDataSeeder>()
-                    .SeedAsync();
+                var dataSeeder = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
+                
+                using (var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>().Begin(new AbpUnitOfWorkOptions
+                       {
+                           IsTransactional = false  
+                       }))
+                {
+                    await dataSeeder.SeedAsync();
+                    await uow.CompleteAsync();  
+                }
             }
         });
     }

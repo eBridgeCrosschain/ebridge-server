@@ -24,7 +24,6 @@ namespace AElf.CrossChainServer.EntityHandler
                 .MinimumLevel.Information()
 #endif
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
-                .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
                 .Enrich.FromLogContext()
                 .ReadFrom.Configuration(configuration)
 #if DEBUG
