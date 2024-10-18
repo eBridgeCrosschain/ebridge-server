@@ -595,7 +595,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         }
     }
 
-    private void AddReceiveTransactionAttemptTimes(CrossChainTransfer transfer,List<CrossChainTransfer> toUpdate)
+    private async Task AddReceiveTransactionAttemptTimes(CrossChainTransfer transfer,List<CrossChainTransfer> toUpdate)
     {
         transfer.ReceiveTransactionAttemptTimes += 1;
         toUpdate.Add(transfer);

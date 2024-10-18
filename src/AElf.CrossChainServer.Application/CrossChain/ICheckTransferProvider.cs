@@ -52,7 +52,7 @@ public class CheckTransferProvider : ICheckTransferProvider
         var chain = await _chainAppService.GetAsync(toChainId);
         if (chain == null)
         {
-            Logger.LogInformation("No chain info.");
+            Log.Warning("No chain info.");
             return false;
         }
 
