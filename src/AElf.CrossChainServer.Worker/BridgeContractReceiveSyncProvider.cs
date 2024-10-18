@@ -28,10 +28,7 @@ public class BridgeContractReceiveSyncProvider :BridgeContractSyncProviderBase
     {
         return await BridgeContractAppService.GetReceiveReceiptIndexAsync(chainId, tokenIds, targetChainIds);
     }
-
-    [ExceptionHandler(typeof(Exception), typeof(EntityNotFoundException),
-        TargetType = typeof(BridgeContractReceiveSyncProvider),
-        MethodName = nameof(HandleReceiptException))]
+    
     protected override async Task<HandleReceiptResult> HandleReceiptAsync(string chainId, string targetChainId, Guid tokenId, long fromIndex, long endIndex)
     {
         var result = new HandleReceiptResult();

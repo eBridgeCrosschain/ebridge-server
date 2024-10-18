@@ -96,7 +96,7 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
     [ExceptionHandler(typeof(Exception), typeof(InvalidOperationException), typeof(ArgumentNullException), Message = "Insert bridge sync info failed.",
         TargetType = typeof(ExceptionHandlingService),
         MethodName = nameof(ExceptionHandlingService.HandleExceptionWithOutReturnValue))]
-    private async Task InsertBridgeSyncInfoAsync(BridgeContractSyncInfo info)
+    public virtual async Task InsertBridgeSyncInfoAsync(BridgeContractSyncInfo info)
     {
         await _bridgeContractSyncInfoRepository.InsertAsync(info);
     }
@@ -104,7 +104,7 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
     [ExceptionHandler(typeof(Exception), typeof(InvalidOperationException), typeof(ArgumentNullException), Message = "update bridge sync info failed.",
         TargetType = typeof(ExceptionHandlingService),
         MethodName = nameof(ExceptionHandlingService.HandleExceptionWithOutReturnValue))]
-    private async Task UpdateBridgeSyncInfoAsync(BridgeContractSyncInfo info)
+    public virtual async Task UpdateBridgeSyncInfoAsync(BridgeContractSyncInfo info)
     {
         await _bridgeContractSyncInfoRepository.UpdateAsync(info);
     }

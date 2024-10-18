@@ -21,6 +21,7 @@ public static class ExceptionHandlingService
     public static async Task<FlowBehavior> HandleExceptionWithOutReturnValue(Exception ex)
     {
         // Log.Error(ex,$"Handled exception: {message}",ex.Message);
+        Console.WriteLine("Handled exception: {0}", ex.Message);
         return new FlowBehavior
         {
             ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,

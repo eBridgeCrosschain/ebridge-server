@@ -24,7 +24,7 @@ public class BridgeContractProviderFactory : IBridgeContractProviderFactory, ITr
     [ExceptionHandler(typeof(Exception), Message = "Get bridge contract provider failed.",
         TargetType = typeof(ExceptionHandlingService),
         MethodName = nameof(ExceptionHandlingService.HandleException))]
-    public async Task<IBridgeContractProvider> GetBridgeContractProviderAsync(string chainId)
+    public virtual async Task<IBridgeContractProvider> GetBridgeContractProviderAsync(string chainId)
     {
         var chain = await _chainAppService.GetAsync(chainId);
         return chain == null ? null : _blockchainClientProviders.First(o => o.ChainType == chain.Type);

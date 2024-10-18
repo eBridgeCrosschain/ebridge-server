@@ -63,7 +63,7 @@ public partial class EvmBridgeContractProvider : EvmClientProvider, IBridgeContr
     [ExceptionHandler(typeof(Exception),
         TargetType = typeof(EvmBridgeContractProvider),
         MethodName = nameof(HandleGetReceivedReceiptInfosException))]
-    public async Task<List<ReceivedReceiptInfoDto>> GetReceivedReceiptInfosAsync(string chainId, string contractAddress,
+    public virtual async Task<List<ReceivedReceiptInfoDto>> GetReceivedReceiptInfosAsync(string chainId, string contractAddress,
         string fromChainId, Guid tokenId,
         long fromIndex, long endIndex)
     {
@@ -103,7 +103,7 @@ public partial class EvmBridgeContractProvider : EvmClientProvider, IBridgeContr
     [ExceptionHandler(typeof(Exception),
         TargetType = typeof(EvmBridgeContractProvider),
         MethodName = nameof(HandleGetTransferReceiptInfosException))]
-    public async Task<List<ReceiptIndexDto>> GetTransferReceiptIndexAsync(string chainId, string contractAddress,
+    public virtual async Task<List<ReceiptIndexDto>> GetTransferReceiptIndexAsync(string chainId, string contractAddress,
         List<Guid> tokenIds, List<string> targetChainIds)
     {
         var tokenAddress = new List<string>();
@@ -190,7 +190,7 @@ public partial class EvmBridgeContractProvider : EvmClientProvider, IBridgeContr
     [ExceptionHandler(typeof(Exception),
         TargetType = typeof(EvmBridgeContractProvider),
         MethodName = nameof(HandleGetCurrentReceiptTokenBucketStatesException))]
-    public async Task<List<TokenBucketDto>> GetCurrentReceiptTokenBucketStatesAsync(string chainId,
+    public virtual async Task<List<TokenBucketDto>> GetCurrentReceiptTokenBucketStatesAsync(string chainId,
         string contractAddress, List<Guid> tokenIds,
         List<string> targetChainIds)
     {
@@ -220,7 +220,7 @@ public partial class EvmBridgeContractProvider : EvmClientProvider, IBridgeContr
     [ExceptionHandler(typeof(Exception),
         TargetType = typeof(EvmBridgeContractProvider),
         MethodName = nameof(HandleGetCurrentSwapTokenBucketStatesException))]
-    public async Task<List<TokenBucketDto>> GetCurrentSwapTokenBucketStatesAsync(string chainId, string contractAddress,
+    public virtual async Task<List<TokenBucketDto>> GetCurrentSwapTokenBucketStatesAsync(string chainId, string contractAddress,
         List<Guid> tokenIds, List<string> fromChainIds)
     {
         var tokenAddress = new List<string>();

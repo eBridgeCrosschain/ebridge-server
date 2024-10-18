@@ -65,7 +65,7 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
     [ExceptionHandler(typeof(Exception),typeof(InvalidOperationException),typeof(WebException),Message = "SendReceiveTransaction failed.",
         TargetType = typeof(HeterogeneousCrossChainTransferProvider),
         MethodName = nameof(HandleSendReceiveTransactionException))]
-    public async Task<string> SendReceiveTransactionAsync(CrossChainTransfer transfer)
+    public virtual async Task<string> SendReceiveTransactionAsync(CrossChainTransfer transfer)
     {
         var transferToken = await _tokenRepository.GetAsync(transfer.TransferTokenId);
         var symbol =

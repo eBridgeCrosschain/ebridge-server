@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using AElf.CrossChainServer.MultiTenancy;
+using AElf.ExceptionHandler.ABP;
 using AElf.Indexing.Elasticsearch;
 using AElf.Indexing.Elasticsearch.Options;
 using Volo.Abp.AuditLogging;
@@ -33,7 +34,8 @@ namespace AElf.CrossChainServer;
     typeof(AbpSettingManagementDomainModule),
     typeof(AbpTenantManagementDomainModule),
     typeof(AbpEmailingModule),
-    typeof(AElfIndexingElasticsearchModule)
+    typeof(AElfIndexingElasticsearchModule),
+    typeof(AOPExceptionModule)
 )]
 public class CrossChainServerDomainModule : AbpModule
 {

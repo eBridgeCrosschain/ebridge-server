@@ -6,6 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="AElf.ExceptionHandler.ABP" Version="1.0.0" />
         <PackageReference Include="GraphQL.Client.Serializer.Newtonsoft" Version="5.1.1" />
         <PackageReference Include="Serilog.AspNetCore" Version="4.0.0" />
         <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />

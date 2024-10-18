@@ -11,10 +11,8 @@ using Volo.Abp.Modularity;
 using Microsoft.Extensions.Configuration;
 using AElf.CrossChainServer.EntityHandler.Core;
 using AElf.CrossChainServer.Worker;
+using AElf.ExceptionHandler.ABP;
 using AElf.OpenTelemetry;
-using GraphQL.Client.Abstractions;
-using GraphQL.Client.Http;
-using GraphQL.Client.Serializer.Newtonsoft;
 using Volo.Abp.Auditing;
 using Volo.Abp.BlobStoring;
 using Volo.Abp.BlobStoring.Aliyun;
@@ -31,7 +29,8 @@ namespace AElf.CrossChainServer.EntityHandler
         typeof(AbpBlobStoringAliyunModule),
         typeof(CrossChainServerWorkerModule),
         typeof(CrossChainServerApplicationModule),
-        typeof(OpenTelemetryModule)
+        typeof(OpenTelemetryModule),
+        typeof(AOPExceptionModule)
     )]
     public class CrossChainServerEntityHandlerModule : AbpModule
     {

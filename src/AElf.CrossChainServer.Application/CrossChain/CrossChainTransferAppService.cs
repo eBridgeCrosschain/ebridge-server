@@ -213,16 +213,16 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
 
     [ExceptionHandler(typeof(DbUpdateConcurrencyException), typeof(DbUpdateException),
         TargetType = typeof(CrossChainTransferAppService),
-        MethodName = nameof(HandleDbException))]
-    private Task UpdateCrossChainTransferAsync(CrossChainTransfer transfer)
+        MethodName = nameof(HandleTransferDbException))]
+    public virtual Task UpdateCrossChainTransferAsync(CrossChainTransfer transfer)
     {
         return _crossChainTransferRepository.UpdateAsync(transfer);
     }
 
     [ExceptionHandler(typeof(DbUpdateConcurrencyException), typeof(DbUpdateException),
         TargetType = typeof(CrossChainTransferAppService),
-        MethodName = nameof(HandleDbException))]
-    private Task InsertCrossChainTransferAsync(CrossChainTransfer transfer)
+        MethodName = nameof(HandleTransferDbException))]
+    public virtual Task InsertCrossChainTransferAsync(CrossChainTransfer transfer)
     {
         return _crossChainTransferRepository.InsertAsync(transfer, autoSave: true);
     }
@@ -336,7 +336,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
     [ExceptionHandler(typeof(Exception),typeof(InvalidOperationException),Message = "Get cross chain transfer failed.",
         TargetType = typeof(ExceptionHandlingService),
         MethodName = nameof(ExceptionHandlingService.HandleException))]
-    private async Task<CrossChainTransfer> FindCrossChainTransferAsync(string fromChainId, string toChainId,
+    public virtual async Task<CrossChainTransfer> FindCrossChainTransferAsync(string fromChainId, string toChainId,
         string transferTransactionId, string receiptId)
     {
         var crossChainType = await GetCrossChainTypeAsync(fromChainId, toChainId);
@@ -453,7 +453,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
     [ExceptionHandler(typeof(Exception),Message = "Update receive transaction failed.",
         TargetType = typeof(ExceptionHandlingService),
         MethodName = nameof(ExceptionHandlingService.HandleExceptionWithOutReturnValue))]
-    public async Task UpdateReceiveTransactionAsync()
+    public virtual async Task UpdateReceiveTransactionAsync()
     {
         var page = 0;
         var toUpdate = new List<CrossChainTransfer>();
@@ -519,7 +519,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
     [ExceptionHandler(typeof(Exception),Message = "Auto receive transaction failed.",
         TargetType = typeof(ExceptionHandlingService),
         MethodName = nameof(ExceptionHandlingService.HandleExceptionWithOutReturnValue))]
-    public async Task AutoReceiveAsync()
+    public virtual async Task AutoReceiveAsync()
     {
         var page = 0;
         var toUpdate = new List<CrossChainTransfer>();
@@ -655,15 +655,24 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
     
     public async Task Test()
     {
-        await TestB();
+        // try
+        // {
+            var a = await TestB();
+            Console.WriteLine(a);
+        // }
+        // catch (Exception e)
+        // {
+        //     Console.WriteLine(e);
+        // }
     }
 
-    [ExceptionHandler(typeof(Exception),Message = "failed.",
-        TargetType = typeof(ExceptionHandlingService),
-        MethodName = nameof(ExceptionHandlingService.HandleExceptionWithOutReturnValue))]
-    public virtual async Task TestB()
+    // [ExceptionHandler(typeof(Exception),Message = "failed.",
+    //     TargetType = typeof(ExceptionHandlingService),
+    //     MethodName = nameof(ExceptionHandlingService.HandleExceptionWithOutReturnValue),ReturnDefault = ReturnDefault.New)]
+    [ExceptionHandler(typeof(Exception),Message = "failed.", ReturnDefault = ReturnDefault.Default)]
+    public virtual async Task<Dictionary<long,long>> TestB()
     {
-        await TestC();
+        throw new Exception("err");
     }
     
     public async Task TestC()
