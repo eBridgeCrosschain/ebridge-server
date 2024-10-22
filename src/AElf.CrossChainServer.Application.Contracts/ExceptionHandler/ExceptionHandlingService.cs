@@ -9,7 +9,7 @@ public static class ExceptionHandlingService
 {
     public static async Task<FlowBehavior> HandleException(Exception ex)
     {
-        // Log.Error(ex,$"Handled exception: {message}",ex.Message);
+        Log.Error("Handled exception: {message}",ex.Message);
         return new FlowBehavior
         {
             ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,
@@ -19,7 +19,7 @@ public static class ExceptionHandlingService
     
     public static async Task<FlowBehavior> HandleExceptionReturnBool(Exception ex)
     {
-        // Log.Error(ex,$"Handled exception: {message}",ex.Message);
+        Log.Error("Handled exception: {message}",ex.Message);
         return new FlowBehavior
         {
             ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,
@@ -29,7 +29,7 @@ public static class ExceptionHandlingService
     
     public static async Task<FlowBehavior> HandleExceptionReturnLong(Exception ex)
     {
-        // Log.Error(ex,$"Handled exception: {message}",ex.Message);
+        Log.Error("Handled exception: {message}",ex.Message);
         return new FlowBehavior
         {
             ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,
@@ -40,16 +40,16 @@ public static class ExceptionHandlingService
     
     public static async Task<FlowBehavior> HandleExceptionWithOutReturnValue(Exception ex)
     {
-        // Log.Error(ex,$"Handled exception: {message}",ex.Message);
+        Log.Error("Handled exception: {message}",ex.Message);
         return new FlowBehavior
         {
             ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,
         };
     }
     
-    public static async Task<FlowBehavior> ThrowException(Exception ex, string message)
+    public static async Task<FlowBehavior> ThrowException(Exception ex)
     {
-        Log.Error(ex,$"Handled exception: {message}",ex.Message);
+        Log.Error("Handled exception: {message}",ex.Message);
         return new FlowBehavior
         {
             ExceptionHandlingStrategy = ExceptionHandlingStrategy.Throw,
@@ -57,9 +57,9 @@ public static class ExceptionHandlingService
         };
     }
     
-    public static async Task<FlowBehavior> HandleExceptionAndContinue(Exception ex, string message)
+    public static async Task<FlowBehavior> HandleExceptionAndContinue(Exception ex)
     {
-        Log.Error(ex,$"Handled exception: {message}",ex.Message);
+        Log.Error("Handled exception: {message}",ex.Message);
         return new FlowBehavior
         {
             ExceptionHandlingStrategy = ExceptionHandlingStrategy.Continue,

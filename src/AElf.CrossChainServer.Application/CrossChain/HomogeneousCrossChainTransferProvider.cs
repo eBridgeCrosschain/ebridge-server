@@ -52,7 +52,7 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
 
     [ExceptionHandler(typeof(Exception),typeof(InvalidOperationException),typeof(WebException),Message = "SendReceiveTransaction failed.",
         TargetType = typeof(HomogeneousCrossChainTransferProvider),
-        MethodName = nameof(HandleSendReceiveTransactionException))]
+        MethodName = nameof(HandleSendReceiveTransactionException),ReturnDefault = ReturnDefault.Default)]
     public virtual async Task<string> SendReceiveTransactionAsync(CrossChainTransfer transfer)
     {
         var txResult =
@@ -125,8 +125,7 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
             transfer.FromChainId, transfer.ToChainId, transfer.TransferTokenId, transfer.TransferAmount,transfer.ToAddress);
         return new FlowBehavior
         {
-            ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,
-            ReturnValue = null
+            ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return
         };
     }
 }

@@ -17,14 +17,4 @@ public partial class CrossChainTransferAppService
             ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,
         };
     }
-    
-    public async Task<FlowBehavior> HandleAutoReceiveException(Exception ex, CrossChainTransfer transfer,List<CrossChainTransfer> toUpdate)
-    {
-        Log.ForContext("fromChainId",transfer.FromChainId).ForContext("toChainId",transfer.ToChainId).Error($"Send auto receive failed: {ex.Message}");
-        await AddReceiveTransactionAttemptTimes(transfer, toUpdate);
-        return new FlowBehavior
-        {
-            ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,
-        };
-    }
 }
