@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.CrossChain;
+using AElf.ExceptionHandler;
 using GraphQL;
 using Microsoft.Extensions.Logging;
 using Serilog;
@@ -53,7 +55,9 @@ public class IndexerCrossChainLimitInfoService : CrossChainServerAppService, IIn
         return crossChainLimitInfos;
     }
 
-    private async Task<IndexerCrossChainLimitInfos> QueryCrossChainLimitInfoIndexAsync(int skipCount,
+    [ExceptionHandler(typeof(Exception),Message = "[Indexer cross chain limit] Query cross chain limit failed.",
+        ReturnDefault = ReturnDefault.Default, LogTargets = new[] {"fromChainId","toChainId","symbol"})]
+    public virtual async Task<IndexerCrossChainLimitInfos> QueryCrossChainLimitInfoIndexAsync(int skipCount,
         string fromChainId, string toChainId, string symbol)
     {
         var indexerCommonResult = await _graphQlHelper.QueryAsync<IndexerCrossChainLimitInfos>(new GraphQLRequest

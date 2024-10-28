@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.EntityHandler.Extension;
+using AElf.ExceptionHandler.ABP;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -57,6 +58,7 @@ namespace AElf.CrossChainServer.EntityHandler
                 .ConfigureAppConfiguration((h,c)=>c.AddJsonFile("apollo.appsettings.json")) 
                 .UseApollo()
                 .UseAutofac()
+                .UseAElfExceptionHandler()
                 .UseSerilog();
     }
     

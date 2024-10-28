@@ -41,7 +41,7 @@ public class CheckTransferProvider : ICheckTransferProvider
 
     [ExceptionHandler(typeof(Exception), Message = "Check transfer error.",
         TargetType = typeof(ExceptionHandlingService),
-        MethodName = nameof(ExceptionHandlingService.HandleExceptionReturnBool))]
+        MethodName = nameof(ExceptionHandlingService.HandleException))]
     public virtual async Task<bool> CheckTransferAsync(string fromChainId, string toChainId, Guid tokenId,
         decimal transferAmount)
     {
@@ -104,8 +104,7 @@ public class CheckTransferProvider : ICheckTransferProvider
 
 
     [ExceptionHandler(typeof(Exception), Message = "Check transfer: get token info error.",
-        TargetType = typeof(ExceptionHandlingService),
-        MethodName = nameof(ExceptionHandlingService.HandleException))]
+        ReturnDefault = ReturnDefault.Default,LogTargets = new[]{"fromChainId","toChainId","tokenId"})]
     public virtual async Task<TokenDto> GetTokenInfoAsync(string fromChainId, string toChainId, Guid tokenId)
     {
         var transferToken = await _tokenAppService.GetAsync(tokenId);

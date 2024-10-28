@@ -62,9 +62,7 @@ public abstract class BridgeContractSyncProviderBase : IBridgeContractSyncProvid
             fromIndex + result.Count - 1);
     }
 
-    [ExceptionHandler(typeof(Exception),Message = "Get confirmed height failed.",
-        TargetType = typeof(ExceptionHandlingService),
-        MethodName = nameof(ExceptionHandlingService.ThrowException))]    
+
     public virtual async Task<long> GetConfirmedHeightAsync(string chainId)
     {
         var chainStatus = await BlockchainAppService.GetChainStatusAsync(chainId);
@@ -74,21 +72,9 @@ public abstract class BridgeContractSyncProviderBase : IBridgeContractSyncProvid
     protected abstract Task<List<ReceiptIndexDto>> GetReceiveReceiptIndexAsync(string chainId, List<Guid> tokenIds,
         List<string> targetChainIds);
     
-    [ExceptionHandler(typeof(Exception), typeof(EntityNotFoundException),
-        TargetType = typeof(BridgeContractSyncProviderBase),
-        MethodName = nameof(HandleReceiptException))]
+    [ExceptionHandler(typeof(Exception), typeof(EntityNotFoundException),Message = "[Bridge contract sync] Handle receipt failed.",
+        ReturnDefault = ReturnDefault.New, LogTargets = new[] {"chainId", "targetChainId", "tokenId", "fromIndex", "endIndex"})]
     protected abstract Task<HandleReceiptResult> HandleReceiptAsync(string chainId, string targetChainId, Guid tokenId, long fromIndex, long endIndex);
-    
-    public static async Task<FlowBehavior> HandleReceiptException(Exception ex, string chainId, string targetChainId, Guid tokenId, long fromIndex, long endIndex)
-    {
-        Log.ForContext("chainId", chainId).Error(ex,
-            "Handle receipt failed, ChainId: {key}, TargetChainId: {targetChainId}, TokenId: {tokenId}, FromIndex: {fromIndex}, EndIndex: {endIndex}", chainId, targetChainId, tokenId, fromIndex, endIndex);
-        return new FlowBehavior
-        {
-            ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,
-            ReturnValue = new HandleReceiptResult()
-        };
-    }
 }
 
 public class HandleReceiptResult

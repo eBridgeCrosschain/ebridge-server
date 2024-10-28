@@ -1,6 +1,8 @@
+using System;
 using System.Threading.Tasks;
 using AElf.Client.Dto;
 using AElf.CrossChainServer.Tokens;
+using AElf.ExceptionHandler;
 using Volo.Abp;
 
 namespace AElf.CrossChainServer.Chains
@@ -37,7 +39,9 @@ namespace AElf.CrossChainServer.Chains
             return await provider.GetBlockByHeightAsync(chainId, height,includeTransactions);
         }
 
-        public async Task<ChainStatusDto> GetChainStatusAsync(string chainId)
+        [ExceptionHandler(typeof(Exception),Message = "[Bridge chain] Get chain status failed.",
+            ReturnDefault = ReturnDefault.New, LogTargets = new[] {"chainId"})]
+        public virtual async Task<ChainStatusDto> GetChainStatusAsync(string chainId)
         {
             var provider = await _blockchainClientProviderFactory.GetBlockChainClientProviderAsync(chainId);
             if(provider == null)
@@ -46,7 +50,8 @@ namespace AElf.CrossChainServer.Chains
             }
             return await provider.GetChainStatusAsync(chainId);
         }
-
+        [ExceptionHandler(typeof(Exception),Message = "[Bridge chain] Get transaction result failed.",
+            ReturnDefault = ReturnDefault.New, LogTargets = new[] {"chainId","transactionId"})]
         public async Task<TransactionResultDto> GetTransactionResultAsync(string chainId, string transactionId)
         {
             var provider = await _blockchainClientProviderFactory.GetBlockChainClientProviderAsync(chainId);

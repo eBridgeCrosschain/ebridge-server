@@ -28,9 +28,6 @@ public class BridgeContractTransferSyncProvider :BridgeContractSyncProviderBase
         return await BridgeContractAppService.GetTransferReceiptIndexAsync(chainId, tokenIds, targetChainIds);
     }
     
-    [ExceptionHandler(typeof(Exception), typeof(EntityNotFoundException),
-        TargetType = typeof(BridgeContractTransferSyncProvider),
-        MethodName = nameof(HandleReceiptException))]
     protected override async Task<HandleReceiptResult> HandleReceiptAsync(string chainId, string targetChainId, Guid tokenId, long fromIndex, long endIndex)
     {
         var result = new HandleReceiptResult();
@@ -67,15 +64,5 @@ public class BridgeContractTransferSyncProvider :BridgeContractSyncProviderBase
         }
 
         return result;
-    }
-    private async Task<FlowBehavior> HandleReceiptException(Exception ex, string chainId, string targetChainId, Guid tokenId, long fromIndex, long endIndex)
-    {
-        Log.ForContext("chainId", chainId).Error(ex,
-            "Handle receipt failed, ChainId: {key}, TargetChainId: {targetChainId}, TokenId: {tokenId}, FromIndex: {fromIndex}, EndIndex: {endIndex}", chainId, targetChainId, tokenId, fromIndex, endIndex);
-        return new FlowBehavior
-        {
-            ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,
-            ReturnValue = new HandleReceiptResult()
-        };
     }
 }

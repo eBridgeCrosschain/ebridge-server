@@ -94,16 +94,14 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
     }
 
     [ExceptionHandler(typeof(Exception), typeof(InvalidOperationException), typeof(ArgumentNullException), Message = "Insert bridge sync info failed.",
-        TargetType = typeof(ExceptionHandlingService),
-        MethodName = nameof(ExceptionHandlingService.HandleExceptionWithOutReturnValue))]
+        LogTargets = new[]{"info"})]
     public virtual async Task InsertBridgeSyncInfoAsync(BridgeContractSyncInfo info)
     {
         await _bridgeContractSyncInfoRepository.InsertAsync(info);
     }
 
     [ExceptionHandler(typeof(Exception), typeof(InvalidOperationException), typeof(ArgumentNullException), Message = "update bridge sync info failed.",
-        TargetType = typeof(ExceptionHandlingService),
-        MethodName = nameof(ExceptionHandlingService.HandleExceptionWithOutReturnValue))]
+        LogTargets = new[]{"info"})]
     public virtual async Task UpdateBridgeSyncInfoAsync(BridgeContractSyncInfo info)
     {
         await _bridgeContractSyncInfoRepository.UpdateAsync(info);
@@ -153,7 +151,9 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
         return await provider.GetSwapIdByTokenAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].BridgeOutContract, fromChainId, symbol);
     }
-
+    
+    [ExceptionHandler(typeof(Exception), Message = "Swap token failed.",ReturnDefault = ReturnDefault.Default, 
+        LogTargets = new[]{"chainId","swapId","receiptId","originAmount","receiverAddress"})]
     public async Task<string> SwapTokenAsync(string chainId, string swapId, string receiptId, string originAmount,
         string receiverAddress)
     {

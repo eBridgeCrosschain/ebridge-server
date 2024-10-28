@@ -2,9 +2,7 @@ using System;
 using System.Threading.Tasks;
 using AElf.Client.Dto;
 using AElf.Client.Service;
-using AElf.CrossChainServer.ExceptionHandler;
 using AElf.CrossChainServer.Tokens;
-using AElf.ExceptionHandler;
 using AElf.Types;
 using Google.Protobuf;
 using Microsoft.Extensions.Options;
@@ -12,7 +10,7 @@ using GetTokenInfoInput = AElf.Client.MultiToken.GetTokenInfoInput;
 
 namespace AElf.CrossChainServer.Chains
 {
-    public partial class AElfClientProvider : IBlockchainClientProvider
+    public class AElfClientProvider : IBlockchainClientProvider
     {
         protected readonly IBlockchainClientFactory<AElfClient> BlockchainClientFactory;
         private readonly AccountOptions _accountOptions;
@@ -49,10 +47,7 @@ namespace AElf.CrossChainServer.Chains
                 Symbol = token.Symbol
             };
         }
-
-        [ExceptionHandler(typeof(Exception),Message = "Get block height failed.",
-            TargetType = typeof(ExceptionHandlingService),
-            MethodName = nameof(ExceptionHandlingService.ThrowException))]
+        
         public virtual async Task<BlockDto> GetBlockByHeightAsync(string chainId, long height, bool includeTransactions = false)
         {
             var client = BlockchainClientFactory.GetClient(chainId);
@@ -80,10 +75,7 @@ namespace AElf.CrossChainServer.Chains
         {
             throw new NotImplementedException();
         }
-
-        [ExceptionHandler(typeof(Exception),Message = "Get chain status failed.",
-            TargetType = typeof(ExceptionHandlingService),
-            MethodName = nameof(ExceptionHandlingService.ThrowException))]
+        
         public virtual async Task<ChainStatusDto> GetChainStatusAsync(string chainId)
         {
             var client = BlockchainClientFactory.GetClient(chainId);
@@ -95,11 +87,8 @@ namespace AElf.CrossChainServer.Chains
                 ConfirmedBlockHeight = status.LastIrreversibleBlockHeight
             };
         }
-
-        [ExceptionHandler(typeof(Exception),
-            TargetType = typeof(AElfClientProvider),
-            MethodName = nameof(HandleGetTransactionResultException))]
-        public virtual async Task<TransactionResultDto> GetTransactionResultAsync(string chainId, string transactionId)
+        
+        public async Task<TransactionResultDto> GetTransactionResultAsync(string chainId, string transactionId)
         {
             var client = BlockchainClientFactory.GetClient(chainId);
             var result = await client.GetTransactionResultAsync(transactionId);

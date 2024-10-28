@@ -4,16 +4,14 @@ using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
-using AElf.CrossChainServer.ExceptionHandler;
 using AElf.CrossChainServer.Tokens;
 using AElf.ExceptionHandler;
 using Nethereum.Util;
 using Nethereum.Web3;
-using Serilog;
 
 namespace AElf.CrossChainServer.Contracts.Bridge;
 
-public partial class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvider
+public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvider
 {
     private readonly ITokenAppService _tokenAppService;
 
@@ -23,7 +21,8 @@ public partial class EvmBridgeContractProvider : EvmClientProvider, IBridgeContr
     {
         _tokenAppService = tokenAppService;
     }
-
+    [ExceptionHandler(typeof(Exception), Message = "[Evm bridge contract] Get send receipt infos failed.",
+        ReturnDefault = ReturnDefault.New, LogTargets = new[]{"chainId","contractAddress","targetChainId","tokenId","fromIndex","endIndex"})]
     public async Task<List<ReceiptInfoDto>> GetSendReceiptInfosAsync(string chainId, string contractAddress,
         string targetChainId, Guid tokenId,
         long fromIndex, long endIndex)
@@ -60,9 +59,9 @@ public partial class EvmBridgeContractProvider : EvmClientProvider, IBridgeContr
 
         return result;
     }
-    [ExceptionHandler(typeof(Exception),
-        TargetType = typeof(EvmBridgeContractProvider),
-        MethodName = nameof(HandleGetReceivedReceiptInfosException))]
+    
+    [ExceptionHandler(typeof(Exception), Message = "[Evm bridge contract] Get received receipt info failed.",
+        ReturnDefault = ReturnDefault.New, LogTargets = new[]{"chainId","contractAddress","fromChainId","tokenId","fromIndex","endIndex"})]
     public virtual async Task<List<ReceivedReceiptInfoDto>> GetReceivedReceiptInfosAsync(string chainId, string contractAddress,
         string fromChainId, Guid tokenId,
         long fromIndex, long endIndex)
@@ -100,9 +99,8 @@ public partial class EvmBridgeContractProvider : EvmClientProvider, IBridgeContr
         return result;
     }
 
-    [ExceptionHandler(typeof(Exception),
-        TargetType = typeof(EvmBridgeContractProvider),
-        MethodName = nameof(HandleGetTransferReceiptInfosException))]
+    [ExceptionHandler(typeof(Exception), Message = "[Evm bridge contract] Get transfer receipt index failed.",
+        ReturnDefault = ReturnDefault.New, LogTargets = new[]{"chainId","contractAddress","tokenIds","targetChainIds"})]
     public virtual async Task<List<ReceiptIndexDto>> GetTransferReceiptIndexAsync(string chainId, string contractAddress,
         List<Guid> tokenIds, List<string> targetChainIds)
     {
@@ -131,7 +129,8 @@ public partial class EvmBridgeContractProvider : EvmClientProvider, IBridgeContr
             Index = (long)t
         }).ToList();
     }
-
+    [ExceptionHandler(typeof(Exception), Message = "[Evm bridge contract] Get receive receipt index failed.",
+        ReturnDefault = ReturnDefault.New, LogTargets = new[]{"chainId","contractAddress","tokenIds","fromChainIds"})]
     public async Task<List<ReceiptIndexDto>> GetReceiveReceiptIndexAsync(string chainId, string contractAddress,
         List<Guid> tokenIds, List<string> fromChainIds)
     {
@@ -187,9 +186,8 @@ public partial class EvmBridgeContractProvider : EvmClientProvider, IBridgeContr
         throw new NotImplementedException();
     }
 
-    [ExceptionHandler(typeof(Exception),
-        TargetType = typeof(EvmBridgeContractProvider),
-        MethodName = nameof(HandleGetCurrentReceiptTokenBucketStatesException))]
+    [ExceptionHandler(typeof(Exception), Message = "[Evm bridge contract] Get current receipt token bucket states failed.",
+        ReturnDefault = ReturnDefault.New, LogTargets = new[]{"chainId","contractAddress","tokenIds","targetChainIds"})]
     public virtual async Task<List<TokenBucketDto>> GetCurrentReceiptTokenBucketStatesAsync(string chainId,
         string contractAddress, List<Guid> tokenIds,
         List<string> targetChainIds)
@@ -217,9 +215,8 @@ public partial class EvmBridgeContractProvider : EvmClientProvider, IBridgeContr
         return tokenBuckets;
     }
     
-    [ExceptionHandler(typeof(Exception),
-        TargetType = typeof(EvmBridgeContractProvider),
-        MethodName = nameof(HandleGetCurrentSwapTokenBucketStatesException))]
+    [ExceptionHandler(typeof(Exception), Message = "[Evm bridge contract] Get current swap token bucket states failed.",
+        ReturnDefault = ReturnDefault.New, LogTargets = new[]{"chainId","contractAddress","tokenIds","fromChainIds"})]
     public virtual async Task<List<TokenBucketDto>> GetCurrentSwapTokenBucketStatesAsync(string chainId, string contractAddress,
         List<Guid> tokenIds, List<string> fromChainIds)
     {

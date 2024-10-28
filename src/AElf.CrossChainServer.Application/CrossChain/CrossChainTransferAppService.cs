@@ -6,6 +6,7 @@ using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.ExceptionHandler;
 using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.Tokens;
+using AElf.CrossChainServer.Worker;
 using AElf.ExceptionHandler;
 using AElf.Indexing.Elasticsearch;
 using Microsoft.EntityFrameworkCore;
@@ -334,9 +335,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
     }
 
     [ExceptionHandler(typeof(Exception), typeof(InvalidOperationException),
-        Message = "Get cross chain transfer failed.",
-        TargetType = typeof(ExceptionHandlingService),
-        MethodName = nameof(ExceptionHandlingService.HandleException))]
+        Message = "Find cross chain transfer failed.",ReturnDefault = ReturnDefault.Default, LogTargets = new[]{"fromChainId","toChainId","transferTransactionId","receiptId"})]
     public virtual async Task<CrossChainTransfer> FindCrossChainTransferAsync(string fromChainId, string toChainId,
         string transferTransactionId, string receiptId)
     {
@@ -451,9 +450,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         return crossChainTransfers;
     }
 
-    [ExceptionHandler(typeof(Exception), Message = "Update receive transaction failed.",
-        TargetType = typeof(ExceptionHandlingService),
-        MethodName = nameof(ExceptionHandlingService.HandleExceptionWithOutReturnValue))]
+    [ExceptionHandler(typeof(Exception), Message = "Update receive transaction failed.")]
     public virtual async Task UpdateReceiveTransactionAsync()
     {
         var page = 0;

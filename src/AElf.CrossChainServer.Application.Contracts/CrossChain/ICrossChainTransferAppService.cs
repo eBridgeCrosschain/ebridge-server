@@ -15,5 +15,5 @@ public interface ICrossChainTransferAppService
     Task UpdateReceiveTransactionAsync();
     Task AutoReceiveAsync();
     Task CheckReceiveTransactionAsync();
-    Task Test();
+    Task<string> Test(string chainId);
 }

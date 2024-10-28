@@ -2,13 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AElf.CrossChainServer.ExceptionHandler;
 using AElf.CrossChainServer.Tokens;
 using AElf.ExceptionHandler;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using Serilog;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Entities;
 
@@ -61,9 +57,9 @@ public class BridgeContractSyncService : IBridgeContractSyncService, ITransientD
         }
     }
     
-    [ExceptionHandler(typeof(Exception), typeof(EntityNotFoundException),Message = "Token not found.",
-        TargetType = typeof(ExceptionHandlingService),
-        MethodName = nameof(ExceptionHandlingService.HandleException))]
+
+    [ExceptionHandler(typeof(Exception),typeof(EntityNotFoundException), Message = "[Bridge contract sync] Token not found.", 
+        ReturnDefault = ReturnDefault.Default, LogTargets = new[]{"chainId", "address", "symbol"})]
     public virtual async Task<TokenDto> GetTokenInfoAsync(string chainId, string address, string symbol)
     {
         var tokenDto = await _tokenAppService.GetAsync(new GetTokenInput

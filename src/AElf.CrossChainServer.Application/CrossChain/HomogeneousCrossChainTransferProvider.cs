@@ -36,7 +36,8 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
 
     public CrossChainType CrossChainType { get; } = CrossChainType.Homogeneous;
 
-    public async Task<CrossChainTransfer> FindTransferAsync(string fromChainId, string toChainId, string transferTransactionId, string receiptId)
+    public async Task<CrossChainTransfer> FindTransferAsync(string fromChainId, string toChainId,
+        string transferTransactionId, string receiptId)
     {
         return await _crossChainTransferRepository.FindAsync(o =>
             o.FromChainId == fromChainId && o.ToChainId == toChainId &&
@@ -50,61 +51,62 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
             transfer.TransferTime);
     }
 
-    [ExceptionHandler(typeof(Exception),typeof(InvalidOperationException),typeof(WebException),Message = "SendReceiveTransaction failed.",
-        TargetType = typeof(HomogeneousCrossChainTransferProvider),
-        MethodName = nameof(HandleSendReceiveTransactionException),ReturnDefault = ReturnDefault.Default)]
+    [ExceptionHandler(typeof(Exception), typeof(InvalidOperationException), typeof(WebException),
+        Message = "SendReceiveTransaction failed.",ReturnDefault = ReturnDefault.Default,
+        LogTargets = new[]{"transfer"})]
     public virtual async Task<string> SendReceiveTransactionAsync(CrossChainTransfer transfer)
     {
         var txResult =
-                await _blockchainAppService.GetTransactionResultAsync(transfer.FromChainId,
-                    transfer.TransferTransactionId);
-            var parentHeight = txResult.BlockHeight;
-            
-            var paramsJson = JsonNode.Parse(txResult.Transaction.Params);
-            var param = new AElf.Contracts.MultiToken.CrossChainTransferInput
-            {
-                To = Address.FromBase58(paramsJson["to"].ToString()),
-                Amount = long.Parse(paramsJson["amount"].ToString()),
-                Symbol = paramsJson["symbol"].ToString(),
-                IssueChainId = int.Parse(paramsJson["issueChainId"].ToString()),
-                ToChainId = int.Parse(paramsJson["toChainId"].ToString())
-            };
-            if (paramsJson["memo"] != null)
-            {
-                param.Memo = paramsJson["memo"].ToString(); 
-            }
+            await _blockchainAppService.GetTransactionResultAsync(transfer.FromChainId,
+                transfer.TransferTransactionId);
+        var parentHeight = txResult.BlockHeight;
 
-            var transaction = new Transaction
-            {
-                From = Address.FromBase58(txResult.Transaction.From),
-                To = Address.FromBase58(txResult.Transaction.To),
-                Params = param.ToByteString(),
-                Signature = ByteString.FromBase64(txResult.Transaction.Signature),
-                MethodName = txResult.Transaction.MethodName,
-                RefBlockNumber = txResult.Transaction.RefBlockNumber,
-                RefBlockPrefix = ByteString.FromBase64(txResult.Transaction.RefBlockPrefix)
-            };
+        var paramsJson = JsonNode.Parse(txResult.Transaction.Params);
+        var param = new AElf.Contracts.MultiToken.CrossChainTransferInput
+        {
+            To = Address.FromBase58(paramsJson["to"].ToString()),
+            Amount = long.Parse(paramsJson["amount"].ToString()),
+            Symbol = paramsJson["symbol"].ToString(),
+            IssueChainId = int.Parse(paramsJson["issueChainId"].ToString()),
+            ToChainId = int.Parse(paramsJson["toChainId"].ToString())
+        };
+        if (paramsJson["memo"] != null)
+        {
+            param.Memo = paramsJson["memo"].ToString();
+        }
 
-            var merklePath = await GetMerklePathAsync(transfer.FromChainId, transfer.TransferTransactionId);
-            if (transfer.FromChainId != CrossChainServerConsts.AElfMainChainId)
-            {
-                var merkleProofContext = await _crossChainContractAppService.GetBoundParentChainHeightAndMerklePathByHeightAsync(
+        var transaction = new Transaction
+        {
+            From = Address.FromBase58(txResult.Transaction.From),
+            To = Address.FromBase58(txResult.Transaction.To),
+            Params = param.ToByteString(),
+            Signature = ByteString.FromBase64(txResult.Transaction.Signature),
+            MethodName = txResult.Transaction.MethodName,
+            RefBlockNumber = txResult.Transaction.RefBlockNumber,
+            RefBlockPrefix = ByteString.FromBase64(txResult.Transaction.RefBlockPrefix)
+        };
+
+        var merklePath = await GetMerklePathAsync(transfer.FromChainId, transfer.TransferTransactionId);
+        if (transfer.FromChainId != CrossChainServerConsts.AElfMainChainId)
+        {
+            var merkleProofContext =
+                await _crossChainContractAppService.GetBoundParentChainHeightAndMerklePathByHeightAsync(
                     transfer.FromChainId, txResult.BlockHeight);
-                parentHeight = merkleProofContext.BoundParentChainHeight;
-                merklePath.MerklePathNodes.AddRange(merkleProofContext.MerklePathFromParentChain.MerklePathNodes);
-            }
+            parentHeight = merkleProofContext.BoundParentChainHeight;
+            merklePath.MerklePathNodes.AddRange(merkleProofContext.MerklePathFromParentChain.MerklePathNodes);
+        }
 
-            
-            var fromChain = await _chainAppService.GetAsync(transfer.FromChainId);
-            return fromChain == null
-                ? ""
-                : await _tokenContractAppService.CrossChainReceiveTokenAsync(transfer.ToChainId,
-                    fromChain.AElfChainId, parentHeight, transaction.ToByteArray().ToHex(), merklePath);
+
+        var fromChain = await _chainAppService.GetAsync(transfer.FromChainId);
+        return fromChain == null
+            ? ""
+            : await _tokenContractAppService.CrossChainReceiveTokenAsync(transfer.ToChainId,
+                fromChain.AElfChainId, parentHeight, transaction.ToByteArray().ToHex(), merklePath);
     }
-    
+
     private async Task<MerklePath> GetMerklePathAsync(string chainId, string txId)
     {
-        var merklePathDto = await _blockchainAppService.GetMerklePathAsync(chainId,txId);
+        var merklePathDto = await _blockchainAppService.GetMerklePathAsync(chainId, txId);
         var merklePath = new MerklePath();
         foreach (var node in merklePathDto.MerklePathNodes)
         {
@@ -117,12 +119,13 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
 
         return merklePath;
     }
-    
+
     private FlowBehavior HandleSendReceiveTransactionException(Exception ex, CrossChainTransfer transfer)
     {
         Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId).Error(ex,
             "SendReceiveTransaction failed.{fromChainId},{toChainId},{transferTokenId},{transferAmount},{toAddress}",
-            transfer.FromChainId, transfer.ToChainId, transfer.TransferTokenId, transfer.TransferAmount,transfer.ToAddress);
+            transfer.FromChainId, transfer.ToChainId, transfer.TransferTokenId, transfer.TransferAmount,
+            transfer.ToAddress);
         return new FlowBehavior
         {
             ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return
