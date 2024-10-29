@@ -13,7 +13,7 @@ using Volo.Abp.EntityFrameworkCore;
 namespace AElf.CrossChainServer.Migrations
 {
     [DbContext(typeof(CrossChainServerDbContext))]
-    [Migration("20241014164424_Update_Abp")]
+    [Migration("20241029111257_Update_Abp")]
     partial class Update_Abp
     {
         /// <inheritdoc />
@@ -132,6 +132,9 @@ namespace AElf.CrossChainServer.Migrations
 
                     b.Property<Guid>("ReceiveTokenId")
                         .HasColumnType("char(36)");
+
+                    b.Property<int>("ReceiveTransactionAttemptTimes")
+                        .HasColumnType("int");
 
                     b.Property<string>("ReceiveTransactionId")
                         .HasColumnType("longtext");
