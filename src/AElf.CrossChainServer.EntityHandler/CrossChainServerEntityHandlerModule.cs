@@ -40,6 +40,7 @@ namespace AElf.CrossChainServer.EntityHandler
             ConfigureBlob(configuration);
             ConfigureAuditLog(configuration);
             context.Services.AddHostedService<CrossChainServerHostedService>();
+            context.Services.AddAbpDbContext<CrossChainServerDbContext>();
         }
         
         private void ConfigureBlob(IConfiguration configuration)
