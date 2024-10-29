@@ -9,7 +9,6 @@ public class EvmTokensOptions
     /// ChainId -> Token Dic
     /// </summary>
     public Dictionary<string, List<TokenInfo>> Tokens { get; set; } = new();
-
 }
 
 public class TokenInfo
