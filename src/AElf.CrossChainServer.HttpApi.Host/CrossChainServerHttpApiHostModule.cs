@@ -12,7 +12,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using AElf.CrossChainServer.EntityFrameworkCore;
 using AElf.CrossChainServer.MultiTenancy;
-using AElf.OpenTelemetry;
 using StackExchange.Redis;
 using Microsoft.OpenApi.Models;
 using Volo.Abp;
@@ -37,8 +36,7 @@ namespace AElf.CrossChainServer;
     typeof(CrossChainServerApplicationModule),
     typeof(CrossChainServerEntityFrameworkCoreModule),
     typeof(AbpAspNetCoreSerilogModule),
-    typeof(AbpSwashbuckleModule),
-    typeof(OpenTelemetryModule)
+    typeof(AbpSwashbuckleModule)
 )]
 public class CrossChainServerHttpApiHostModule : AbpModule
 {
