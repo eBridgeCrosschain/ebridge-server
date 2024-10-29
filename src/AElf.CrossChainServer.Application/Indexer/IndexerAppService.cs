@@ -9,7 +9,6 @@ using AElf.CrossChainServer.HttpClient;
 using AElf.ExceptionHandler;
 using GraphQL;
 using GraphQL.Client.Abstractions;
-using Grpc.Net.Client.Configuration;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Microsoft.Extensions.Options;
