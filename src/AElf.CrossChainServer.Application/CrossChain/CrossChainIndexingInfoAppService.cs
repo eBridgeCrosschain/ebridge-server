@@ -6,6 +6,7 @@ using AElf.Indexing.Elasticsearch;
 using Nest;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Uow;
 
 namespace AElf.CrossChainServer.CrossChain;
 
@@ -28,6 +29,7 @@ public class CrossChainIndexingInfoAppService : CrossChainServerAppService, ICro
         _blockchainAppService = blockchainAppService;
     }
 
+    [UnitOfWork]
     public async Task CreateAsync(CreateCrossChainIndexingInfoInput input)
     {
         if (await _crossChainIndexingInfoRepository.FirstOrDefaultAsync(o =>

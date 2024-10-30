@@ -9,6 +9,7 @@ using AElf.Types;
 using Google.Protobuf;
 using Serilog;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.Uow;
 
 namespace AElf.CrossChainServer.CrossChain;
 
@@ -36,6 +37,7 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
 
     public CrossChainType CrossChainType { get; } = CrossChainType.Homogeneous;
 
+    [UnitOfWork]
     public async Task<CrossChainTransfer> FindTransferAsync(string fromChainId, string toChainId,
         string transferTransactionId, string receiptId)
     {

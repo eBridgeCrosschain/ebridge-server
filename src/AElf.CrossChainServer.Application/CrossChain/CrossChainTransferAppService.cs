@@ -15,6 +15,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MySqlConnector;
 using Serilog;
+using Volo.Abp.Uow;
 
 namespace AElf.CrossChainServer.CrossChain;
 
@@ -31,6 +32,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
     private readonly IIndexerAppService _indexerAppService;
     private readonly ITokenAppService _tokenAppService;
     private readonly AutoReceiveConfigOptions _autoReceiveConfigOptions;
+    private readonly IUnitOfWorkManager _unitOfWorkManager;
 
     private const int PageCount = 1000;
 
@@ -42,7 +44,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         ICheckTransferProvider checkTransferProvider,
         IEnumerable<ICrossChainTransferProvider> crossChainTransferProviders,
         IIndexerAppService indexerAppService, ITokenAppService tokenAppService,
-        IOptionsSnapshot<AutoReceiveConfigOptions> autoReceiveConfigOptions)
+        IOptionsSnapshot<AutoReceiveConfigOptions> autoReceiveConfigOptions, IUnitOfWorkManager unitOfWorkManager)
     {
         _crossChainTransferRepository = crossChainTransferRepository;
         _chainAppService = chainAppService;
@@ -52,6 +54,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         _checkTransferProvider = checkTransferProvider;
         _indexerAppService = indexerAppService;
         _tokenAppService = tokenAppService;
+        _unitOfWorkManager = unitOfWorkManager;
         _autoReceiveConfigOptions = autoReceiveConfigOptions.Value;
         _crossChainTransferProviders = crossChainTransferProviders.ToList();
     }
@@ -439,12 +442,15 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
 
     private async Task<List<CrossChainTransfer>> GetToUpdateProgressAsync(int page)
     {
+        using var uow = _unitOfWorkManager.Begin();
         var q = await _crossChainTransferRepository.GetQueryableAsync();
         var crossChainTransfers = await AsyncExecuter.ToListAsync(q
-            .Where(o => o.Status == CrossChainStatus.Transferred && o.ProgressUpdateTime > DateTime.UtcNow.AddDays(-3))
+            .Where(o => o.Status == CrossChainStatus.Transferred &&
+                        o.ProgressUpdateTime > DateTime.UtcNow.AddDays(-3))
             .OrderBy(o => o.ProgressUpdateTime)
             .Skip(PageCount * page)
             .Take(PageCount));
+        await uow.CompleteAsync();
         return crossChainTransfers;
     }
 
@@ -499,7 +505,8 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
             await _crossChainTransferRepository.UpdateManyAsync(toUpdate);
         }
     }
-
+    
+    [UnitOfWork]
     private async Task<List<CrossChainTransfer>> GetToUpdateReceiveTransactionAsync(int page)
     {
         var q = await _crossChainTransferRepository.GetQueryableAsync();
@@ -646,9 +653,10 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
             await _crossChainTransferRepository.UpdateManyAsync(toUpdate);
         }
     }
-
+    
     private async Task<List<CrossChainTransfer>> GetToCheckReceivedTransactionAsync(int page)
     {
+        using var uow = _unitOfWorkManager.Begin();
         var q = await _crossChainTransferRepository.GetQueryableAsync();
         var crossChainTransfers = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Progress == CrossChainServerConsts.FullOfTheProgress &&
@@ -656,11 +664,13 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
             .OrderBy(o => o.ProgressUpdateTime)
             .Skip(PageCount * page)
             .Take(PageCount));
+        await uow.CompleteAsync();
         return crossChainTransfers;
     }
 
     private async Task<List<CrossChainTransfer>> GetToReceivedAsync(int page)
     {
+        using var uow = _unitOfWorkManager.Begin();
         var q = await _crossChainTransferRepository.GetQueryableAsync();
         var crossChainTransfers = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Progress == CrossChainServerConsts.FullOfTheProgress && o.ReceiveTransactionId == null &&
@@ -668,6 +678,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
             .OrderBy(o => o.ProgressUpdateTime)
             .Skip(PageCount * page)
             .Take(PageCount));
+        await uow.CompleteAsync();
         return crossChainTransfers;
     }
 

@@ -11,6 +11,7 @@ using Nethereum.Util;
 using Serilog;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Entities;
+using Volo.Abp.Uow;
 
 namespace AElf.CrossChainServer.CrossChain;
 
@@ -40,6 +41,7 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
 
     public CrossChainType CrossChainType { get; } = CrossChainType.Heterogeneous;
     
+    [UnitOfWork]
     public async Task<CrossChainTransfer> FindTransferAsync(string fromChainId, string toChainId,
         string transferTransactionId, string receiptId)
     {

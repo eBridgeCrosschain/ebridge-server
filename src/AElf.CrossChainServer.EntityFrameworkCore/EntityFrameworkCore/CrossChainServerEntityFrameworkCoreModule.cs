@@ -44,7 +44,6 @@ public class CrossChainServerEntityFrameworkCoreModule : AbpModule
             options.AddDefaultRepositories(includeAllEntities: true);
         });
         
-        context.Services.AddScoped<IReportInfoRepository, EfCoreReportInfoRepository>();
 
 
         Configure<AbpDbContextOptions>(options =>

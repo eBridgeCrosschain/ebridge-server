@@ -7,6 +7,7 @@ using Nest;
 using Serilog;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Uow;
 
 namespace AElf.CrossChainServer.CrossChain;
 
@@ -23,6 +24,7 @@ public class OracleQueryInfoAppService : CrossChainServerAppService, IOracleQuer
         _oracleQueryInfoIndexRepository = oracleQueryInfoIndexRepository;
     }
 
+    [UnitOfWork]
     public async Task CreateAsync(CreateOracleQueryInfoInput input)
     {
         if (await _oracleQueryInfoRepository.FirstOrDefaultAsync(o =>

@@ -6,15 +6,14 @@ using Nest;
 using System.Linq;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Contracts;
-using AElf.CrossChainServer.ExceptionHandler;
 using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.Settings;
 using AElf.ExceptionHandler;
 using Microsoft.Extensions.Options;
 using Serilog;
 using Volo.Abp;
-using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Uow;
 
 namespace AElf.CrossChainServer.CrossChain;
 
@@ -30,14 +29,14 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
     private readonly CrossChainOptions _crossChainOptions;
     private readonly ISettingManager _settingManager;
     private readonly ReportQueryTimesOptions _reportQueryTimesOptions;
-
-
+    private readonly IUnitOfWorkManager _unitOfWorkManager;
+    
     public ReportInfoAppService(IReportInfoRepository reportInfoRepository,
         INESTRepository<ReportInfoIndex, Guid> nestRepository, IBridgeContractAppService bridgeContractAppService,
         IBlockchainAppService blockchainAppService,
         IReportContractAppService reportContractAppService,
         IOptionsSnapshot<CrossChainOptions> crossChainOptions, IIndexerAppService indexerAppService,
-        ISettingManager settingManager,IOptionsSnapshot<ReportQueryTimesOptions> reportQueryTimesOptions)
+        ISettingManager settingManager,IOptionsSnapshot<ReportQueryTimesOptions> reportQueryTimesOptions, IUnitOfWorkManager unitOfWorkManager)
     {
         _reportInfoRepository = reportInfoRepository;
         _nestRepository = nestRepository;
@@ -46,10 +45,12 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
         _reportContractAppService = reportContractAppService;
         _indexerAppService = indexerAppService;
         _settingManager = settingManager;
+        _unitOfWorkManager = unitOfWorkManager;
         _crossChainOptions = crossChainOptions.Value;
         _reportQueryTimesOptions = reportQueryTimesOptions.Value;
     }
 
+    [UnitOfWork]
     public async Task CreateAsync(CreateReportInfoInput input)
     {
         if (await _reportInfoRepository.FirstOrDefaultAsync(o =>
@@ -118,10 +119,11 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
 
     public async Task UpdateStepAsync()
     {
+        using var uow = _unitOfWorkManager.Begin();
         var q = await _reportInfoRepository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Step == ReportStep.Confirmed && o.QueryTimes < _reportQueryTimesOptions.QueryTimes));
-
+        await uow.CompleteAsync();
         if (list.Count == 0)
         {
             return;
@@ -161,10 +163,12 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
 
     public async Task ReSendQueryAsync()
     {
+        using var uow = _unitOfWorkManager.Begin();
         var q = await _reportInfoRepository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Step == ReportStep.Proposed && o.ResendTimes < _crossChainOptions.MaxReportResendTimes));
-
+        await uow.CompleteAsync();
+        
         if (list.Count == 0)
         {
             return;
@@ -206,10 +210,11 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
     [ExceptionHandler(typeof(Exception),Message = "Check query transaction failed.")]
     public virtual async Task CheckQueryTransactionAsync()
     {
+        using var uow = _unitOfWorkManager.Begin();
         var q = await _reportInfoRepository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Step == ReportStep.Resending));
-
+        await uow.CompleteAsync();
         if (list.Count == 0)
         {
             return;
