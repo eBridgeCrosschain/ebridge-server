@@ -16,17 +16,19 @@ public class OracleQueryInfoAppService : CrossChainServerAppService, IOracleQuer
 {
     private readonly INESTRepository<OracleQueryInfoIndex, Guid> _oracleQueryInfoIndexRepository;
     private readonly IOracleQueryInfoRepository _oracleQueryInfoRepository;
+    private readonly IUnitOfWorkManager _unitOfWorkManager;
 
     public OracleQueryInfoAppService(IOracleQueryInfoRepository oracleQueryInfoRepository,
-        INESTRepository<OracleQueryInfoIndex, Guid> oracleQueryInfoIndexRepository)
+        INESTRepository<OracleQueryInfoIndex, Guid> oracleQueryInfoIndexRepository, IUnitOfWorkManager unitOfWorkManager)
     {
         _oracleQueryInfoRepository = oracleQueryInfoRepository;
         _oracleQueryInfoIndexRepository = oracleQueryInfoIndexRepository;
+        _unitOfWorkManager = unitOfWorkManager;
     }
-
-    [UnitOfWork]
+    
     public async Task CreateAsync(CreateOracleQueryInfoInput input)
     {
+        using var uow = _unitOfWorkManager.Begin();
         if (await _oracleQueryInfoRepository.FirstOrDefaultAsync(o =>
                 o.ChainId == input.ChainId && o.QueryId == input.QueryId && o.Option == input.Option) != null)
         {
@@ -35,6 +37,7 @@ public class OracleQueryInfoAppService : CrossChainServerAppService, IOracleQuer
 
         var info = ObjectMapper.Map<CreateOracleQueryInfoInput, OracleQueryInfo>(input);
         await _oracleQueryInfoRepository.InsertAsync(info);
+        await uow.CompleteAsync();
     }
     
     public async Task UpdateAsync(UpdateOracleQueryInfoInput input)

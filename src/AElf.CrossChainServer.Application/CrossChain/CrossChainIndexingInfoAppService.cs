@@ -28,10 +28,10 @@ public class CrossChainIndexingInfoAppService : CrossChainServerAppService, ICro
         _crossChainIndexingInfoIndexRepository = crossChainIndexingInfoIndexRepository;
         _blockchainAppService = blockchainAppService;
     }
-
-    [UnitOfWork]
+    
     public async Task CreateAsync(CreateCrossChainIndexingInfoInput input)
     {
+        using var uow = UnitOfWorkManager.Begin();
         if (await _crossChainIndexingInfoRepository.FirstOrDefaultAsync(o =>
                 o.ChainId == input.ChainId && o.IndexChainId == input.IndexChainId &&
                 o.IndexBlockHeight == input.IndexBlockHeight) != null)
@@ -41,6 +41,7 @@ public class CrossChainIndexingInfoAppService : CrossChainServerAppService, ICro
 
         var index = ObjectMapper.Map<CreateCrossChainIndexingInfoInput, CrossChainIndexingInfo>(input);
         await _crossChainIndexingInfoRepository.InsertAsync(index);
+        await uow.CompleteAsync();
     }
 
     public async Task CleanAsync(DateTime time)

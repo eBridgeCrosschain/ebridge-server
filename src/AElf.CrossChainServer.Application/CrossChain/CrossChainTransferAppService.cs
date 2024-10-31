@@ -506,9 +506,9 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         }
     }
     
-    [UnitOfWork]
     private async Task<List<CrossChainTransfer>> GetToUpdateReceiveTransactionAsync(int page)
     {
+        using var uow = _unitOfWorkManager.Begin();
         var q = await _crossChainTransferRepository.GetQueryableAsync();
         var crossChainTransfers = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Status == CrossChainStatus.Indexed &&
@@ -516,6 +516,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
             .OrderBy(o => o.ProgressUpdateTime)
             .Skip(PageCount * page)
             .Take(PageCount));
+        await uow.CompleteAsync();
         return crossChainTransfers;
     }
 
