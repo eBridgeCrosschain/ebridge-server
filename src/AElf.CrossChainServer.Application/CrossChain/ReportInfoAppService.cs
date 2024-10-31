@@ -50,9 +50,9 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
         _reportQueryTimesOptions = reportQueryTimesOptions.Value;
     }
 
-    [UnitOfWork]
     public async Task CreateAsync(CreateReportInfoInput input)
     {
+        using var uow = _unitOfWorkManager.Begin();
         if (await _reportInfoRepository.FirstOrDefaultAsync(o =>
                 o.ChainId == input.ChainId && o.RoundId == input.RoundId && o.Token == input.Token &&
                 o.TargetChainId == input.TargetChainId) != null)
@@ -66,6 +66,7 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
         info.ResendTimes = resendTimes;
         
         await _reportInfoRepository.InsertAsync(info);
+        await uow.CompleteAsync();
     }
 
     public async Task UpdateStepAsync(string chainId, long roundId, string token, string targetChainId, ReportStep step, long blockHeight)
