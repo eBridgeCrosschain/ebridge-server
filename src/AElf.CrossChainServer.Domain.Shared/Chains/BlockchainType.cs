@@ -3,5 +3,6 @@ namespace AElf.CrossChainServer.Chains;
 public enum BlockchainType
 {
     AElf,
-    Evm
+    Evm,
+    Tvm
 }

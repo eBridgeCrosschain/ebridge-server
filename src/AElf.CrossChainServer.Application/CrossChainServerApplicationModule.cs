@@ -1,5 +1,6 @@
 using AElf.Client.Service;
 using AElf.CrossChainServer.Chains;
+using AElf.CrossChainServer.Chains.Ton;
 using AElf.CrossChainServer.Contracts.Bridge;
 using AElf.CrossChainServer.Contracts.CrossChain;
 using AElf.CrossChainServer.Contracts.Report;
@@ -10,6 +11,7 @@ using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.Tokens;
 using AElf.ExceptionHandler.ABP;
 using Microsoft.Extensions.DependencyInjection;
+using TonLibDotNet;
 using Volo.Abp.Account;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.FeatureManagement;
@@ -58,12 +60,15 @@ public class CrossChainServerApplicationModule : AbpModule
         Configure<ReportQueryTimesOptions>(configuration.GetSection("ReportQueryTimes"));
         Configure<AutoReceiveConfigOptions>(configuration.GetSection("AutoReceiveConfig"));
         Configure<SyncStateServiceOption>(configuration.GetSection("SyncStateService"));
+        Configure<ApiKeyOptions>(configuration.GetSection("ApiKey"));
+        Configure<TonOptions>(configuration.GetSection("Ton"));
 
         context.Services.AddSingleton<IBlockchainClientFactory<AElfClient>, AElfClientFactory>();
         context.Services.AddSingleton<IBlockchainClientFactory<Nethereum.Web3.Web3>, EvmClientFactory>();
         context.Services.AddSingleton<IGraphQLClientFactory, GraphQLClientFactory>();
         context.Services.AddTransient<IBlockchainClientProvider, AElfClientProvider>();
         context.Services.AddTransient<IBlockchainClientProvider, EvmClientProvider>();
+        context.Services.AddTransient<IBlockchainClientProvider, TonClientProvider>();
         
         context.Services.AddTransient<IBridgeContractProvider, EvmBridgeContractProvider>();
         context.Services.AddTransient<IBridgeContractProvider, AElfBridgeContractProvider>();
@@ -72,5 +77,7 @@ public class CrossChainServerApplicationModule : AbpModule
         context.Services.AddTransient<ITokenContractProvider, AElfTokenContractProvider>();
         context.Services.AddTransient<ICheckTransferProvider, CheckTransferProvider>();
         context.Services.AddTransient<IHttpProvider, HttpProvider>();
+        
+        context.Services.AddSingleton<ITonClient, TonClient>();
     }
 }
