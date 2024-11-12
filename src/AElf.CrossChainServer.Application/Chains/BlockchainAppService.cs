@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using AElf.Client.Dto;
+using AElf.CrossChainServer.Chains.Ton;
 using AElf.CrossChainServer.Tokens;
 using AElf.ExceptionHandler;
 using Volo.Abp;
@@ -11,10 +13,13 @@ namespace AElf.CrossChainServer.Chains
     public class BlockchainAppService : CrossChainServerAppService, IBlockchainAppService
     {
         private readonly IBlockchainClientProviderFactory _blockchainClientProviderFactory;
+        private readonly ITonIndexProvider _tonIndexProvider;
 
-        public BlockchainAppService(IBlockchainClientProviderFactory blockchainClientProviderFactory)
+        public BlockchainAppService(IBlockchainClientProviderFactory blockchainClientProviderFactory,
+            ITonIndexProvider tonIndexProvider)
         {
             _blockchainClientProviderFactory = blockchainClientProviderFactory;
+            _tonIndexProvider = tonIndexProvider;
         }
 
         public async Task<TokenDto> GetTokenInfoAsync(string chainId, string address, string symbol)
@@ -70,6 +75,11 @@ namespace AElf.CrossChainServer.Chains
                 return null;
             }
             return await provider.GetMerklePathAsync(chainId, transactionId);
+        }
+
+        public Task<List<TonTransactionDto>> GetTonTransactionAsync(GetTonTransactionInput input)
+        {
+            return _tonIndexProvider.GetTonTransactionAsync(input);
         }
     }
 }

@@ -9,14 +9,14 @@ namespace AElf.CrossChainServer.Chains.Ton
 {
     public class TonClientProvider : IBlockchainClientProvider
     {
-        private readonly ITonIndexClientProvider _indexClientProvider;
+        protected readonly ITonIndexClientProvider IndexClientProvider;
         private readonly ITonClient _tonClient;
         private readonly IHttpClientFactory _clientFactory;
 
         public TonClientProvider(ITonIndexClientProvider indexClientProvider, ITonClient tonClient,
             IHttpClientFactory clientFactory)
         {
-            _indexClientProvider = indexClientProvider;
+            IndexClientProvider = indexClientProvider;
             _tonClient = tonClient;
             _clientFactory = clientFactory;
         }
@@ -26,7 +26,7 @@ namespace AElf.CrossChainServer.Chains.Ton
         public async Task<TokenDto> GetTokenAsync(string chainId, string address, string symbol)
         {
             var path = $"/jetton/masters?address={address}&limit=1&offset=0";
-            var jettonMaster = await _indexClientProvider.GetAsync<JettonMasterDto>(chainId, path);
+            var jettonMaster = await IndexClientProvider.GetAsync<JettonMasterDto>(chainId, path);
             var jetton = await GetJettonAsync(jettonMaster.JettonMasters[0].JettonContent.Uri);
             
             return new TokenDto

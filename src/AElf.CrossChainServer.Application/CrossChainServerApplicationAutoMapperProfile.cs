@@ -1,5 +1,6 @@
 ﻿using AElf.CrossChainServer.BridgeContract;
 using AElf.CrossChainServer.Chains;
+using AElf.CrossChainServer.Chains.Ton;
 using AElf.CrossChainServer.Contracts;
 using AElf.CrossChainServer.CrossChain;
 using AElf.CrossChainServer.Tokens;
@@ -53,5 +54,11 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<CrossChainTransferEto, UpdateCrossChainTransferIndexInput>();
 
         CreateMap<BridgeContractSyncInfo, BridgeContractSyncInfoDto>();
+        
+        CreateMap<TonIndexTransaction, TonTransactionDto>();
+        CreateMap<TonBlockId, TonBlockIdDto>();
+        CreateMap<TonMessage, TonMessageDto>();
+        CreateMap<TonMessageContent, TonMessageContentDto>();
+        CreateMap<TonDecodedContent, TonDecodedContentDto>();
     }
 }
