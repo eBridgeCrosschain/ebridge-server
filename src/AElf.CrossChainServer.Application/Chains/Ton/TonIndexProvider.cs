@@ -1,8 +1,6 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using TonLibDotNet;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
 
@@ -17,8 +15,8 @@ public class TonIndexProvider : TonClientProvider, ITonIndexProvider, ITransient
 {
     private readonly IObjectMapper _objectMapper;
 
-    public TonIndexProvider(ITonIndexClientProvider indexClientProvider, ITonClient tonClient,
-        IHttpClientFactory clientFactory, IObjectMapper objectMapper) : base(indexClientProvider, tonClient,
+    public TonIndexProvider(ITonIndexClientProvider indexClientProvider,
+        IHttpClientFactory clientFactory, IObjectMapper objectMapper) : base(indexClientProvider,
         clientFactory)
     {
         _objectMapper = objectMapper;

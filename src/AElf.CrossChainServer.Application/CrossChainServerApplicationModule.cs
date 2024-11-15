@@ -11,7 +11,6 @@ using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.Tokens;
 using AElf.ExceptionHandler.ABP;
 using Microsoft.Extensions.DependencyInjection;
-using TonLibDotNet;
 using Volo.Abp.Account;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.FeatureManagement;
@@ -61,7 +60,6 @@ public class CrossChainServerApplicationModule : AbpModule
         Configure<AutoReceiveConfigOptions>(configuration.GetSection("AutoReceiveConfig"));
         Configure<SyncStateServiceOption>(configuration.GetSection("SyncStateService"));
         Configure<ApiKeyOptions>(configuration.GetSection("ApiKey"));
-        Configure<TonOptions>(configuration.GetSection("Ton"));
 
         context.Services.AddSingleton<IBlockchainClientFactory<AElfClient>, AElfClientFactory>();
         context.Services.AddSingleton<IBlockchainClientFactory<Nethereum.Web3.Web3>, EvmClientFactory>();
@@ -77,7 +75,5 @@ public class CrossChainServerApplicationModule : AbpModule
         context.Services.AddTransient<ITokenContractProvider, AElfTokenContractProvider>();
         context.Services.AddTransient<ICheckTransferProvider, CheckTransferProvider>();
         context.Services.AddTransient<IHttpProvider, HttpProvider>();
-        
-        context.Services.AddSingleton<ITonClient, TonClient>();
     }
 }

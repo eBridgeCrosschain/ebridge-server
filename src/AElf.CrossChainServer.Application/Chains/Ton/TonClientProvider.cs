@@ -3,21 +3,18 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using AElf.Client.Dto;
 using AElf.CrossChainServer.Tokens;
-using TonLibDotNet;
 
 namespace AElf.CrossChainServer.Chains.Ton
 {
     public class TonClientProvider : IBlockchainClientProvider
     {
         protected readonly ITonIndexClientProvider IndexClientProvider;
-        private readonly ITonClient _tonClient;
         private readonly IHttpClientFactory _clientFactory;
 
-        public TonClientProvider(ITonIndexClientProvider indexClientProvider, ITonClient tonClient,
+        public TonClientProvider(ITonIndexClientProvider indexClientProvider,
             IHttpClientFactory clientFactory)
         {
             IndexClientProvider = indexClientProvider;
-            _tonClient = tonClient;
             _clientFactory = clientFactory;
         }
 
