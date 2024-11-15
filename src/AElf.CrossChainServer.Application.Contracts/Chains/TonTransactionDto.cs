@@ -8,7 +8,7 @@ public class TonTransactionDto
     public TonBlockIdDto BlockRef { get; set; }
     public string Hash { get; set; }
     public TonMessageDto InMsg { get; set; }
-    public int McBlockSeqno { get; set; }
+    public long McBlockSeqno { get; set; }
     public string Lt { get; set; }
     public int Now { get; set; }
     public string OrigStatus { get; set; }

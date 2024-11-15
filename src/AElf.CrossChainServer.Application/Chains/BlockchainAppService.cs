@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using AElf.Client.Dto;
 using AElf.CrossChainServer.Chains.Ton;
+using AElf.CrossChainServer.Contracts.Bridge;
 using AElf.CrossChainServer.Tokens;
 using AElf.ExceptionHandler;
+using Microsoft.Extensions.Options;
 using Volo.Abp;
 
 namespace AElf.CrossChainServer.Chains
@@ -14,12 +16,14 @@ namespace AElf.CrossChainServer.Chains
     {
         private readonly IBlockchainClientProviderFactory _blockchainClientProviderFactory;
         private readonly ITonIndexProvider _tonIndexProvider;
+        private BridgeContractOptions _bridgeContractOptions;
 
         public BlockchainAppService(IBlockchainClientProviderFactory blockchainClientProviderFactory,
-            ITonIndexProvider tonIndexProvider)
+            ITonIndexProvider tonIndexProvider, IOptionsSnapshot<BridgeContractOptions> bridgeContractOptions)
         {
             _blockchainClientProviderFactory = blockchainClientProviderFactory;
             _tonIndexProvider = tonIndexProvider;
+            _bridgeContractOptions = bridgeContractOptions.Value;
         }
 
         public async Task<TokenDto> GetTokenInfoAsync(string chainId, string address, string symbol)

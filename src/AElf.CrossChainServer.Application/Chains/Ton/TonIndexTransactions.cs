@@ -14,7 +14,7 @@ public class TonIndexTransaction
     public TonBlockId BlockRef { get; set; }
     public string Hash { get; set; }
     public TonMessage InMsg { get; set; }
-    public int McBlockSeqno { get; set; }
+    public long McBlockSeqno { get; set; }
     public string Lt { get; set; }
     public int Now { get; set; }
     public string OrigStatus { get; set; }

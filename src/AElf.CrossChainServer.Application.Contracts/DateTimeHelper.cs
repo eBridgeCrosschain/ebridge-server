@@ -14,4 +14,9 @@ public class DateTimeHelper
     {
         return DateTime.UnixEpoch.AddMilliseconds(value);
     }
+    
+    public static DateTime FromUnixTimeSeconds(long value)
+    {
+        return DateTime.UnixEpoch.AddSeconds(value);
+    }
 }

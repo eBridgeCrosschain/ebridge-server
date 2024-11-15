@@ -14,6 +14,7 @@ namespace AElf.CrossChainServer.Worker
         {
             var configuration = context.Services.GetConfiguration();
             Configure<BridgeContractSyncOptions>(configuration.GetSection("BridgeContractSync"));
+            Configure<TonIndexSyncOptions>(configuration.GetSection("TonIndexSync"));
                         
             context.Services.AddTransient<IBridgeContractSyncProvider, BridgeContractTransferSyncProvider>();
             context.Services.AddTransient<IBridgeContractSyncProvider, BridgeContractReceiveSyncProvider>();
@@ -29,6 +30,7 @@ namespace AElf.CrossChainServer.Worker
             context.AddBackgroundWorkerAsync<TransferAutoReceiveWorker>();
             context.AddBackgroundWorkerAsync<IndexerSyncWorker>();
             context.AddBackgroundWorkerAsync<CheckReceiveWorker>();
+            context.AddBackgroundWorkerAsync<TonIndexSyncWorker>();
         }
     }
 }

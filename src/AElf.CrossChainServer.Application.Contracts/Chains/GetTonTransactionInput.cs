@@ -4,5 +4,5 @@ public class GetTonTransactionInput
 {
     public string ChainId { get; set; }
     public string ContractAddress { get; set; }
-    public int LatestTransactionLt { get; set; }
+    public string LatestTransactionLt { get; set; }
 }
