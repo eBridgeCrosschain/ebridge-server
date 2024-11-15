@@ -67,6 +67,8 @@ public class CrossChainServerDbContext :
     public DbSet<OracleQueryInfo> OracleQueryInfos { get; set; }
     public DbSet<ReportInfo> ReportInfos { get; set; }
     public DbSet<Settings.Settings> Settings { get; set; }
+    public DbSet<CrossChainDailyLimit> CrossChainDailyLimits { get; set; }
+    public DbSet<CrossChainRateLimit> CrossChainRateLimits { get; set; }
 
     public CrossChainServerDbContext(DbContextOptions<CrossChainServerDbContext> options)
         : base(options)
@@ -143,6 +145,18 @@ public class CrossChainServerDbContext :
         {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "Settings", CrossChainServerConsts.DbSchema);
             b.HasIndex(o => new {o.ChainId, o.Name});
+            b.ConfigureByConvention(); 
+        });
+        
+        builder.Entity<CrossChainDailyLimit>(b =>
+        {
+            b.ToTable(CrossChainServerConsts.DbTablePrefix + "CrossChainDailyLimits", CrossChainServerConsts.DbSchema);
+            b.ConfigureByConvention(); 
+        });
+        
+        builder.Entity<CrossChainRateLimit>(b =>
+        {
+            b.ToTable(CrossChainServerConsts.DbTablePrefix + "CrossChainRateLimits", CrossChainServerConsts.DbSchema);
             b.ConfigureByConvention(); 
         });
     }

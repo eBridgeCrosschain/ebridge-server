@@ -60,5 +60,12 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<TonMessage, TonMessageDto>();
         CreateMap<TonMessageContent, TonMessageContentDto>();
         CreateMap<TonDecodedContent, TonDecodedContentDto>();
+        
+        CreateMap<SetCrossChainDailyLimitInput, CrossChainDailyLimit>();
+        CreateMap<SetCrossChainRateLimitInput, CrossChainRateLimit>();
+        CreateMap<SetCrossChainDailyLimitInput, CrossChainDailyLimitIndex>();
+        CreateMap<SetCrossChainRateLimitInput, CrossChainRateLimitIndex>();
+        CreateMap<CrossChainRateLimitEto, SetCrossChainRateLimitInput>();
+        CreateMap<CrossChainDailyLimitEto, SetCrossChainDailyLimitInput>();
     }
 }

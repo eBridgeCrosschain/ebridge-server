@@ -52,5 +52,14 @@ public class CrossChainServerTestDataSeedContributor : IDataSeedContributor, ITr
             IsMainChain = false,
             AElfChainId = 1931928
         });
+        
+        await _chainRepository.InsertAsync(new Chain()
+        {
+            Id = "Ton",
+            Type = BlockchainType.Tvm,
+            Name = "Ton",
+            IsMainChain = true,
+            AElfChainId = 0
+        });
     }
 }

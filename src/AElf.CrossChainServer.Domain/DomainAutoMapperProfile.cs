@@ -11,6 +11,8 @@ namespace AElf.CrossChainServer
             CreateMap<CrossChainIndexingInfo, CrossChainIndexingInfoEto>();
             CreateMap<OracleQueryInfo, OracleQueryInfoEto>();
             CreateMap<ReportInfo, ReportInfoEto>();
+            CreateMap<CrossChainDailyLimit, CrossChainDailyLimitEto>();
+            CreateMap<CrossChainRateLimit, CrossChainRateLimitEto>();
         }
     }
 }

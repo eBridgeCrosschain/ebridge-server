@@ -37,6 +37,7 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         _crossChainTransferAppService = crossChainTransferAppService;
         _tokenAppService = tokenAppService;
         _tonIndexSyncOptions = tonIndexSyncOptions.Value;
+        timer.Period = 10 * 1000;
     }
 
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
