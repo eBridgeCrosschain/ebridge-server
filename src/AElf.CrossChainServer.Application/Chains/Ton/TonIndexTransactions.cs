@@ -62,14 +62,14 @@ public class TonTransactionDescr
 
 public class TonMessage
 {
-    public bool Bounce { get; set; }
-    public bool Bounced { get; set; }
+    public bool? Bounce { get; set; }
+    public bool? Bounced { get; set; }
     public string CreatedAt { get; set; }
     public string CreatedLt { get; set; }
     public string Destination { get; set; }
     public string FwdFee { get; set; }
     public string Hash { get; set; }
-    public bool IhrDisabled { get; set; }
+    public bool? IhrDisabled { get; set; }
     public string IhrFee { get; set; }
     public string ImportFee { get; set; }
     public TonMessageContent InitState { get; set; }
