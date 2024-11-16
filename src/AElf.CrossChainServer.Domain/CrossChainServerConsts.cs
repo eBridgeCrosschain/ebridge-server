@@ -16,7 +16,10 @@ public static class CrossChainServerConsts
     public const long DefaultDailyLimitRefreshTime = 86400;
     public const long DefaultRateLimitSeconds = 60;
 
-    public const string TonTransferOpCode = "0xfcaf1515";
-    public const string TonReceiveOpCode = "0xc64370e5";
-    public const string TonSetPoolLimitOpCode = "";
+    public const string TonTransferedOpCode = "0xfcaf1515";
+    public const string TonReceivedOpCode = "0xc64370e5";
+    public const string TonDailyLimitChangedOpCode = "0x1";
+    public const string TonDailyLimitConsumedOpCode = "0x2";
+    public const string TonRateLimitChangedOpCode = "0x3";
+    public const string TonRateLimitConsumedOpCode = "0x4";
 }

@@ -11,6 +11,6 @@ public class CrossChainRateLimitEto
     public decimal CurrentAmount { get; set; }
     public decimal Capacity { get; set; }
     public decimal Rate { get; set; }
-    public bool Enable { get; set; }
+    public bool IsEnable { get; set; }
     public Guid TokenId { get; set; }
 }

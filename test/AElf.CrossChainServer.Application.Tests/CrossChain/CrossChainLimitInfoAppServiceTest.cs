@@ -27,7 +27,7 @@ public class CrossChainLimitInfoAppServiceTest
     private readonly IChainAppService _mockChainAppService;
     private readonly IOptionsMonitor<CrossChainLimitsOptions> _mockCrossChainLimitsOptions;
     private readonly ITokenSymbolMappingProvider _mockTokenSymbolMappingProvider;
-
+    private readonly ICrossChainLimitAppService _mockCrossChainLimitAppService;
 
     public CrossChainLimitInfoAppServiceTest()
     {
@@ -39,6 +39,7 @@ public class CrossChainLimitInfoAppServiceTest
         _mockChainAppService = Substitute.For<IChainAppService>();
         _mockCrossChainLimitsOptions = Substitute.For<IOptionsMonitor<CrossChainLimitsOptions>>();
         _mockTokenSymbolMappingProvider = Substitute.For<ITokenSymbolMappingProvider>();
+        _mockCrossChainLimitAppService = Substitute.For<ICrossChainLimitAppService>();
 
         _service = new CrossChainLimitInfoAppService(
             _mockIndexerCrossChainLimitInfoService,
@@ -47,7 +48,8 @@ public class CrossChainLimitInfoAppServiceTest
             _mockTokenAppService,
             _mockChainAppService,
             _mockCrossChainLimitsOptions,
-            _mockTokenSymbolMappingProvider
+            _mockTokenSymbolMappingProvider,
+            _mockCrossChainLimitAppService
         );
     }
 
@@ -99,12 +101,14 @@ public class CrossChainLimitInfoAppServiceTest
         MockBridgeContractAppService();
 
         MockTokenSymbolMappingProvider();
+        
+        MockCrossChainLimitAppService();
 
         // Act
         var result = await _service.GetCrossChainRateLimitsAsync();
 
         // Assert
-        Assert.Equal(4, result.Items.Count);
+        Assert.Equal(6, result.Items.Count);
     }
 
     
@@ -203,6 +207,22 @@ public class CrossChainLimitInfoAppServiceTest
             {
               ""FromChainId"": ""Sepolia"",
               ""ToChainId"": ""tDVV""
+            },
+            {
+              ""FromChainId"": ""AELF"",
+              ""ToChainId"": ""Ton""
+            },
+            {
+              ""FromChainId"": ""tDVV"",
+              ""ToChainId"": ""Ton""
+            },
+            {
+              ""FromChainId"": ""Ton"",
+              ""ToChainId"": ""AELF""
+            },
+            {
+              ""FromChainId"": ""Ton"",
+              ""ToChainId"": ""tDVV""
             }
           ]";
         var fromToChainList = JsonSerializer.Deserialize<List<IndexerCrossChainLimitInfo>>(fromToChainJsonArray);
@@ -277,6 +297,15 @@ public class CrossChainLimitInfoAppServiceTest
                 BlockChain = "BSC"
             });
         
+        _mockChainAppService.GetAsync(Arg.Is<string>(s =>  "Ton".Contains(s)))
+            .Returns(new ChainDto
+            {
+                Id = "Ton",
+                IsMainChain = true,
+                Type = BlockchainType.Tvm,
+                BlockChain = "Ton"
+            });
+        
         _mockChainAppService.GetByAElfChainIdAsync(Arg.Is<int>(s => s == 9992731))
             .Returns(aelfChain);
         _mockChainAppService.GetByAElfChainIdAsync(Arg.Is<int>(s => s == 1866392))
@@ -292,7 +321,7 @@ public class CrossChainLimitInfoAppServiceTest
             { "USDT", 6 }
         };
         
-        var chainIds = new HashSet<string> { "MainChain_AELF", "SideChain_tDVV", "Sepolia" ,"BSCTest"};
+        var chainIds = new HashSet<string> { "MainChain_AELF", "SideChain_tDVV", "Sepolia" ,"BSCTest", "Ton"};
         
         foreach (var token in tokenDict)
         {
@@ -374,5 +403,68 @@ public class CrossChainLimitInfoAppServiceTest
                     MaximumTimeConsumed = 4
                 }
             });
+    }
+
+    private void MockCrossChainLimitAppService()
+    {
+        _mockCrossChainLimitAppService.GetCrossChainRateLimitsAsync().Returns(new List<CrossChainRateLimitDto>
+        {
+            new()
+            {
+                TargetChainId = "MainChain_AELF",
+                Capacity = 7000,
+                CurrentAmount = 700,
+                Type = CrossChainLimitType.Receipt,
+                Token = new TokenDto
+                {
+                    Symbol = "USDT"
+                },
+                ChainId = "Ton",
+                IsEnable = true,
+                Rate = 70
+            },
+            new()
+            {
+                TargetChainId = "SideChain_tDVV",
+                Capacity = 7100,
+                CurrentAmount = 710,
+                Type = CrossChainLimitType.Receipt,
+                Token = new TokenDto
+                {
+                    Symbol = "USDT"
+                },
+                ChainId = "Ton",
+                IsEnable = true,
+                Rate = 71
+            },
+            new()
+            {
+                TargetChainId = "MainChain_AELF",
+                Capacity = 7200,
+                CurrentAmount = 720,
+                Type = CrossChainLimitType.Swap,
+                Token = new TokenDto
+                {
+                    Symbol = "USDT"
+                },
+                ChainId = "Ton",
+                IsEnable = true,
+                Rate = 72
+            },
+            new()
+            {
+                TargetChainId = "SideChain_tDVV",
+                Capacity = 7300,
+                CurrentAmount = 730,
+                Type = CrossChainLimitType.Swap,
+                Token = new TokenDto
+                {
+                    Symbol = "USDT"
+                },
+                ChainId = "Ton",
+                IsEnable = true,
+                Rate = 73
+            }
+        });
     }
 }

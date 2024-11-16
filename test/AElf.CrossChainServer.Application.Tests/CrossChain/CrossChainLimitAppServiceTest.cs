@@ -39,7 +39,7 @@ public class CrossChainLimitAppServiceTest: CrossChainServerApplicationTestBase
             Type = CrossChainLimitType.Receipt,
             TargetChainId = "AELF",
             Capacity = 100,
-            Enable = true,
+            IsEnable = true,
             Rate = 20,
             CurrentAmount = 20,
             TokenId = token.Id
@@ -53,7 +53,7 @@ public class CrossChainLimitAppServiceTest: CrossChainServerApplicationTestBase
         limit.Item2[0].Type.ShouldBe(setInput.Type);
         limit.Item2[0].TargetChainId.ShouldBe(setInput.TargetChainId);
         limit.Item2[0].Capacity.ShouldBe(setInput.Capacity);
-        limit.Item2[0].Enable.ShouldBe(setInput.Enable);
+        limit.Item2[0].IsEnable.ShouldBe(setInput.IsEnable);
         limit.Item2[0].Rate.ShouldBe(setInput.Rate);
         limit.Item2[0].CurrentAmount.ShouldBe(setInput.CurrentAmount);
         limit.Item2[0].Token.Id.ShouldBe(token.Id);
@@ -64,7 +64,7 @@ public class CrossChainLimitAppServiceTest: CrossChainServerApplicationTestBase
             Type = CrossChainLimitType.Receipt,
             TargetChainId = "AELF",
             Capacity = 200,
-            Enable = true,
+            IsEnable = true,
             Rate = 20,
             CurrentAmount = 50,
             TokenId = token.Id
@@ -78,7 +78,7 @@ public class CrossChainLimitAppServiceTest: CrossChainServerApplicationTestBase
         limit.Item2[0].Type.ShouldBe(setInput.Type);
         limit.Item2[0].TargetChainId.ShouldBe(setInput.TargetChainId);
         limit.Item2[0].Capacity.ShouldBe(setInput.Capacity);
-        limit.Item2[0].Enable.ShouldBe(setInput.Enable);
+        limit.Item2[0].IsEnable.ShouldBe(setInput.IsEnable);
         limit.Item2[0].Rate.ShouldBe(setInput.Rate);
         limit.Item2[0].CurrentAmount.ShouldBe(setInput.CurrentAmount);
         limit.Item2[0].Token.Id.ShouldBe(token.Id);

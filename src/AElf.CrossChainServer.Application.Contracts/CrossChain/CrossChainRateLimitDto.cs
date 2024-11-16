@@ -1,8 +1,8 @@
-using System;
+using AElf.CrossChainServer.Tokens;
 
 namespace AElf.CrossChainServer.CrossChain;
 
-public class SetCrossChainRateLimitInput
+public class CrossChainRateLimitDto
 {
     public string ChainId { get; set; }
     public string TargetChainId { get; set; }
@@ -11,5 +11,5 @@ public class SetCrossChainRateLimitInput
     public decimal Capacity { get; set; }
     public decimal Rate { get; set; }
     public bool IsEnable { get; set; }
-    public Guid TokenId { get; set; }
+    public TokenDto Token { get; set; }
 }

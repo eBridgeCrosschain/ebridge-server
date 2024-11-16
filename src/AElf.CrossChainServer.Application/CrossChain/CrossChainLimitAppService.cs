@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Tokens;
 using AElf.Indexing.Elasticsearch;
+using Nest;
 using Volo.Abp;
 
 namespace AElf.CrossChainServer.CrossChain;
@@ -15,7 +17,11 @@ public class CrossChainLimitAppService : CrossChainServerAppService, ICrossChain
     private readonly INESTRepository<CrossChainDailyLimitIndex, Guid> _crossChainDailyLimitIndexRepository;
     private readonly ITokenRepository _tokenRepository;
 
-    public CrossChainLimitAppService(ICrossChainDailyLimitRepository crossChainDailyLimitRepository, ICrossChainRateLimitRepository crossChainRateLimitRepository, INESTRepository<CrossChainRateLimitIndex, Guid> crossChainRateLimitIndexRepository, INESTRepository<CrossChainDailyLimitIndex, Guid> crossChainDailyLimitIndexRepository, ITokenRepository tokenRepository)
+    public CrossChainLimitAppService(ICrossChainDailyLimitRepository crossChainDailyLimitRepository,
+        ICrossChainRateLimitRepository crossChainRateLimitRepository,
+        INESTRepository<CrossChainRateLimitIndex, Guid> crossChainRateLimitIndexRepository,
+        INESTRepository<CrossChainDailyLimitIndex, Guid> crossChainDailyLimitIndexRepository,
+        ITokenRepository tokenRepository)
     {
         _crossChainDailyLimitRepository = crossChainDailyLimitRepository;
         _crossChainRateLimitRepository = crossChainRateLimitRepository;
@@ -39,7 +45,7 @@ public class CrossChainLimitAppService : CrossChainServerAppService, ICrossChain
             limit.CurrentAmount = input.CurrentAmount;
             limit.Capacity = input.Capacity;
             limit.Rate = input.Rate;
-            limit.Enable = input.Enable;
+            limit.IsEnable = input.IsEnable;
             await _crossChainRateLimitRepository.UpdateAsync(limit);
         }
     }
@@ -57,6 +63,12 @@ public class CrossChainLimitAppService : CrossChainServerAppService, ICrossChain
             o.ChainId == input.ChainId && o.TargetChainId == input.TargetChainId && o.TokenId == input.TokenId && o.Type == input.Type);
         limit.CurrentAmount -= input.Amount;
         await _crossChainRateLimitRepository.UpdateAsync(limit);
+    }
+
+    public async Task<List<CrossChainRateLimitDto>> GetCrossChainRateLimitsAsync()
+    {
+        var list = await _crossChainRateLimitIndexRepository.GetListAsync();
+        return ObjectMapper.Map<List<CrossChainRateLimitIndex>, List<CrossChainRateLimitDto>>(list.Item2);
     }
 
     public async Task SetCrossChainDailyLimitAsync(SetCrossChainDailyLimitInput input)

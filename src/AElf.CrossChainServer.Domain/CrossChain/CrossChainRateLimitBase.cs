@@ -12,5 +12,5 @@ public class CrossChainRateLimitBase : MultiChainEntity<Guid>
     public decimal CurrentAmount { get; set; }
     public decimal Capacity { get; set; }
     public decimal Rate { get; set; }
-    public bool Enable { get; set; }
+    public bool IsEnable { get; set; }
 }

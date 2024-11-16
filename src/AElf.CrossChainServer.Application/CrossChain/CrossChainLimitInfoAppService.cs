@@ -24,6 +24,7 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
     private readonly IChainAppService _chainAppService;
     private readonly IOptionsMonitor<CrossChainLimitsOptions> _crossChainLimitsOptions;
     private readonly ITokenSymbolMappingProvider _tokenSymbolMappingProvider;
+    private readonly ICrossChainLimitAppService _crossChainLimitAppService;
 
     public CrossChainLimitInfoAppService(
         IIndexerCrossChainLimitInfoService indexerCrossChainLimitInfoService,
@@ -31,7 +32,7 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
         IOptionsMonitor<EvmTokensOptions> evmTokensOptions, ITokenAppService tokenAppService,
         IChainAppService chainAppService,
         IOptionsMonitor<CrossChainLimitsOptions> crossChainLimitsOptions,
-        ITokenSymbolMappingProvider tokenSymbolMappingProvider)
+        ITokenSymbolMappingProvider tokenSymbolMappingProvider, ICrossChainLimitAppService crossChainLimitAppService)
     {
         _indexerCrossChainLimitInfoService = indexerCrossChainLimitInfoService;
         _bridgeContractAppService = bridgeContractAppService;
@@ -40,6 +41,7 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
         _chainAppService = chainAppService;
         _crossChainLimitsOptions = crossChainLimitsOptions;
         _tokenSymbolMappingProvider = tokenSymbolMappingProvider;
+        _crossChainLimitAppService = crossChainLimitAppService;
     }
 
     public async Task<ListResultDto<CrossChainDailyLimitsDto>> GetCrossChainDailyLimitsAsync()
@@ -101,6 +103,7 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
         var result = new List<CrossChainRateLimitsDto>();
         var crossChainLimitInfos = await GetCrossChainLimitInfosAsync();
         var evmLimitInfos = await GetEvmRateLimitInfosAsync();
+        var tvmLimitInfos = await GetRateLimitsAsync();
         foreach (var crossChainLimitInfo in crossChainLimitInfos)
         {
             var chain = await _chainAppService.GetAsync(crossChainLimitInfo.Key.FromChainId);
@@ -122,6 +125,11 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
                 {
                     swapRateLimits = OfEvmRateLimitInfos(value);
                 }
+                
+                if(tvmLimitInfos.TryGetValue(crossChainLimitInfo.Key, out var tvmLimits))
+                {
+                    swapRateLimits = OfEvmRateLimitInfos(tvmLimits);
+                }
 
                 var chainDto = await _chainAppService.GetAsync(crossChainLimitInfo.Key.FromChainId);
                 if (chainDto == null)
@@ -139,7 +147,7 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
                     SwapRateLimitsInfo = swapRateLimits
                 });
             }
-            else
+            else if(chain.Type == BlockchainType.Evm)
             {
                 Log.ForContext("fromChainId", crossChainLimitInfo.Key.FromChainId)
                     .ForContext("toChainId", crossChainLimitInfo.Key.ToChainId)
@@ -151,6 +159,38 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
 
                 var receiptRateLimits = new List<RateLimitInfo>();
                 if (evmLimitInfos.TryGetValue(crossChainLimitInfo.Key, out var value))
+                {
+                    receiptRateLimits = OfEvmRateLimitInfos(value);
+                }
+
+                var chainDto = await _chainAppService.GetAsync(crossChainLimitInfo.Key.ToChainId);
+                if (chainDto == null)
+                {
+                    continue;
+                }
+
+                var aelfChainId = chainDto.AElfChainId;
+                crossChainLimitInfo.Key.ToChainId = ChainHelper.ConvertChainIdToBase58(aelfChainId);
+                result.Add(new CrossChainRateLimitsDto
+                {
+                    FromChain = crossChainLimitInfo.Key.FromChainId,
+                    ToChain = crossChainLimitInfo.Key.ToChainId,
+                    ReceiptRateLimitsInfo = receiptRateLimits,
+                    SwapRateLimitsInfo = swapRateLimits
+                });
+            }
+            else if(chain.Type == BlockchainType.Tvm)
+            {
+                Log.ForContext("fromChainId", crossChainLimitInfo.Key.FromChainId)
+                    .ForContext("toChainId", crossChainLimitInfo.Key.ToChainId)
+                    .Debug(
+                        "Limit data processing，From chain:{fromChainId}, to chain:{toChainId}",
+                        crossChainLimitInfo.Key.FromChainId, crossChainLimitInfo.Key.ToChainId);
+                var swapRateLimits =
+                    await OfRateLimitInfos(crossChainLimitInfo.Value, crossChainLimitInfo.Key.ToChainId);
+
+                var receiptRateLimits = new List<RateLimitInfo>();
+                if (tvmLimitInfos.TryGetValue(crossChainLimitInfo.Key, out var value))
                 {
                     receiptRateLimits = OfEvmRateLimitInfos(value);
                 }
@@ -380,6 +420,47 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
         return result;
     }
 
+    private async Task<Dictionary<CrossChainLimitKey, Dictionary<string, TokenBucketDto>>> GetRateLimitsAsync()
+    {
+        var result = new Dictionary<CrossChainLimitKey, Dictionary<string, TokenBucketDto>>();
+        var limits = await _crossChainLimitAppService.GetCrossChainRateLimitsAsync();
+        foreach (var limit in limits)
+        {
+            var limitKey = new CrossChainLimitKey();
+            if (limit.Type == CrossChainLimitType.Receipt)
+            {
+                limitKey.FromChainId = limit.ChainId;
+                limitKey.ToChainId = limit.TargetChainId;
+            }
+            else
+            {
+                limitKey.FromChainId = limit.TargetChainId;
+                limitKey.ToChainId = limit.ChainId;
+            }
+
+            if (!result.TryGetValue(limitKey, out var value))
+            {
+                value = new Dictionary<string, TokenBucketDto>();
+            }
+            
+            var symbol =
+                _tokenSymbolMappingProvider.GetMappingSymbol(limit.ChainId, limit.TargetChainId, limit.Token.Symbol);
+
+            var tokenBucket = new TokenBucketDto();
+            if (limit.Capacity != 0 || limit.Rate != 0)
+            {
+                tokenBucket.Capacity = limit.Capacity;
+                tokenBucket.RefillRate = limit.Rate;
+                tokenBucket.MaximumTimeConsumed =
+                    (int)Math.Ceiling(tokenBucket.Capacity / tokenBucket.RefillRate / CrossChainServerConsts.DefaultRateLimitSeconds);
+            }
+            value[symbol] = tokenBucket;
+
+            result[limitKey] = value;
+        }
+
+        return result;
+    }
 
     private void GetRateLimitsResult(ref Dictionary<CrossChainLimitKey, Dictionary<string, TokenBucketDto>> result,
         CrossChainLimitKey limitKey, TokenBucketDto tokenBucket, string symbol)
