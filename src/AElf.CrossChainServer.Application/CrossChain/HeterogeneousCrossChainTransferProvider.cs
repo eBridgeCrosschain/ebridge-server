@@ -56,12 +56,17 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
         {
             return 0;
         }
+        // evm
+        // ethereum -> aelf
         if (chain.Type == BlockchainType.AElf)
         {
             return await _oracleQueryInfoAppService.CalculateCrossChainProgressAsync(transfer.ToChainId,transfer.ReceiptId);
         }
-
+        // aelf ->ethereum
         return await _reportInfoAppService.CalculateCrossChainProgressAsync(transfer.FromChainId, transfer.ReceiptId);
+        // ton -> aelf
+        
+        // aelf -> ton
     }
     
     [ExceptionHandler(typeof(Exception),typeof(InvalidOperationException),typeof(WebException), Message = "Send receive transaction failed.", 

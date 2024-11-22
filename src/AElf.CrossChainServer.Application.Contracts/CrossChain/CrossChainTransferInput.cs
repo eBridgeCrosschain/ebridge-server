@@ -14,4 +14,6 @@ public class CrossChainTransferInput
     public decimal TransferAmount { get; set; }
     public Guid TransferTokenId { get; set; }
     public string ReceiptId { get; set; }
+    // For ton trace
+    public string TraceId { get; set; }
 }

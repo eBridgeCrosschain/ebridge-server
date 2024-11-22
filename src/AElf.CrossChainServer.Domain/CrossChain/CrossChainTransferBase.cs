@@ -31,4 +31,6 @@ public class CrossChainTransferBase : CrossChainServerEntity<Guid>
     public DateTime ProgressUpdateTime { get; set; }
     public bool TransferNeedToBeApproved { get; set; }
     public int ReceiveTransactionAttemptTimes { get; set; }
+    [Keyword]
+    public string TraceId { get; set; }
 }

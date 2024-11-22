@@ -90,17 +90,21 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
                 {
                     continue;
                 }
-                
+
+                var txId = tx.Hash;
+                var traceId = tx.TraceId;
+
                 foreach (var outMsg in tx.OutMsgs)
                 {
                     switch (outMsg.Opcode)
                     {
                         case CrossChainServerConsts.TonTransferedOpCode:
                             await TransferAsync(chainId, tx.McBlockSeqno, DateTimeHelper.FromUnixTimeSeconds(tx.Now),
-                                outMsg);
+                                outMsg, traceId, txId);
                             break;
                         case CrossChainServerConsts.TonReceivedOpCode:
-                            await ReceiveAsync(chainId, DateTimeHelper.FromUnixTimeSeconds(tx.Now), outMsg);
+                            await ReceiveAsync(chainId, DateTimeHelper.FromUnixTimeSeconds(tx.Now), outMsg, traceId,
+                                txId);
                             break;
                         case CrossChainServerConsts.TonDailyLimitChangedOpCode:
                             await SetDailyLimitAsync(chainId, tx.Account, outMsg);
@@ -132,13 +136,14 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
             });
         }
     }
-    
+
     private string GetSettingKey(string contractAddress)
     {
         return $"{CrossChainServerSettings.TonIndexTransactionSync}-{contractAddress}";
     }
 
-    private async Task TransferAsync(string chainId, long blockHeight, DateTime blockTime, TonMessageDto outMessage)
+    private async Task TransferAsync(string chainId, long blockHeight, DateTime blockTime, TonMessageDto outMessage,
+        string traceId, string txId)
     {
         var body = Cell.From(outMessage.MessageContent.Body);
         var bodySlice = body.Parse();
@@ -158,13 +163,15 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
             ChainId = chainId,
             Address = tokenAddress.ToString()
         });
-        
+
         await _crossChainTransferAppService.TransferAsync(new CrossChainTransferInput
         {
+            TraceId = traceId,
+            TransferTransactionId = txId,
             FromAddress = fromAddress.ToString(),
             ReceiptId = receiptId,
             ToAddress = toAddress.ToString(),
-            TransferAmount =  (decimal)((BigDecimal)amount / BigInteger.Pow(10, token.Decimals)),
+            TransferAmount = (decimal)((BigDecimal)amount / BigInteger.Pow(10, token.Decimals)),
             TransferTime = blockTime,
             FromChainId = chainId,
             ToChainId = ChainHelper.ConvertChainIdToBase58(toChainId),
@@ -172,8 +179,9 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
             TransferTokenId = token.Id
         });
     }
-    
-    private async Task ReceiveAsync(string chainId, DateTime blockTime, TonMessageDto outMessage)
+
+    private async Task ReceiveAsync(string chainId, DateTime blockTime, TonMessageDto outMessage, string traceId,
+        string txId)
     {
         var body = Cell.From(outMessage.MessageContent.Body);
         var bodySlice = body.Parse();
@@ -186,15 +194,17 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         var keyHash = receiptSlice.LoadBytes(32).ToHex();
         var index = receiptSlice.LoadInt(256);
         var receiptId = $"{keyHash}-{index}";
-        
+
         var token = await _tokenAppService.GetAsync(new GetTokenInput
         {
             ChainId = chainId,
             Address = tokenAddress.ToString()
         });
-        
+
         await _crossChainTransferAppService.ReceiveAsync(new CrossChainReceiveInput
         {
+            TransferTransactionId = txId,
+            TraceId = traceId,
             ReceiptId = receiptId,
             ToAddress = toAddress.ToString(),
             FromChainId = ChainHelper.ConvertChainIdToBase58(toChainId),
@@ -204,7 +214,7 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
             ReceiveTokenId = token.Id
         });
     }
-    
+
     private async Task SetDailyLimitAsync(string chainId, string account, TonMessageDto outMessage)
     {
         var body = Cell.From(outMessage.MessageContent.Body);
@@ -214,20 +224,20 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         var remainAmount = bodySlice.LoadInt(256);
         var refreshTime = bodySlice.LoadInt(64);
         var limit = bodySlice.LoadInt(256);
-        
+
         var tokenAddress = new Address(account);
         var token = await _tokenAppService.GetAsync(new GetTokenInput
         {
             ChainId = chainId,
             Address = tokenAddress.ToString()
         });
-        
+
         await _crossChainLimitAppService.SetCrossChainDailyLimitAsync(new SetCrossChainDailyLimitInput()
         {
             ChainId = chainId,
             Type = type,
             DailyLimit = (decimal)((BigDecimal)limit / BigInteger.Pow(10, token.Decimals)),
-            RefreshTime = (long) refreshTime,
+            RefreshTime = (long)refreshTime,
             RemainAmount = (decimal)((BigDecimal)remainAmount / BigInteger.Pow(10, token.Decimals)),
             TokenId = token.Id,
             TargetChainId = ChainHelper.ConvertChainIdToBase58(toChainId)
@@ -241,7 +251,7 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         var toChainId = (int)bodySlice.LoadInt(32);
         var type = (CrossChainLimitType)(int)bodySlice.LoadInt(1);
         var amount = bodySlice.LoadInt(256);
-        
+
         var tokenAddress = new Address(account);
         var token = await _tokenAppService.GetAsync(new GetTokenInput
         {
@@ -269,14 +279,14 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         var capacity = bodySlice.LoadInt(256);
         var isEnable = Convert.ToBoolean(bodySlice.LoadInt(1));
         var rate = bodySlice.LoadInt(256);
-        
+
         var tokenAddress = new Address(account);
         var token = await _tokenAppService.GetAsync(new GetTokenInput
         {
             ChainId = chainId,
             Address = tokenAddress.ToString()
         });
-        
+
         await _crossChainLimitAppService.SetCrossChainRateLimitAsync(new SetCrossChainRateLimitInput()
         {
             ChainId = chainId,
@@ -289,7 +299,7 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
             CurrentAmount = (decimal)((BigDecimal)currentAmount / BigInteger.Pow(10, token.Decimals)),
         });
     }
-    
+
     private async Task ConsumeRateLimitAsync(string chainId, string account, TonMessageDto outMessage)
     {
         var body = Cell.From(outMessage.MessageContent.Body);
@@ -297,7 +307,7 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         var toChainId = (int)bodySlice.LoadInt(32);
         var type = (CrossChainLimitType)(int)bodySlice.LoadInt(1);
         var amount = bodySlice.LoadInt(256);
-        
+
         var tokenAddress = new Address(account);
         var token = await _tokenAppService.GetAsync(new GetTokenInput
         {
