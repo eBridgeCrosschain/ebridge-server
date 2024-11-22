@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
@@ -7,6 +8,7 @@ using AElf.CrossChainServer.Contracts;
 using AElf.ExceptionHandler;
 using AElf.Types;
 using Google.Protobuf;
+using Google.Protobuf.Collections;
 using Serilog;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Uow;
@@ -62,6 +64,40 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
             await _blockchainAppService.GetTransactionResultAsync(transfer.FromChainId,
                 transfer.TransferTransactionId);
         var parentHeight = txResult.BlockHeight;
+        var merklePath = await GetMerklePathAsync(transfer.FromChainId, transfer.TransferTransactionId);
+        if (transfer.FromChainId != CrossChainServerConsts.AElfMainChainId)
+        {
+            var merkleProofContext =
+                await _crossChainContractAppService.GetBoundParentChainHeightAndMerklePathByHeightAsync(
+                    transfer.FromChainId, txResult.BlockHeight);
+            parentHeight = merkleProofContext.BoundParentChainHeight;
+            merklePath.MerklePathNodes.AddRange(merkleProofContext.MerklePathFromParentChain.MerklePathNodes);
+        }
+        var fromChain = await _chainAppService.GetAsync(transfer.FromChainId);
+        if (fromChain == null)
+        {
+            return "";
+        }
+
+        var inlineTxLogs = txResult.Logs.Where(p => p.Name.Equals(InlineTransactionCreated.Descriptor.Name)).ToList();
+        if (inlineTxLogs.Count > 0)
+        {
+            foreach (var inlineCreatedLog in inlineTxLogs)
+            {
+                var inlineCreated = ProtoExtensions.MergeFromIndexed<InlineTransactionCreated>(
+                    new RepeatedField<ByteString>
+                    {
+                        ByteString.FromBase64(inlineCreatedLog.Indexed[0])
+                    });
+                var inlineTransaction = inlineCreated.Transaction;
+                if (!inlineTransaction.MethodName.Contains(".CrossChainTransfer."))
+                {
+                    continue;
+                }
+                return await _tokenContractAppService.CrossChainReceiveTokenAsync(transfer.ToChainId,
+                    fromChain.AElfChainId, parentHeight, inlineTransaction.ToByteArray().ToHex(), merklePath);
+            }
+        }
 
         var paramsJson = JsonNode.Parse(txResult.Transaction.Params);
         var param = new AElf.Contracts.MultiToken.CrossChainTransferInput
@@ -87,22 +123,7 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
             RefBlockNumber = txResult.Transaction.RefBlockNumber,
             RefBlockPrefix = ByteString.FromBase64(txResult.Transaction.RefBlockPrefix)
         };
-
-        var merklePath = await GetMerklePathAsync(transfer.FromChainId, transfer.TransferTransactionId);
-        if (transfer.FromChainId != CrossChainServerConsts.AElfMainChainId)
-        {
-            var merkleProofContext =
-                await _crossChainContractAppService.GetBoundParentChainHeightAndMerklePathByHeightAsync(
-                    transfer.FromChainId, txResult.BlockHeight);
-            parentHeight = merkleProofContext.BoundParentChainHeight;
-            merklePath.MerklePathNodes.AddRange(merkleProofContext.MerklePathFromParentChain.MerklePathNodes);
-        }
-
-
-        var fromChain = await _chainAppService.GetAsync(transfer.FromChainId);
-        return fromChain == null
-            ? ""
-            : await _tokenContractAppService.CrossChainReceiveTokenAsync(transfer.ToChainId,
+        return await _tokenContractAppService.CrossChainReceiveTokenAsync(transfer.ToChainId,
                 fromChain.AElfChainId, parentHeight, transaction.ToByteArray().ToHex(), merklePath);
     }
 

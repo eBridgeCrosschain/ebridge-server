@@ -101,7 +101,8 @@ namespace AElf.CrossChainServer.Chains
                             result.Status != TransactionResultStatus.Pending.ToString().ToUpper(),
                 BlockHeight = result.BlockNumber,
                 BlockHash = result.BlockHash,
-                Transaction = result.Transaction
+                Transaction = result.Transaction,
+                Logs = result.Logs
             };
         }
 
