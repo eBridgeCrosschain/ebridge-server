@@ -59,6 +59,7 @@ public class CrossChainServerApplicationModule : AbpModule
         Configure<ReportQueryTimesOptions>(configuration.GetSection("ReportQueryTimes"));
         Configure<AutoReceiveConfigOptions>(configuration.GetSection("AutoReceiveConfig"));
         Configure<SyncStateServiceOption>(configuration.GetSection("SyncStateService"));
+        Configure<AetherLinkOption>(configuration.GetSection("AetherLink"));
         Configure<ApiKeyOptions>(configuration.GetSection("ApiKey"));
 
         context.Services.AddSingleton<IBlockchainClientFactory<AElfClient>, AElfClientFactory>();
@@ -75,5 +76,6 @@ public class CrossChainServerApplicationModule : AbpModule
         context.Services.AddTransient<ITokenContractProvider, AElfTokenContractProvider>();
         context.Services.AddTransient<ICheckTransferProvider, CheckTransferProvider>();
         context.Services.AddTransient<IHttpProvider, HttpProvider>();
+        context.Services.AddTransient<IAetherLinkProvider, AetherLinkProvider>();
     }
 }

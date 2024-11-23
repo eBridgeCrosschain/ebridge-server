@@ -24,11 +24,13 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
     private readonly ITokenSymbolMappingProvider _tokenSymbolMappingProvider;
     private readonly IBridgeContractAppService _bridgeContractAppService;
     private readonly ICrossChainTransferRepository _crossChainTransferRepository;
+    private readonly IAetherLinkProvider _aetherLinkProvider;
 
     public HeterogeneousCrossChainTransferProvider(IChainAppService chainAppService,
         IOracleQueryInfoAppService oracleQueryInfoAppService, IReportInfoAppService reportInfoAppService,
         ITokenRepository tokenRepository, ITokenSymbolMappingProvider tokenSymbolMappingProvider,
-        IBridgeContractAppService bridgeContractAppService, ICrossChainTransferRepository crossChainTransferRepository)
+        IBridgeContractAppService bridgeContractAppService, ICrossChainTransferRepository crossChainTransferRepository,
+        IAetherLinkProvider aetherLinkProvider)
     {
         _chainAppService = chainAppService;
         _oracleQueryInfoAppService = oracleQueryInfoAppService;
@@ -37,6 +39,7 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
         _tokenSymbolMappingProvider = tokenSymbolMappingProvider;
         _bridgeContractAppService = bridgeContractAppService;
         _crossChainTransferRepository = crossChainTransferRepository;
+        _aetherLinkProvider = aetherLinkProvider;
     }
 
     public CrossChainType CrossChainType { get; } = CrossChainType.Heterogeneous;
@@ -52,21 +55,35 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
     public async Task<int> CalculateCrossChainProgressAsync(CrossChainTransfer transfer)
     {
         var chain = await _chainAppService.GetAsync(transfer.ToChainId);
-        if (chain == null)
+        var fromChain = await _chainAppService.GetAsync(transfer.FromChainId);
+        if (chain == null || fromChain == null)
         {
             return 0;
         }
-        // evm
-        // ethereum -> aelf
+        // other chain -> aelf
         if (chain.Type == BlockchainType.AElf)
         {
+            if (fromChain.Type == BlockchainType.Tvm)
+            {
+                return await _aetherLinkProvider.CalculateCrossChainProgressAsync(new AetherLinkCrossChainStatusInput
+                {
+                    SourceChainId = fromChain.AElfChainId,
+                    TraceId = transfer.TraceId
+                });
+            }
             return await _oracleQueryInfoAppService.CalculateCrossChainProgressAsync(transfer.ToChainId,transfer.ReceiptId);
+        }
+        // aelf -> ton
+        if (chain.Type == BlockchainType.Tvm)
+        {
+            return await _aetherLinkProvider.CalculateCrossChainProgressAsync(new AetherLinkCrossChainStatusInput
+            {
+                SourceChainId = fromChain.AElfChainId,
+                TransactionId = transfer.TransferTransactionId
+            });
         }
         // aelf ->ethereum
         return await _reportInfoAppService.CalculateCrossChainProgressAsync(transfer.FromChainId, transfer.ReceiptId);
-        // ton -> aelf
-        
-        // aelf -> ton
     }
     
     [ExceptionHandler(typeof(Exception),typeof(InvalidOperationException),typeof(WebException), Message = "Send receive transaction failed.", 
