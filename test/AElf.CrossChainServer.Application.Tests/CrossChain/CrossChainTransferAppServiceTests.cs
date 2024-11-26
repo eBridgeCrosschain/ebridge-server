@@ -563,6 +563,74 @@ public class CrossChainTransferAppServiceTests : CrossChainServerApplicationTest
         status.Items.Count.ShouldBe(1);
         status.Items[0].Progress.ShouldBe(50);
     }
+    
+    [Fact]
+    public async Task HeterogeneousTransfer_TON_To_AELF_Test()
+    {
+        var tokenTransfer = await _tokenAppService.GetAsync(new GetTokenInput
+        {
+            ChainId ="MainChain_AELF",
+            Symbol = "ELF"
+        });
+        // var tokenReceived = await _tokenAppService.GetAsync(new GetTokenInput
+        // {
+        //     ChainId ="Ton",
+        //     Symbol = "ELF"
+        // });
+
+        var input = new CrossChainTransferInput
+        {
+            TransferAmount = 100,
+            FromAddress = "FromAddress",
+            ToAddress = "ToAddress",
+            TransferTokenId = tokenTransfer.Id,
+            FromChainId = "Ton",
+            ToChainId = "MainChain_AELF",
+            TransferBlockHeight = 100,
+            TransferTime = DateTime.UtcNow.AddMinutes(-1),
+            ReceiptId = "ReceiptId",
+            TransferTransactionId = "txID",
+            TraceId = "TraceId"
+        };
+        await _crossChainTransferAppService.TransferAsync(input);
+
+        var list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
+        {
+            MaxResultCount = 100
+        });
+        list.Items.Count.ShouldBe(1);
+        list.Items[0].TransferAmount.ShouldBe(input.TransferAmount);
+        list.Items[0].ReceiveAmount.ShouldBe(0);
+        list.Items[0].Progress.ShouldBe(0);
+        list.Items[0].Status.ShouldBe(CrossChainStatus.Transferred);
+        list.Items[0].TransferToken.Id.ShouldBe(tokenTransfer.Id);
+        list.Items[0].ReceiveToken.ShouldBeNull();
+        list.Items[0].Type.ShouldBe(CrossChainType.Heterogeneous);
+        list.Items[0].FromAddress.ShouldBe(input.FromAddress);
+        list.Items[0].ToAddress.ShouldBe(input.ToAddress);
+        list.Items[0].FromChainId.ShouldBe(input.FromChainId);
+        list.Items[0].ToChainId.ShouldBe(input.ToChainId);
+        list.Items[0].TransferBlockHeight.ShouldBe(input.TransferBlockHeight);
+        list.Items[0].TransferTime.ShouldBe(DateTimeHelper.ToUnixTimeMilliseconds(input.TransferTime));
+        list.Items[0].ReceiptId.ShouldBe(input.ReceiptId);
+        list.Items[0].TraceId.ShouldBe(input.TraceId);
+
+        var status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
+        {
+            Ids = { list.Items[0].Id }
+        });
+        status.Items.Count.ShouldBe(1);
+        status.Items[0].Progress.ShouldBe(0);
+
+        await _crossChainTransferAppService.UpdateProgressAsync();
+        
+        status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
+        {
+            Ids = { list.Items[0].Id }
+        });
+        status.Items.Count.ShouldBe(1);
+        status.Items[0].Progress.ShouldBe(50);
+    }
 
     [Fact]
     public async Task ReceiveFirstTest()
