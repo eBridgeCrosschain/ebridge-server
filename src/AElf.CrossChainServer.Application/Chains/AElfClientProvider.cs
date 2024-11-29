@@ -44,7 +44,7 @@ namespace AElf.CrossChainServer.Chains
                 ChainId = chainId,
                 Address = address,
                 Decimals = token.Decimals,
-                Symbol = token.Symbol
+                Symbol = token.Symbol,
             };
         }
         

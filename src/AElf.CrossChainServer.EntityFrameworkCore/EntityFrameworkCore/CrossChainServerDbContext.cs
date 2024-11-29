@@ -1,6 +1,7 @@
 ﻿using AElf.CrossChainServer.BridgeContract;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.CrossChain;
+using AElf.CrossChainServer.TokenAccess;
 using AElf.CrossChainServer.Tokens;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
@@ -143,6 +144,21 @@ public class CrossChainServerDbContext :
         {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "Settings", CrossChainServerConsts.DbSchema);
             b.HasIndex(o => new {o.ChainId, o.Name});
+            b.ConfigureByConvention(); 
+        });
+
+        builder.Entity<UserTokenAccessInfo>(b =>
+        {
+            b.ToTable(CrossChainServerConsts.DbTablePrefix + "UserTokenAccessInfo", CrossChainServerConsts.DbSchema);
+            b.HasIndex(o => new {o.Symbol}).IsUnique();
+            b.HasIndex(o => new {o.Address});
+            b.ConfigureByConvention(); 
+        });
+        
+        builder.Entity<TokenApplyOrder>(b =>
+        {
+            b.ToTable(CrossChainServerConsts.DbTablePrefix + "TokenApplyOrder", CrossChainServerConsts.DbSchema);
+            b.HasIndex(o => new {o.UserAddress, o.Symbol});
             b.ConfigureByConvention(); 
         });
     }
