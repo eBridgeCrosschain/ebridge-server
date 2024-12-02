@@ -67,7 +67,7 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
             {
                 return await _aetherLinkProvider.CalculateCrossChainProgressAsync(new AetherLinkCrossChainStatusInput
                 {
-                    SourceChainId = fromChain.AElfChainId,
+                    // SourceChainId = fromChain.AElfChainId,
                     TraceId = transfer.TraceId
                 });
             }
@@ -78,7 +78,7 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
         {
             return await _aetherLinkProvider.CalculateCrossChainProgressAsync(new AetherLinkCrossChainStatusInput
             {
-                SourceChainId = fromChain.AElfChainId,
+                // SourceChainId = fromChain.AElfChainId,
                 TransactionId = transfer.TransferTransactionId
             });
         }

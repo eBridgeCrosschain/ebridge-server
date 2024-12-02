@@ -60,6 +60,14 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<TonMessage, TonMessageDto>();
         CreateMap<TonMessageContent, TonMessageContentDto>();
         CreateMap<TonDecodedContent, TonDecodedContentDto>();
+
+        CreateMap<TonApiTransaction, TonApiTransactionDto>();
+        CreateMap<TonApiAccount,TonApiAccountDto>();
+        CreateMap<TonapiMessage,TonapiMessageDto>();
+        CreateMap<TonapiComputePhase,TonapiComputePhaseDto>();
+        CreateMap<TonapiStoragePhase,TonapiStoragePhaseDto>();
+        CreateMap<TonapiCreditPhase,TonapiCreditPhaseDto>();
+        CreateMap<TonapiActionPhase,TonapiActionPhaseDto>();
         
         CreateMap<SetCrossChainDailyLimitInput, CrossChainDailyLimit>();
         CreateMap<SetCrossChainRateLimitInput, CrossChainRateLimit>();
@@ -67,5 +75,6 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<SetCrossChainRateLimitInput, CrossChainRateLimitIndex>();
         CreateMap<CrossChainRateLimitEto, SetCrossChainRateLimitInput>();
         CreateMap<CrossChainDailyLimitEto, SetCrossChainDailyLimitInput>();
+        CreateMap<CrossChainRateLimitIndex, CrossChainRateLimitDto>();
     }
 }

@@ -18,4 +18,5 @@ public class JettonContent
 {
     public string Decimals { get; set; }
     public string Uri { get; set; }
+    public string Symbol { get; set; } = null;
 }

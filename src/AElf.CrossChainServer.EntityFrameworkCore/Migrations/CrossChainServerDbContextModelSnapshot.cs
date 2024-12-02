@@ -74,6 +74,37 @@ namespace AElf.CrossChainServer.Migrations
                     b.ToTable("AppChains", (string)null);
                 });
 
+            modelBuilder.Entity("AElf.CrossChainServer.CrossChain.CrossChainDailyLimit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("ChainId")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("DailyLimit")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<long>("RefreshTime")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("RemainAmount")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<string>("TargetChainId")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("TokenId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AppCrossChainDailyLimits", (string)null);
+                });
+
             modelBuilder.Entity("AElf.CrossChainServer.CrossChain.CrossChainIndexingInfo", b =>
                 {
                     b.Property<Guid>("Id")
@@ -99,6 +130,40 @@ namespace AElf.CrossChainServer.Migrations
                     b.HasIndex("BlockTime");
 
                     b.ToTable("AppCrossChainIndexingInfos", (string)null);
+                });
+
+            modelBuilder.Entity("AElf.CrossChainServer.CrossChain.CrossChainRateLimit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("Capacity")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<string>("ChainId")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("CurrentAmount")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<bool>("IsEnable")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<decimal>("Rate")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<string>("TargetChainId")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("TokenId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AppCrossChainRateLimits", (string)null);
                 });
 
             modelBuilder.Entity("AElf.CrossChainServer.CrossChain.CrossChainTransfer", b =>
@@ -144,6 +209,9 @@ namespace AElf.CrossChainServer.Migrations
 
                     b.Property<string>("ToChainId")
                         .HasColumnType("varchar(255)");
+
+                    b.Property<string>("TraceId")
+                        .HasColumnType("longtext");
 
                     b.Property<decimal>("TransferAmount")
                         .HasColumnType("decimal(65,30)");

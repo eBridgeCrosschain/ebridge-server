@@ -24,6 +24,8 @@ public class TonIndexProvider : TonClientProvider, ITonIndexProvider, ITransient
 
     public async Task<List<TonTransactionDto>> GetTonTransactionAsync(GetTonTransactionInput input)
     {
+        // var path =
+        //     $"/v2/blockchain/accounts/{input.ContractAddress}/transactions?after_lt={input.LatestTransactionLt}&limit=100&sort=asc";
         var path =
             $"/transactions?account={input.ContractAddress}&start_lt={input.LatestTransactionLt}&limit=100&offset=0&sort=asc";
         var tonIndexTransactions = await IndexClientProvider.GetAsync<TonIndexTransactions>(input.ChainId, path);

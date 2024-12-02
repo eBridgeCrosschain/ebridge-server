@@ -533,12 +533,8 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                     .Debug(
                         "AutoReceive.TransferTransactionId:{id}", transfer.TransferTransactionId);
                 var toChain = await _chainAppService.GetAsync(transfer.ToChainId);
-                if (toChain == null)
-                {
-                    continue;
-                }
-
-                if (toChain.Type != BlockchainType.AElf)
+                var fromChain = await _chainAppService.GetAsync(transfer.FromChainId);
+                if (toChain == null || toChain.Type != BlockchainType.AElf || fromChain.Type == BlockchainType.Tvm)
                 {
                     continue;
                 }

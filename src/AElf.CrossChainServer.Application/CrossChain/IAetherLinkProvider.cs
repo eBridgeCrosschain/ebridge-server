@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AElf.CrossChainServer.HttpClient;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Serilog;
 using Volo.Abp.DependencyInjection;
 
 namespace AElf.CrossChainServer.CrossChain;
@@ -32,6 +33,7 @@ public class AetherLinkProvider : IAetherLinkProvider
             _getCrossChainStatusUri, ConvertInputToDictionary(input));
         if (!result.Success)
         {
+            Log.Error("Get status from aetherlink failed.");
             return 0;
         }
         

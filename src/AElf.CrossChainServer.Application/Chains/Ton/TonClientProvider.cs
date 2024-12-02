@@ -24,14 +24,22 @@ namespace AElf.CrossChainServer.Chains.Ton
         {
             var path = $"/jetton/masters?address={address}&limit=1&offset=0";
             var jettonMaster = await IndexClientProvider.GetAsync<JettonMasterDto>(chainId, path);
-            var jetton = await GetJettonAsync(jettonMaster.JettonMasters[0].JettonContent.Uri);
+            if (jettonMaster.JettonMasters[0].JettonContent.Uri != null)
+            {
+                var jetton = await GetJettonAsync(jettonMaster.JettonMasters[0].JettonContent.Uri);
+                symbol = jetton.Symbol;
+            }
+            else
+            {
+                symbol = jettonMaster.JettonMasters[0].JettonContent.Symbol;
+            }
             
             return new TokenDto
             {
                 ChainId = chainId,
                 Address = address,
                 Decimals = int.Parse(jettonMaster.JettonMasters[0].JettonContent.Decimals),
-                Symbol = jetton.Symbol
+                Symbol = symbol
             };
         }
 
