@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AElf.CrossChainServer.HttpClient;
 
 namespace AElf.CrossChainServer.TokenAccess;
 
@@ -11,6 +12,9 @@ public interface ISymbolMarketProvider
 
 public class SymbolMarketProvider : ISymbolMarketProvider
 {
+    private readonly TokenAccessOptions _tokenAccessOptions;
+    private readonly IHttpProvider _httpProvider;
+    
     public Task IssueTokenAsync(IssueTokenInput input)
     {
         throw new System.NotImplementedException();

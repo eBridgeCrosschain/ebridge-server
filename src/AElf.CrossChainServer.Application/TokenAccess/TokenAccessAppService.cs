@@ -23,13 +23,13 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     private readonly INESTRepository<UserTokenAccessInfoIndex, Guid> _userAccessTokenInfoIndexRepository;
     private readonly AElfClientProvider _aElfClientProvider;
     private readonly TokenAccessOptions _tokenAccessOptions;
+    private readonly ILarkManager _larkManager;
     
     public async Task<AvailableTokensDto> GetAvailableTokensAsync(string address)
     {
         var tokenList = await _scanProvider.GetOwnTokensAsync(address);
         foreach (var token in tokenList)
         {
-            token.Holders = await _scanProvider.GetTokenHoldersAsync(token.Symbol);
             token.LiquidityInUsd = await _liquidityDataProvider.GetTokenTvlAsync(token.Symbol);
         }
 
@@ -196,6 +196,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             });
         }
         await _tokenApplyOrderRepository.InsertManyAsync(applyOrderList);
+        await _larkManager.SendMessageAsync("");
     }
 
     public async Task IssueTokenAsync(IssueTokenInput input)

@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using AElf.CrossChainServer.HttpClient;
 
 namespace AElf.CrossChainServer.TokenAccess;
 
@@ -9,6 +10,8 @@ public interface ILiquidityDataProvider
 
 public class LiquidityDataProvider : ILiquidityDataProvider
 {
+    private readonly TokenAccessOptions _tokenAccessOptions;
+    private readonly IHttpProvider _httpProvider;
     public Task<string> GetTokenTvlAsync(string symbol)
     {
         throw new System.NotImplementedException();
