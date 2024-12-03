@@ -183,7 +183,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         if (transfer == null)
         {
             Log.Information(
-                "New transfer {TransferTransactionId}", input.TransferTransactionId);
+                "New transfer {transferTxId},{receiptId}", input.TransferTransactionId, input.ReceiptId);
             isTransferExist = false;
             transfer = ObjectMapper.Map<CrossChainTransferInput, CrossChainTransfer>(input);
             transfer.Type = await GetCrossChainTypeAsync(input.FromChainId, input.ToChainId);
@@ -195,7 +195,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         {
             Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId)
                 .Debug(
-                    "Update transfer {TransferTransactionId}", input.TransferTransactionId);
+                    "Update transfer {transferTxId},{receiptId}", input.TransferTransactionId, input.ReceiptId);
             transfer.TransferTokenId = input.TransferTokenId;
             transfer.TransferTransactionId = input.TransferTransactionId;
             transfer.TransferAmount = input.TransferAmount;
@@ -298,24 +298,26 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
     public async Task ReceiveAsync(CrossChainReceiveInput input)
     {
         Log.ForContext("fromChainId", input.FromChainId).ForContext("toChainId", input.ToChainId).Information(
-            "Receive transfer {TransferTransactionId}", input.TransferTransactionId);
+            "Receive transfer {transferTxId},{receiptId},{receiveTxId}", input.TransferTransactionId, input.ReceiptId,
+            input.ReceiveTransactionId);
         var transfer = await FindCrossChainTransferAsync(input.FromChainId, input.ToChainId,
             input.TransferTransactionId, input.ReceiptId);
 
         var isTransferExist = true;
         if (transfer == null)
         {
-            Logger.LogDebug("New receive {TransferTransactionId} from {FromChainId} to {ToChainId}",
-                input.TransferTransactionId, input.FromChainId, input.ToChainId);
+            Log.ForContext("fromChainId", input.FromChainId).ForContext("toChainId", input.ToChainId).Information(
+                "New receive {transferTxId},{receiptId},{receiveTxId}", input.TransferTransactionId, input.ReceiptId,
+                input.ReceiveTransactionId);
             isTransferExist = false;
             transfer = ObjectMapper.Map<CrossChainReceiveInput, CrossChainTransfer>(input);
             transfer.Type = await GetCrossChainTypeAsync(input.FromChainId, input.ToChainId);
         }
         else
         {
-            Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId)
-                .Debug(
-                    "Update receive {TransferTransactionId}", input.TransferTransactionId);
+            Log.ForContext("fromChainId", input.FromChainId).ForContext("toChainId", input.ToChainId).Information(
+                "Update receive {transferTxId},{receiptId},{receiveTxId}", input.TransferTransactionId, input.ReceiptId,
+                input.ReceiveTransactionId);
             transfer.ReceiveTokenId = input.ReceiveTokenId;
             transfer.ReceiveTransactionId = input.ReceiveTransactionId;
             transfer.ReceiveTime = input.ReceiveTime;
@@ -336,7 +338,8 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
     }
 
     [ExceptionHandler(typeof(Exception), typeof(InvalidOperationException),
-        Message = "Find cross chain transfer failed.",ReturnDefault = ReturnDefault.Default, LogTargets = new[]{"fromChainId","toChainId","transferTransactionId","receiptId"})]
+        Message = "Find cross chain transfer failed.", ReturnDefault = ReturnDefault.Default,
+        LogTargets = new[] { "fromChainId", "toChainId", "transferTransactionId", "receiptId" })]
     public virtual async Task<CrossChainTransfer> FindCrossChainTransferAsync(string fromChainId, string toChainId,
         string transferTransactionId, string receiptId)
     {
@@ -505,7 +508,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
             await _crossChainTransferRepository.UpdateManyAsync(toUpdate);
         }
     }
-    
+
     private async Task<List<CrossChainTransfer>> GetToUpdateReceiveTransactionAsync(int page)
     {
         using var uow = _unitOfWorkManager.Begin();
@@ -576,6 +579,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                     toUpdate.Add(transfer);
                     continue;
                 }
+
                 transfer.ReceiveTransactionId = txId;
                 transfer.ReceiveTransactionAttemptTimes += 1;
                 toUpdate.Add(transfer);
@@ -650,7 +654,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
             await _crossChainTransferRepository.UpdateManyAsync(toUpdate);
         }
     }
-    
+
     private async Task<List<CrossChainTransfer>> GetToCheckReceivedTransactionAsync(int page)
     {
         using var uow = _unitOfWorkManager.Begin();
