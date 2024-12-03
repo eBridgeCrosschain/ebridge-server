@@ -48,6 +48,8 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
     public async Task<CrossChainTransfer> FindTransferAsync(string fromChainId, string toChainId,
         string transferTransactionId, string receiptId)
     {
+        Log.Debug("Find transfer from chain {fromChainId} to chain {toChainId} with receipt id {receiptId}.",
+            fromChainId, toChainId, receiptId);
         return await _crossChainTransferRepository.FindAsync(o =>
             o.FromChainId == fromChainId && o.ToChainId == toChainId && o.ReceiptId == receiptId);
     }
