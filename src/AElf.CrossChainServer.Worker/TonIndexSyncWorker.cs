@@ -59,11 +59,11 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
                 continue;
             }
 
-            Log.Debug("Sync ton chain bridge contract:{contract}",contract);
+            Log.Debug("Sync ton chain bridge contract:{contract}", contract.BridgeContract);
             await HandleTonTransactionAsync(chain.Id, contract.BridgeContract);
             foreach (var pool in contract.BridgePoolContract)
             {
-                Log.Debug("Sync ton chain bridge pool contract:{contract}",pool.PoolAddress);
+                Log.Debug("Sync ton chain bridge pool contract:{contract}", pool.PoolAddress);
                 await HandleTonTransactionAsync(chain.Id, pool.PoolAddress, pool.TokenAddress);
             }
         }
@@ -227,8 +227,9 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         });
     }
 
-    private async Task SetDailyLimitAsync(string chainId,string tokenAddress, TonMessageDto outMessage)
+    private async Task SetDailyLimitAsync(string chainId, string tokenAddress, TonMessageDto outMessage)
     {
+        Log.ForContext("chainId", chainId).Debug("Start to set daily limit:{tokenAddress}", tokenAddress);
         var body = Cell.From(outMessage.MessageContent.Body);
         var bodySlice = body.Parse();
         var eventId = bodySlice.LoadUInt(32);
@@ -258,13 +259,14 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
 
     private async Task ConsumeDailyLimitAsync(string chainId, string tokenAddress, TonMessageDto outMessage)
     {
+        Log.ForContext("chainId", chainId).Debug("Start to consume daily limit:{tokenAddress}", tokenAddress);
         var body = Cell.From(outMessage.MessageContent.Body);
         var bodySlice = body.Parse();
         var eventId = bodySlice.LoadUInt(32);
         var toChainId = (int)bodySlice.LoadInt(32);
         var type = (CrossChainLimitType)(int)bodySlice.LoadInt(1);
         var amount = bodySlice.LoadInt(256);
-        
+
         var token = await _tokenAppService.GetAsync(new GetTokenInput
         {
             ChainId = chainId,
@@ -283,6 +285,7 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
 
     private async Task SetRateLimitAsync(string chainId, string tokenAddress, TonMessageDto outMessage)
     {
+        Log.ForContext("chainId", chainId).Debug("Start to set rate limit:{tokenAddress}", tokenAddress);
         var body = Cell.From(outMessage.MessageContent.Body);
         var bodySlice = body.Parse();
         var eventId = bodySlice.LoadUInt(32);
@@ -314,13 +317,14 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
 
     private async Task ConsumeRateLimitAsync(string chainId, string tokenAddress, TonMessageDto outMessage)
     {
+        Log.ForContext("chainId", chainId).Debug("Start to consume rate limit:{tokenAddress}", tokenAddress);
         var body = Cell.From(outMessage.MessageContent.Body);
         var bodySlice = body.Parse();
         var eventId = bodySlice.LoadUInt(32);
         var toChainId = (int)bodySlice.LoadInt(32);
         var type = (CrossChainLimitType)(int)bodySlice.LoadInt(1);
         var amount = bodySlice.LoadInt(256);
-        
+
         var token = await _tokenAppService.GetAsync(new GetTokenInput
         {
             ChainId = chainId,
