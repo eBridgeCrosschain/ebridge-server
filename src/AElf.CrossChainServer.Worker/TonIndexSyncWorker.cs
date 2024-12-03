@@ -234,7 +234,7 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         var bodySlice = body.Parse();
         var eventId = bodySlice.LoadUInt(32);
         var toChainId = (int)bodySlice.LoadInt(32);
-        var type = (CrossChainLimitType)(int)bodySlice.LoadInt(1);
+        var type = (CrossChainLimitType)(int)bodySlice.LoadUInt(1);
         var remainAmount = bodySlice.LoadInt(256);
         var refreshTime = bodySlice.LoadInt(64);
         var limit = bodySlice.LoadInt(256);
@@ -264,7 +264,7 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         var bodySlice = body.Parse();
         var eventId = bodySlice.LoadUInt(32);
         var toChainId = (int)bodySlice.LoadInt(32);
-        var type = (CrossChainLimitType)(int)bodySlice.LoadInt(1);
+        var type = (CrossChainLimitType)(int)bodySlice.LoadUInt(1);
         var amount = bodySlice.LoadInt(256);
 
         var token = await _tokenAppService.GetAsync(new GetTokenInput
@@ -290,7 +290,7 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         var bodySlice = body.Parse();
         var eventId = bodySlice.LoadUInt(32);
         var toChainId = (int)bodySlice.LoadInt(32);
-        var type = (CrossChainLimitType)(int)bodySlice.LoadInt(1);
+        var type = (CrossChainLimitType)(int)bodySlice.LoadUInt(1);
         var limitInfo = bodySlice.LoadRef().Parse();
         var currentAmount = limitInfo.LoadInt(256);
         var capacity = limitInfo.LoadInt(256);
@@ -322,7 +322,7 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         var bodySlice = body.Parse();
         var eventId = bodySlice.LoadUInt(32);
         var toChainId = (int)bodySlice.LoadInt(32);
-        var type = (CrossChainLimitType)(int)bodySlice.LoadInt(1);
+        var type = (CrossChainLimitType)(int)bodySlice.LoadUInt(1);
         var amount = bodySlice.LoadInt(256);
 
         var token = await _tokenAppService.GetAsync(new GetTokenInput
