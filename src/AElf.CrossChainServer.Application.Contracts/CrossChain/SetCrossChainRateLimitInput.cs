@@ -4,6 +4,7 @@ namespace AElf.CrossChainServer.CrossChain;
 
 public class SetCrossChainRateLimitInput
 {
+    public Guid Id { get; set; }
     public string ChainId { get; set; }
     public string TargetChainId { get; set; }
     public CrossChainLimitType Type { get; set; }
