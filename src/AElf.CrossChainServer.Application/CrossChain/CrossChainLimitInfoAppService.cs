@@ -78,6 +78,7 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
                 {
                     continue;
                 }
+
                 tokenDict[tokenKey] = token;
             }
 
@@ -125,8 +126,8 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
                 {
                     swapRateLimits = OfEvmRateLimitInfos(value);
                 }
-                
-                if(tvmLimitInfos.TryGetValue(crossChainLimitInfo.Key, out var tvmLimits))
+
+                if (tvmLimitInfos.TryGetValue(crossChainLimitInfo.Key, out var tvmLimits))
                 {
                     swapRateLimits = OfEvmRateLimitInfos(tvmLimits);
                 }
@@ -147,7 +148,7 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
                     SwapRateLimitsInfo = swapRateLimits
                 });
             }
-            else if(chain.Type == BlockchainType.Evm)
+            else if (chain.Type == BlockchainType.Evm)
             {
                 Log.ForContext("fromChainId", crossChainLimitInfo.Key.FromChainId)
                     .ForContext("toChainId", crossChainLimitInfo.Key.ToChainId)
@@ -179,7 +180,7 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
                     SwapRateLimitsInfo = swapRateLimits
                 });
             }
-            else if(chain.Type == BlockchainType.Tvm)
+            else if (chain.Type == BlockchainType.Tvm)
             {
                 Log.ForContext("fromChainId", crossChainLimitInfo.Key.FromChainId)
                     .ForContext("toChainId", crossChainLimitInfo.Key.ToChainId)
@@ -314,8 +315,9 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
     }
 
     [ExceptionHandler(typeof(Exception),
-        Message = "Get evm cross chain limit info failed.",ReturnDefault = ReturnDefault.New)]
-    public virtual async Task<Dictionary<CrossChainLimitKey, Dictionary<string, TokenBucketDto>>> GetEvmRateLimitInfosAsync()
+        Message = "Get evm cross chain limit info failed.", ReturnDefault = ReturnDefault.New)]
+    public virtual async Task<Dictionary<CrossChainLimitKey, Dictionary<string, TokenBucketDto>>>
+        GetEvmRateLimitInfosAsync()
     {
         var result = new Dictionary<CrossChainLimitKey, Dictionary<string, TokenBucketDto>>();
         foreach (var (chainId, tokenInfos) in _evmTokensOptions.CurrentValue.Tokens)
@@ -327,9 +329,10 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
         return result;
     }
 
-    [ExceptionHandler(typeof(Exception),Message = "Get evm rate limit info failed.",
-        ReturnDefault = ReturnDefault.New,LogTargets = new[]{"chainId","tokenInfos"})]
-    public virtual async Task<Dictionary<CrossChainLimitKey, Dictionary<string, TokenBucketDto>>> GetEvmRateLimitInfosByChainIdAsync(string chainId, List<TokenInfo> tokenInfos)
+    [ExceptionHandler(typeof(Exception), Message = "Get evm rate limit info failed.",
+        ReturnDefault = ReturnDefault.New, LogTargets = new[] { "chainId", "tokenInfos" })]
+    public virtual async Task<Dictionary<CrossChainLimitKey, Dictionary<string, TokenBucketDto>>>
+        GetEvmRateLimitInfosByChainIdAsync(string chainId, List<TokenInfo> tokenInfos)
     {
         var result = new Dictionary<CrossChainLimitKey, Dictionary<string, TokenBucketDto>>();
         var targetChainIds = tokenInfos.Select(t => t.TargetChainId).ToList();
@@ -342,6 +345,7 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
             {
                 continue;
             }
+
             tokenIds.Add(tokenInfo.Id);
             tokenInfo.Symbol =
                 _tokenSymbolMappingProvider.GetMappingSymbol(chainId, token.TargetChainId, tokenInfo.Symbol);
@@ -367,8 +371,8 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
     }
 
     [ExceptionHandler(typeof(Exception), Message = "Get evm receipt rate limits failed.",
-        ReturnDefault = ReturnDefault.Default, LogTargets = new[] {"tokenAddress","chainId"})]
-    public virtual async Task<TokenDto> GetTokenAsync(string tokenAddress,string chainId)
+        ReturnDefault = ReturnDefault.Default, LogTargets = new[] { "tokenAddress", "chainId" })]
+    public virtual async Task<TokenDto> GetTokenAsync(string tokenAddress, string chainId)
     {
         var tokenInfo = await _tokenAppService.GetAsync(new GetTokenInput
         {
@@ -377,11 +381,12 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
         });
         return tokenInfo;
     }
-    
-    [ExceptionHandler(typeof(Exception),Message = "Get evm receipt rate limits failed.",
-        ReturnDefault = ReturnDefault.New,LogTargets = new[]{"chainId","targetChainIds","tokenIds","symbols"})]
-    public virtual async Task<Dictionary<CrossChainLimitKey, Dictionary<string, TokenBucketDto>>> GetEvmReceiptRateLimitsAsync(
-        string chainId, List<string> targetChainIds, List<Guid> tokenIds, List<string> symbols)
+
+    [ExceptionHandler(typeof(Exception), Message = "Get evm receipt rate limits failed.",
+        ReturnDefault = ReturnDefault.New, LogTargets = new[] { "chainId", "targetChainIds", "tokenIds", "symbols" })]
+    public virtual async Task<Dictionary<CrossChainLimitKey, Dictionary<string, TokenBucketDto>>>
+        GetEvmReceiptRateLimitsAsync(
+            string chainId, List<string> targetChainIds, List<Guid> tokenIds, List<string> symbols)
     {
         var result = new Dictionary<CrossChainLimitKey, Dictionary<string, TokenBucketDto>>();
         var receiptTokenBucketDto = await _bridgeContractAppService.GetCurrentReceiptTokenBucketStatesAsync(chainId,
@@ -399,10 +404,11 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
         return result;
     }
 
-    [ExceptionHandler(typeof(Exception),Message = "Get evm swap rate limits failed.",
-        ReturnDefault = ReturnDefault.New,LogTargets = new[]{"fromChainIds","toChainId","tokenIds","symbols"})]
-    public virtual async Task<Dictionary<CrossChainLimitKey, Dictionary<string, TokenBucketDto>>> GetEvmSwapRateLimitsAsync(
-        List<string> fromChainIds, string toChainId, List<Guid> tokenIds, List<string> symbols)
+    [ExceptionHandler(typeof(Exception), Message = "Get evm swap rate limits failed.",
+        ReturnDefault = ReturnDefault.New, LogTargets = new[] { "fromChainIds", "toChainId", "tokenIds", "symbols" })]
+    public virtual async Task<Dictionary<CrossChainLimitKey, Dictionary<string, TokenBucketDto>>>
+        GetEvmSwapRateLimitsAsync(
+            List<string> fromChainIds, string toChainId, List<Guid> tokenIds, List<string> symbols)
     {
         var result = new Dictionary<CrossChainLimitKey, Dictionary<string, TokenBucketDto>>();
         var swapTokenBucketDto = await _bridgeContractAppService.GetCurrentSwapTokenBucketStatesAsync(toChainId,
@@ -427,14 +433,17 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
         foreach (var limit in limits)
         {
             var limitKey = new CrossChainLimitKey();
+            var chain = await _chainAppService.GetByAElfChainIdAsync(
+                ChainHelper.ConvertBase58ToChainId(limit.TargetChainId));
             if (limit.Type == CrossChainLimitType.Receipt)
             {
                 limitKey.FromChainId = limit.ChainId;
-                limitKey.ToChainId = limit.TargetChainId;
+                limitKey.ToChainId = chain.Id;
             }
             else
             {
-                limitKey.FromChainId = limit.TargetChainId;
+
+                limitKey.FromChainId = chain.Id;
                 limitKey.ToChainId = limit.ChainId;
             }
 
@@ -442,7 +451,7 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
             {
                 value = new Dictionary<string, TokenBucketDto>();
             }
-            
+
             var symbol =
                 _tokenSymbolMappingProvider.GetMappingSymbol(limit.ChainId, limit.TargetChainId, limit.Token.Symbol);
 
@@ -452,8 +461,10 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
                 tokenBucket.Capacity = limit.Capacity;
                 tokenBucket.RefillRate = limit.Rate;
                 tokenBucket.MaximumTimeConsumed =
-                    (int)Math.Ceiling(tokenBucket.Capacity / tokenBucket.RefillRate / CrossChainServerConsts.DefaultRateLimitSeconds);
+                    (int)Math.Ceiling(tokenBucket.Capacity / tokenBucket.RefillRate /
+                                      CrossChainServerConsts.DefaultRateLimitSeconds);
             }
+
             value[symbol] = tokenBucket;
 
             result[limitKey] = value;
@@ -478,7 +489,7 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
             result[limitKey] = tokenDictionary;
         }
     }
-    
+
     public void ConcatRateLimits(ref Dictionary<CrossChainLimitKey, Dictionary<string, TokenBucketDto>> result,
         Dictionary<CrossChainLimitKey, Dictionary<string, TokenBucketDto>> rateLimits)
     {
@@ -495,8 +506,8 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
         }
     }
 
-    [ExceptionHandler(typeof(Exception),Message = "Get token info failed.",
-        ReturnDefault = ReturnDefault.Default,LogTargets = new[]{"chainId","symbol"})]
+    [ExceptionHandler(typeof(Exception), Message = "Get token info failed.",
+        ReturnDefault = ReturnDefault.Default, LogTargets = new[] { "chainId", "symbol" })]
     public virtual async Task<TokenDto> GetTokenInfoAsync(string chainId, string symbol)
     {
         var chain = await _chainAppService.GetByAElfChainIdAsync(
