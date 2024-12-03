@@ -63,25 +63,25 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
         // other chain -> aelf
         if (chain.Type == BlockchainType.AElf)
         {
-            if (fromChain.Type == BlockchainType.Tvm)
-            {
-                return await _aetherLinkProvider.CalculateCrossChainProgressAsync(new AetherLinkCrossChainStatusInput
-                {
-                    // SourceChainId = fromChain.AElfChainId,
-                    TraceId = transfer.TraceId
-                });
-            }
+            // if (fromChain.Type == BlockchainType.Tvm)
+            // {
+            //     return await _aetherLinkProvider.CalculateCrossChainProgressAsync(new AetherLinkCrossChainStatusInput
+            //     {
+            //         // SourceChainId = fromChain.AElfChainId,
+            //         TraceId = transfer.TraceId
+            //     });
+            // }
             return await _oracleQueryInfoAppService.CalculateCrossChainProgressAsync(transfer.ToChainId,transfer.ReceiptId);
         }
         // aelf -> ton
-        if (chain.Type == BlockchainType.Tvm)
-        {
-            return await _aetherLinkProvider.CalculateCrossChainProgressAsync(new AetherLinkCrossChainStatusInput
-            {
-                // SourceChainId = fromChain.AElfChainId,
-                TransactionId = transfer.TransferTransactionId
-            });
-        }
+        // if (chain.Type == BlockchainType.Tvm)
+        // {
+        //     return await _aetherLinkProvider.CalculateCrossChainProgressAsync(new AetherLinkCrossChainStatusInput
+        //     {
+        //         // SourceChainId = fromChain.AElfChainId,
+        //         TransactionId = transfer.TransferTransactionId
+        //     });
+        // }
         // aelf ->ethereum
         return await _reportInfoAppService.CalculateCrossChainProgressAsync(transfer.FromChainId, transfer.ReceiptId);
     }
