@@ -12,7 +12,8 @@ public class TokenAccessOptions
     public string SymbolMarketBaseUrl { get; set; }
     public string SymbolMarketIssueTokenUri { get; set; }
     public string SymbolMarketGetIssueInfoUri { get; set; }
-    
+    public string SymbolMarketMyTokenUri { get; set; }
+
     public string AwakenBaseUrl { get; set; }
     public string AwakenGetTokenLiquidityUri { get; set; }
 

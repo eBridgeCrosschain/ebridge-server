@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
 using AElf.Indexing.Elasticsearch;
+using Microsoft.Extensions.Options;
 using Nest;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
@@ -24,10 +25,34 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     private readonly AElfClientProvider _aElfClientProvider;
     private readonly TokenAccessOptions _tokenAccessOptions;
     private readonly ILarkManager _larkManager;
-    
+
+    public TokenAccessAppService(ISymbolMarketProvider symbolMarketProvider, 
+        ILiquidityDataProvider liquidityDataProvider, 
+        IScanProvider scanProvider, ITokenApplyOrderRepository tokenApplyOrderRepository, 
+        INESTRepository<TokenApplyOrderIndex, Guid> tokenApplyOrderIndexRepository,
+        IUserAccessTokenInfoRepository userAccessTokenInfoRepository, 
+        INESTRepository<UserTokenAccessInfoIndex, Guid> userAccessTokenInfoIndexRepository, 
+        AElfClientProvider aElfClientProvider, 
+        IOptionsSnapshot<TokenAccessOptions> tokenAccessOptions, 
+        ILarkManager larkManager)
+    {
+        _symbolMarketProvider = symbolMarketProvider;
+        _liquidityDataProvider = liquidityDataProvider;
+        _scanProvider = scanProvider;
+        _tokenApplyOrderRepository = tokenApplyOrderRepository;
+        _tokenApplyOrderIndexRepository = tokenApplyOrderIndexRepository;
+        _userAccessTokenInfoRepository = userAccessTokenInfoRepository;
+        _userAccessTokenInfoIndexRepository = userAccessTokenInfoIndexRepository;
+        _aElfClientProvider = aElfClientProvider;
+        _tokenAccessOptions = tokenAccessOptions.Value;
+        _larkManager = larkManager;
+    }
+
     public async Task<AvailableTokensDto> GetAvailableTokensAsync(string address)
     {
         var tokenList = await _scanProvider.GetOwnTokensAsync(address);
+        var symbolMarketTokenList = await _symbolMarketProvider.GetOwnTokensAsync(address);
+        tokenList.AddRange(symbolMarketTokenList);
         foreach (var token in tokenList)
         {
             token.LiquidityInUsd = await _liquidityDataProvider.GetTokenTvlAsync(token.Symbol);
