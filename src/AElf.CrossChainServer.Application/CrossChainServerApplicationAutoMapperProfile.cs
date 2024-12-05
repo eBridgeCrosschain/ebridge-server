@@ -2,8 +2,10 @@
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Contracts;
 using AElf.CrossChainServer.CrossChain;
+using AElf.CrossChainServer.TokenAccess;
 using AElf.CrossChainServer.Tokens;
 using AutoMapper;
+using Token = AElf.CrossChainServer.Tokens.Token;
 
 namespace AElf.CrossChainServer;
 
@@ -53,5 +55,14 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<CrossChainTransferEto, UpdateCrossChainTransferIndexInput>();
 
         CreateMap<BridgeContractSyncInfo, BridgeContractSyncInfoDto>();
+
+        CreateMap<UserTokenAccessInfoEto, AddUserTokenAccessInfoIndexInput>();
+        CreateMap<UserTokenAccessInfoEto, UpdateUserTokenAccessInfoIndexInput>();
+        CreateMap<AddUserTokenAccessInfoIndexInput, UserTokenAccessInfoIndex>();
+        CreateMap<UpdateUserTokenAccessInfoIndexInput, UserTokenAccessInfoIndex>();
+        CreateMap<TokenApplyOrderEto, AddTokenApplyOrderIndexInput>();
+        CreateMap<TokenApplyOrderEto, UpdateTokenApplyOrderIndexInput>();
+        CreateMap<AddTokenApplyOrderIndexInput, TokenApplyOrderIndex>();
+        CreateMap<UpdateTokenApplyOrderIndexInput, TokenApplyOrderIndex>();
     }
 }

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using AElf.CrossChainServer.MultiTenancy;
+using AElf.CrossChainServer.TokenAccess;
 using AElf.ExceptionHandler.ABP;
 using AElf.Indexing.Elasticsearch;
 using AElf.Indexing.Elasticsearch.Options;
@@ -70,6 +71,12 @@ public class CrossChainServerDomainModule : AbpModule
             
             options.AutoEventSelectors.Add<ReportInfo>();
             options.EtoMappings.Add<ReportInfo, ReportInfoEto>();
+
+            options.AutoEventSelectors.Add<UserTokenAccessInfo>();
+            options.EtoMappings.Add<UserTokenAccessInfo, UserTokenAccessInfoEto>();
+            
+            options.AutoEventSelectors.Add<TokenApplyOrder>();
+            options.EtoMappings.Add<TokenApplyOrder, TokenApplyOrderEto>();
         });
     }
 }

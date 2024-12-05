@@ -229,7 +229,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         await _symbolMarketProvider.IssueTokenAsync(input);
     }
 
-    public async Task<TokenApplyOrderListDto> GetTokenApplyOrderList(GetTokenApplyOrderListInput input)
+    public async Task<TokenApplyOrderListDto> GetTokenApplyOrderListAsync(GetTokenApplyOrderListInput input)
     {
         var mustQuery = new List<Func<QueryContainerDescriptor<TokenApplyOrderIndex>, QueryContainer>>();
         mustQuery.Add(q => q.Term(i => i.Field(f => f.UserAddress).Value(input.Address)));
@@ -244,9 +244,33 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         };
     }
 
-    public async Task<TokenApplyOrderDto> GetTokenApplyOrder(Guid id)
+    public async Task<TokenApplyOrderDto> GetTokenApplyOrderAsync(Guid id)
     {
         var tokenApplyOrder = await _tokenApplyOrderIndexRepository.GetAsync(id);
         return ObjectMapper.Map<TokenApplyOrderIndex, TokenApplyOrderDto>(tokenApplyOrder);
+    }
+
+    public async Task AddUserTokenAccessInfoIndexAsync(AddUserTokenAccessInfoIndexInput input)
+    {
+        var index = ObjectMapper.Map<AddUserTokenAccessInfoIndexInput, UserTokenAccessInfoIndex>(input);
+        await _userAccessTokenInfoIndexRepository.AddAsync(index);
+    }
+
+    public async Task UpdateUserTokenAccessInfoIndexAsync(UpdateUserTokenAccessInfoIndexInput input)
+    {
+        var index = ObjectMapper.Map<UpdateUserTokenAccessInfoIndexInput, UserTokenAccessInfoIndex>(input);
+        await _userAccessTokenInfoIndexRepository.UpdateAsync(index);
+    }
+
+    public async Task AddTokenApplyOrderIndexAsync(AddTokenApplyOrderIndexInput input)
+    {
+        var index = ObjectMapper.Map<AddTokenApplyOrderIndexInput, TokenApplyOrderIndex>(input);
+        await _tokenApplyOrderIndexRepository.AddAsync(index);
+    }
+
+    public async Task UpdateTokenApplyOrderIndexAsync(UpdateTokenApplyOrderIndexInput input)
+    {
+        var index = ObjectMapper.Map<UpdateTokenApplyOrderIndexInput, TokenApplyOrderIndex>(input);
+        await _tokenApplyOrderIndexRepository.UpdateAsync(index);
     }
 }
