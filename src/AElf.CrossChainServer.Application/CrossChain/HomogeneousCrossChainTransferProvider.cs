@@ -96,13 +96,23 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
                     });
                 Log.ForContext("transactionId", transfer.TransferTokenId).Debug("sendTransactionResult inlineCreated:{inlineCreated}", 
                     JsonConvert.SerializeObject(inlineCreated));
-                var inlineTransaction = inlineCreated.Transaction;
-                if (!inlineTransaction.MethodName.Contains(".CrossChainTransfer."))
+                try
                 {
-                    continue;
+                    var inlineTransaction = inlineCreated.Transaction;
+                    if (!inlineTransaction.MethodName.Contains(".CrossChainTransfer."))
+                    {
+                        continue;
+                    }
+                    return await _tokenContractAppService.CrossChainReceiveTokenAsync(transfer.ToChainId,
+                        fromChain.AElfChainId, parentHeight, inlineTransaction.ToByteArray().ToHex(), merklePath);
                 }
-                return await _tokenContractAppService.CrossChainReceiveTokenAsync(transfer.ToChainId,
-                    fromChain.AElfChainId, parentHeight, inlineTransaction.ToByteArray().ToHex(), merklePath);
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    Log.Error(e, "Fail: {message}", e.Message);
+                    throw;
+                }
+                
             }
         }
 
