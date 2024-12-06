@@ -9,6 +9,7 @@ using AElf.ExceptionHandler;
 using AElf.Types;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
+using Newtonsoft.Json;
 using Serilog;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Uow;
@@ -63,6 +64,8 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
         var txResult =
             await _blockchainAppService.GetTransactionResultAsync(transfer.FromChainId,
                 transfer.TransferTransactionId);
+        Log.ForContext("transactionId", transfer.TransferTransactionId).Debug("sendTransactionResult:{transactionResult}", 
+            JsonConvert.SerializeObject(txResult));
         var parentHeight = txResult.BlockHeight;
         var merklePath = await GetMerklePathAsync(transfer.FromChainId, transfer.TransferTransactionId);
         if (transfer.FromChainId != CrossChainServerConsts.AElfMainChainId)
@@ -80,6 +83,8 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
         }
 
         var inlineTxLogs = txResult.Logs.Where(p => p.Name.Equals(InlineTransactionCreated.Descriptor.Name)).ToList();
+        Log.ForContext("transactionId", transfer.TransferTokenId).Debug("sendTransactionResult inlineTxLogs:{inlineTxLogs}", 
+            JsonConvert.SerializeObject(inlineTxLogs));
         if (inlineTxLogs.Count > 0)
         {
             foreach (var inlineCreatedLog in inlineTxLogs)
@@ -89,6 +94,8 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
                     {
                         ByteString.FromBase64(inlineCreatedLog.Indexed[0])
                     });
+                Log.ForContext("transactionId", transfer.TransferTokenId).Debug("sendTransactionResult inlineCreated:{inlineCreated}", 
+                    JsonConvert.SerializeObject(inlineCreated));
                 var inlineTransaction = inlineCreated.Transaction;
                 if (!inlineTransaction.MethodName.Contains(".CrossChainTransfer."))
                 {
