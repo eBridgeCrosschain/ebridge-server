@@ -6,6 +6,7 @@ using AElf.CrossChainServer.Chains;
 using AElf.Types;
 using Google.Protobuf;
 using Microsoft.Extensions.Options;
+using Serilog;
 
 namespace AElf.CrossChainServer.Contracts.Token;
 
@@ -31,12 +32,12 @@ public class AElfTokenContractProvider : AElfClientProvider, ITokenContractProvi
         var fromAddress = client.GetAddressFromPrivateKey(privateKey);
         var transaction = await client.GenerateTransactionAsync(fromAddress, contractAddress, "CrossChainReceiveToken", param);
         var txWithSign = client.SignTransaction(privateKey, transaction);
-
+        
         var result = await client.SendTransactionAsync(new SendTransactionInput
         {
             RawTransaction = txWithSign.ToByteArray().ToHex()
         });
-
+        Log.Debug("CrossChainReceiveToken txId {txId},RawTransaction: {raw}", result.TransactionId, txWithSign.ToByteArray().ToHex());
         return result.TransactionId;
     }
 }
