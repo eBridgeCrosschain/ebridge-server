@@ -75,6 +75,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
 
         if (!input.FromAddress.IsNullOrWhiteSpace())
         {
+        
             var shouldFromQuery = new List<Func<QueryContainerDescriptor<CrossChainTransferIndex>, QueryContainer>>();
 
             if (!Base58CheckEncoding.Verify(input.FromAddress) &&
@@ -83,6 +84,11 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                 shouldFromQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(input.FromAddress.ToLower())));
             }
 
+            if (TonAddressHelper.IsTonFriendlyAddress(input.FromAddress))
+            {
+                shouldFromQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(TonAddressHelper.GetTonRawAddress(input.FromAddress))));
+            }
+            
             shouldFromQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(input.FromAddress)));
 
             mustQuery.Add(q => q.Bool(bb => bb
@@ -100,7 +106,10 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
             {
                 shouldToQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(input.ToAddress.ToLower())));
             }
-
+            if (TonAddressHelper.IsTonFriendlyAddress(input.ToAddress))
+            {
+                shouldToQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(TonAddressHelper.GetTonRawAddress(input.ToAddress))));
+            }
             shouldToQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(input.ToAddress)));
 
             mustQuery.Add(q => q.Bool(bb => bb
@@ -124,6 +133,16 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                         s => s.Term(i => i.Field(f => f.ToAddress).Value(address.ToLower()))
                     )));
                 }
+
+                if (TonAddressHelper.IsTonFriendlyAddress(address))
+                {
+                    var rawAddress = TonAddressHelper.GetTonRawAddress(address);
+                    shouldAddressesQuery.Add(q => q.Bool(b => b.Should(
+                        s => s.Term(i => i.Field(f => f.FromAddress).Value(rawAddress)),
+                        s => s.Term(i => i.Field(f => f.ToAddress).Value(rawAddress))
+                    )));
+                }
+                
 
                 shouldAddressesQuery.Add(q => q.Bool(b => b.Should(
                     s => s.Term(i => i.Field(f => f.FromAddress).Value(address)),

@@ -9,6 +9,7 @@ namespace AElf.CrossChainServer.Chains.Ton;
 public interface ITonIndexProvider
 {
     Task<List<TonTransactionDto>> GetTonTransactionAsync(GetTonTransactionInput input);
+    Task<string> GetTonUserFriendlyAddressAsync(string chainId,string address);
 }
 
 public class TonIndexProvider : TonClientProvider, ITonIndexProvider, ITransientDependency
@@ -31,5 +32,12 @@ public class TonIndexProvider : TonClientProvider, ITonIndexProvider, ITransient
         var tonIndexTransactions = await IndexClientProvider.GetAsync<TonIndexTransactions>(input.ChainId, path);
 
         return _objectMapper.Map<List<TonIndexTransaction>, List<TonTransactionDto>>(tonIndexTransactions.Transactions);
+    }
+    
+    public async Task<string> GetTonUserFriendlyAddressAsync(string chainId,string address)
+    {
+        var path = $"/addressBook?address={address}";
+        var tonUserFriendlyAddress = await IndexClientProvider.GetAsync<Dictionary<string, ResponseItem>>(chainId,path);
+        return tonUserFriendlyAddress == null ? address : tonUserFriendlyAddress[address].UserFriendly;
     }
 }

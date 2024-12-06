@@ -13,5 +13,6 @@ namespace AElf.CrossChainServer.Chains
         Task<TransactionResultDto> GetTransactionResultAsync(string chainId, string transactionId);
         Task<MerklePathDto> GetMerklePathAsync(string chainId, string transactionId);
         Task<List<TonTransactionDto>> GetTonTransactionAsync(GetTonTransactionInput input);
+        Task<string> GetTonUserFriendlyAddressAsync(string chainId, string address);
     }
 }

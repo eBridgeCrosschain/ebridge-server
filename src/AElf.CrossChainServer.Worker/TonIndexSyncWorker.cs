@@ -173,11 +173,12 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         });
 
         var toChain = await _chainAppService.GetByAElfChainIdAsync(toChainId);
+        var from = TonAddressHelper.GetTonRawAddress(fromAddress.ToString());
         await _crossChainTransferAppService.TransferAsync(new CrossChainTransferInput
         {
             TraceId = traceId,
             TransferTransactionId = txId,
-            FromAddress = fromAddress.ToString(),
+            FromAddress = from,
             ReceiptId = receiptId,
             ToAddress = Types.Address.FromBytes(toAddress).ToBase58(),
             TransferAmount = (decimal)((BigDecimal)amount / BigInteger.Pow(10, token.Decimals)),
@@ -213,12 +214,12 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
             Address = tokenAddress.ToString()
         });
         var fromChain = await _chainAppService.GetByAElfChainIdAsync(fromChainId);
-
+        var to = TonAddressHelper.GetTonRawAddress(toAddress.ToString());
         await _crossChainTransferAppService.ReceiveAsync(new CrossChainReceiveInput
         {
             ReceiveTransactionId = txId,
             ReceiptId = receiptId,
-            ToAddress = toAddress.ToString(),
+            ToAddress = to,
             FromChainId = fromChain.Id,
             ToChainId = chainId,
             ReceiveAmount = (decimal)((BigDecimal)amount / BigInteger.Pow(10, token.Decimals)),

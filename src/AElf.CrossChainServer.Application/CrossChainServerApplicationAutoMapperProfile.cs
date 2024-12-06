@@ -5,6 +5,7 @@ using AElf.CrossChainServer.Contracts;
 using AElf.CrossChainServer.CrossChain;
 using AElf.CrossChainServer.Tokens;
 using AutoMapper;
+using TonAddressHelper = AElf.CrossChainServer.Chains.TonAddressHelper;
 
 namespace AElf.CrossChainServer;
 
@@ -29,7 +30,7 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<UpdateOracleQueryInfoIndexInput, OracleQueryInfoIndex>();
         CreateMap<OracleQueryInfoEto, AddOracleQueryInfoIndexInput>();
         CreateMap<OracleQueryInfoEto, UpdateOracleQueryInfoIndexInput>();
-        
+
         CreateMap<CreateReportInfoInput, ReportInfo>();
         CreateMap<AddReportInfoIndexInput, ReportInfoIndex>();
         CreateMap<UpdateReportInfoIndexInput, ReportInfoIndex>();
@@ -38,7 +39,7 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
 
         CreateMap<CrossChainTransferInput, CrossChainTransfer>();
         CreateMap<CrossChainReceiveInput, CrossChainTransfer>();
-        
+
         CreateMap<AddCrossChainTransferIndexInput, CrossChainTransferIndex>();
         CreateMap<UpdateCrossChainTransferIndexInput, CrossChainTransferIndex>();
         CreateMap<CrossChainTransferIndex, CrossChainTransferIndexDto>()
@@ -47,14 +48,17 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
             .ForMember(destination => destination.ReceiveTime,
                 opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.ReceiveTime)))
             .ForMember(destination => destination.ProgressUpdateTime,
-                opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.ProgressUpdateTime)));
-        
+                opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.ProgressUpdateTime)))
+            .ForMember(destination => destination.FromAddress, opt => opt.MapFrom(source =>
+                TonAddressHelper.ConvertRawAddressToFriendly(source.FromAddress)))
+            .ForMember(destination => destination.ToAddress, opt => opt.MapFrom(source =>
+                TonAddressHelper.ConvertRawAddressToFriendly(source.ToAddress)));
         CreateMap<CrossChainTransferIndex, CrossChainTransferStatusDto>();
         CreateMap<CrossChainTransferEto, AddCrossChainTransferIndexInput>();
         CreateMap<CrossChainTransferEto, UpdateCrossChainTransferIndexInput>();
 
         CreateMap<BridgeContractSyncInfo, BridgeContractSyncInfoDto>();
-        
+
         CreateMap<TonIndexTransaction, TonTransactionDto>();
         CreateMap<TonBlockId, TonBlockIdDto>();
         CreateMap<TonMessage, TonMessageDto>();
@@ -62,13 +66,13 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<TonDecodedContent, TonDecodedContentDto>();
 
         CreateMap<TonApiTransaction, TonApiTransactionDto>();
-        CreateMap<TonApiAccount,TonApiAccountDto>();
-        CreateMap<TonapiMessage,TonapiMessageDto>();
-        CreateMap<TonapiComputePhase,TonapiComputePhaseDto>();
-        CreateMap<TonapiStoragePhase,TonapiStoragePhaseDto>();
-        CreateMap<TonapiCreditPhase,TonapiCreditPhaseDto>();
-        CreateMap<TonapiActionPhase,TonapiActionPhaseDto>();
-        
+        CreateMap<TonApiAccount, TonApiAccountDto>();
+        CreateMap<TonapiMessage, TonapiMessageDto>();
+        CreateMap<TonapiComputePhase, TonapiComputePhaseDto>();
+        CreateMap<TonapiStoragePhase, TonapiStoragePhaseDto>();
+        CreateMap<TonapiCreditPhase, TonapiCreditPhaseDto>();
+        CreateMap<TonapiActionPhase, TonapiActionPhaseDto>();
+
         CreateMap<SetCrossChainDailyLimitInput, CrossChainDailyLimit>();
         CreateMap<SetCrossChainRateLimitInput, CrossChainRateLimit>();
         CreateMap<SetCrossChainDailyLimitInput, CrossChainDailyLimitIndex>();

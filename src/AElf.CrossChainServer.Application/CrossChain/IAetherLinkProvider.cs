@@ -36,8 +36,9 @@ public class AetherLinkProvider : IAetherLinkProvider
             Log.Error("Get status from aetherlink failed.");
             return 0;
         }
-        
+
         var crossChainStatus = result.Data.Status;
+        Log.Debug("Get cross chain status {crossChainStatus} from aetherlink.", crossChainStatus);
         return 25 * (1 + crossChainStatus);
     }
 

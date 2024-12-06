@@ -85,5 +85,10 @@ namespace AElf.CrossChainServer.Chains
         {
             return _tonIndexProvider.GetTonTransactionAsync(input);
         }
+        
+        public Task<string> GetTonUserFriendlyAddressAsync(string chainId, string address)
+        {
+            return _tonIndexProvider.GetTonUserFriendlyAddressAsync(chainId, address);
+        }
     }
 }
