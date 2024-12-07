@@ -38,7 +38,7 @@ public class AetherLinkProvider : IAetherLinkProvider
         }
 
         var crossChainStatus = result.Data.Status;
-        Log.Debug("Get cross chain status {crossChainStatus} from aetherlink.", crossChainStatus);
+        Log.Debug("Get cross chain status {crossChainStatus} from aetherlink {traceId},{txId}.", crossChainStatus,input.TraceId,input.TransactionId);
         return 25 * (1 + crossChainStatus);
     }
 
