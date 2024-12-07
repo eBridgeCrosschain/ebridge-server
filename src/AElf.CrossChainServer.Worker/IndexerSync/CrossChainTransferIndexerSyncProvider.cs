@@ -68,9 +68,10 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
                 {
                     return;
                 }
-                var toChainType = (await ChainAppService.GetAsync(toChainId)).Type;
+
+                var toChain = await ChainAppService.GetAsync(toChainId);
                 var toAddress = transfer.ToAddress;
-                if (toChainType == BlockchainType.Tvm)
+                if (toChain.Type == BlockchainType.Tvm)
                 {
                     toAddress = TonAddressHelper.GetTonRawAddress(transfer.ToAddress);
                 }
@@ -102,12 +103,6 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
                 {
                     return;
                 }
-                var fromChainType = (await ChainAppService.GetAsync(formChainId)).Type;
-                var fromAddress = transfer.FromAddress;
-                if (fromChainType == BlockchainType.Tvm)
-                {
-                    fromAddress = TonAddressHelper.GetTonRawAddress(transfer.FromAddress);
-                }
 
                 var receiveToken = await _tokenAppService.GetAsync(new GetTokenInput
                 {
@@ -128,7 +123,7 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
                     ToChainId = chain.Id,
                     TransferTransactionId = transfer.TransferTransactionId,
                     ReceiveTokenId = receiveToken.Id,
-                    FromAddress = fromAddress,
+                    FromAddress = transfer.FromAddress,
                     ToAddress = transfer.ToAddress,
                     ReceiptId = transfer.ReceiptId
                 });
