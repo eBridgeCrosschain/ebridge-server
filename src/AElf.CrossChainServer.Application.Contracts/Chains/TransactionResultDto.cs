@@ -10,4 +10,5 @@ public class TransactionResultDto
     public long BlockHeight { get; set; }
     public string BlockHash { get; set; }
     public TransactionDto Transaction { get; set; }
+    public LogEventDto[] Logs { get; set; }
 }
