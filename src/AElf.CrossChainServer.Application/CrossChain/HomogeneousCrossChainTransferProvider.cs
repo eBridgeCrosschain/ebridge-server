@@ -44,9 +44,12 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
     public async Task<CrossChainTransfer> FindTransferAsync(string fromChainId, string toChainId,
         string transferTransactionId, string receiptId)
     {
-        return await _crossChainTransferRepository.FindAsync(o =>
+        var result = await _crossChainTransferRepository.FindAsync(o =>
             o.FromChainId == fromChainId && o.ToChainId == toChainId &&
             o.TransferTransactionId == transferTransactionId);
+        return result ?? await _crossChainTransferRepository.FindAsync(o =>
+            o.FromChainId == fromChainId && o.ToChainId == toChainId &&
+            o.InlineTransferTransactionId == transferTransactionId);
     }
 
     public async Task<int> CalculateCrossChainProgressAsync(CrossChainTransfer transfer)
@@ -67,15 +70,6 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
         Log.ForContext("transactionId", transfer.TransferTransactionId).Debug("sendTransactionResult:{transactionResult}", 
             JsonConvert.SerializeObject(txResult));
         var parentHeight = txResult.BlockHeight;
-        var merklePath = await GetMerklePathAsync(transfer.FromChainId, transfer.TransferTransactionId);
-        if (transfer.FromChainId != CrossChainServerConsts.AElfMainChainId)
-        {
-            var merkleProofContext =
-                await _crossChainContractAppService.GetBoundParentChainHeightAndMerklePathByHeightAsync(
-                    transfer.FromChainId, txResult.BlockHeight);
-            parentHeight = merkleProofContext.BoundParentChainHeight;
-            merklePath.MerklePathNodes.AddRange(merkleProofContext.MerklePathFromParentChain.MerklePathNodes);
-        }
         var fromChain = await _chainAppService.GetAsync(transfer.FromChainId);
         if (fromChain == null)
         {
@@ -103,8 +97,18 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
                     {
                         continue;
                     }
+                    transfer.InlineTransferTransactionId = inlineTransaction.GetHash().ToHex();
+                    var inlineMerklePath = await GetMerklePathAsync(transfer.FromChainId, inlineTransaction.GetHash().ToHex());
+                    if (transfer.FromChainId != CrossChainServerConsts.AElfMainChainId)
+                    {
+                        var merkleProofContext =
+                            await _crossChainContractAppService.GetBoundParentChainHeightAndMerklePathByHeightAsync(
+                                transfer.FromChainId, txResult.BlockHeight);
+                        parentHeight = merkleProofContext.BoundParentChainHeight;
+                        inlineMerklePath.MerklePathNodes.AddRange(merkleProofContext.MerklePathFromParentChain.MerklePathNodes);
+                    }
                     return await _tokenContractAppService.CrossChainReceiveTokenAsync(transfer.ToChainId,
-                        fromChain.AElfChainId, parentHeight, inlineTransaction.ToByteArray().ToHex(), merklePath);
+                        fromChain.AElfChainId, parentHeight, inlineTransaction.ToByteArray().ToHex(), inlineMerklePath);
                 }
                 catch (Exception e)
                 {
@@ -112,7 +116,6 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
                     Log.Error(e, "Fail: {message}", e.Message);
                     throw;
                 }
-                
             }
         }
 
@@ -140,6 +143,15 @@ public class HomogeneousCrossChainTransferProvider : ICrossChainTransferProvider
             RefBlockNumber = txResult.Transaction.RefBlockNumber,
             RefBlockPrefix = ByteString.FromBase64(txResult.Transaction.RefBlockPrefix)
         };
+        var merklePath = await GetMerklePathAsync(transfer.FromChainId, transfer.TransferTransactionId);
+        if (transfer.FromChainId != CrossChainServerConsts.AElfMainChainId)
+        {
+            var merkleProofContext =
+                await _crossChainContractAppService.GetBoundParentChainHeightAndMerklePathByHeightAsync(
+                    transfer.FromChainId, txResult.BlockHeight);
+            parentHeight = merkleProofContext.BoundParentChainHeight;
+            merklePath.MerklePathNodes.AddRange(merkleProofContext.MerklePathFromParentChain.MerklePathNodes);
+        }
         return await _tokenContractAppService.CrossChainReceiveTokenAsync(transfer.ToChainId,
                 fromChain.AElfChainId, parentHeight, transaction.ToByteArray().ToHex(), merklePath);
     }

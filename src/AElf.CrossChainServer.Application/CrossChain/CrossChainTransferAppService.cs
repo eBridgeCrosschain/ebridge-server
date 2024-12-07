@@ -615,7 +615,8 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                 var chain = await _chainAppService.GetAsync(transfer.ToChainId);
                 var crossChainTransferInfo =
                     await _indexerAppService.GetPendingTransactionAsync(
-                        ChainHelper.ConvertChainIdToBase58(chain.AElfChainId), transfer.TransferTransactionId);
+                        ChainHelper.ConvertChainIdToBase58(chain.AElfChainId), 
+                        string.IsNullOrWhiteSpace(transfer.InlineTransferTransactionId) ? transfer.TransferTransactionId : transfer.InlineTransferTransactionId);
                 if (crossChainTransferInfo == null)
                 {
                     Logger.LogInformation("Transaction not exist. TransferTransactionId:{id}",
