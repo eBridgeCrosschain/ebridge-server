@@ -30,7 +30,7 @@ public class AetherLinkProvider : IAetherLinkProvider
     public async Task<int> CalculateCrossChainProgressAsync(AetherLinkCrossChainStatusInput input)
     {
         var result = await _httpProvider.InvokeAsync<AetherLinkCommonResult<AetherLinkCrossChainStatusResultDto>>(_aetherLinkOption.BaseUrl, 
-            _getCrossChainStatusUri, ConvertInputToDictionary(input));
+            _getCrossChainStatusUri, null,ConvertInputToDictionary(input));
         if (!result.Success)
         {
             Log.Error("Get status from aetherlink failed.");
