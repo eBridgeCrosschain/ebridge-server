@@ -68,7 +68,13 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
                 {
                     return;
                 }
-
+                var toChainType = (await ChainAppService.GetAsync(toChainId)).Type;
+                var toAddress = transfer.ToAddress;
+                if (toChainType == BlockchainType.Tvm)
+                {
+                    toAddress = TonAddressHelper.GetTonRawAddress(transfer.ToAddress);
+                }
+                
                 var transferToken = await _tokenAppService.GetAsync(new GetTokenInput
                 {
                     ChainId = chain.Id,
@@ -80,7 +86,7 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
                 {
                     TransferAmount = transfer.TransferAmount / (decimal)Math.Pow(10, transferToken.Decimals),
                     FromAddress = transfer.FromAddress,
-                    ToAddress = transfer.ToAddress,
+                    ToAddress = toAddress,
                     TransferTokenId = transferToken.Id,
                     FromChainId = chain.Id,
                     ToChainId = toChainId,
@@ -95,6 +101,12 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
                 if (formChainId == null)
                 {
                     return;
+                }
+                var fromChainType = (await ChainAppService.GetAsync(formChainId)).Type;
+                var fromAddress = transfer.FromAddress;
+                if (fromChainType == BlockchainType.Tvm)
+                {
+                    fromAddress = TonAddressHelper.GetTonRawAddress(transfer.FromAddress);
                 }
 
                 var receiveToken = await _tokenAppService.GetAsync(new GetTokenInput
@@ -116,7 +128,7 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
                     ToChainId = chain.Id,
                     TransferTransactionId = transfer.TransferTransactionId,
                     ReceiveTokenId = receiveToken.Id,
-                    FromAddress = transfer.FromAddress,
+                    FromAddress = fromAddress,
                     ToAddress = transfer.ToAddress,
                     ReceiptId = transfer.ReceiptId
                 });

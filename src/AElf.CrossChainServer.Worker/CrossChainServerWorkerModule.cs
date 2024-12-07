@@ -1,3 +1,4 @@
+using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Worker.IndexerSync;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
@@ -23,14 +24,14 @@ namespace AElf.CrossChainServer.Worker
         public override void OnApplicationInitialization(ApplicationInitializationContext context)
         {
             context.AddBackgroundWorkerAsync<TransferProgressUpdateWorker>();
-            context.AddBackgroundWorkerAsync<CrossChainIndexingCleanWorker>();
-            context.AddBackgroundWorkerAsync<BridgeContractSyncWorker>();
-            context.AddBackgroundWorkerAsync<TransmitCheckWorker>();
-            context.AddBackgroundWorkerAsync<ReportCheckWorker>();
-            context.AddBackgroundWorkerAsync<TransferAutoReceiveWorker>();
-            context.AddBackgroundWorkerAsync<IndexerSyncWorker>();
-            context.AddBackgroundWorkerAsync<CheckReceiveWorker>();
-            context.AddBackgroundWorkerAsync<TonIndexSyncWorker>();
+            // context.AddBackgroundWorkerAsync<CrossChainIndexingCleanWorker>();
+            // context.AddBackgroundWorkerAsync<BridgeContractSyncWorker>();
+            // context.AddBackgroundWorkerAsync<TransmitCheckWorker>();
+            // context.AddBackgroundWorkerAsync<ReportCheckWorker>();
+            // context.AddBackgroundWorkerAsync<TransferAutoReceiveWorker>();
+            // context.AddBackgroundWorkerAsync<IndexerSyncWorker>();
+            // context.AddBackgroundWorkerAsync<CheckReceiveWorker>();
+            // context.AddBackgroundWorkerAsync<TonIndexSyncWorker>();
         }
     }
 }
