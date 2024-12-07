@@ -31,7 +31,7 @@ public class AetherLinkProvider : IAetherLinkProvider
     {
         var result = await _httpProvider.InvokeAsync<AetherLinkCommonResult<AetherLinkCrossChainStatusResultDto>>(_aetherLinkOption.BaseUrl, 
             _getCrossChainStatusUri, null,ConvertInputToDictionary(input));
-        if (!result.Success)
+        if (!result.Success || result.Data == null)
         {
             Log.Error("Get status from aetherlink failed.");
             return 0;
