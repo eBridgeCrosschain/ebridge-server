@@ -215,6 +215,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
             Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId)
                 .Debug(
                     "Update transfer {transferTxId},{receiptId}", input.TransferTransactionId, input.ReceiptId);
+            transfer.FromAddress = input.FromAddress;
             transfer.TransferTokenId = input.TransferTokenId;
             transfer.TransferTransactionId = input.TransferTransactionId;
             transfer.TransferAmount = input.TransferAmount;

@@ -177,6 +177,9 @@ namespace AElf.CrossChainServer.Migrations
                     b.Property<string>("FromChainId")
                         .HasColumnType("varchar(255)");
 
+                    b.Property<string>("InlineTransferTransactionId")
+                        .HasColumnType("varchar(255)");
+
                     b.Property<int>("Progress")
                         .HasColumnType("int");
 
@@ -237,6 +240,8 @@ namespace AElf.CrossChainServer.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Status", "ProgressUpdateTime");
+
+                    b.HasIndex("FromChainId", "ToChainId", "InlineTransferTransactionId");
 
                     b.HasIndex("FromChainId", "ToChainId", "ReceiptId");
 
