@@ -12,8 +12,7 @@ public class EntityFrameworkCoreCrossChainServerDbSchemaMigrator
 {
     private readonly IServiceProvider _serviceProvider;
 
-    public EntityFrameworkCoreCrossChainServerDbSchemaMigrator(
-        IServiceProvider serviceProvider)
+    public EntityFrameworkCoreCrossChainServerDbSchemaMigrator(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
     }

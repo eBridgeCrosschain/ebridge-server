@@ -13,7 +13,7 @@ using Volo.Abp.EntityFrameworkCore.Modeling;
 using Volo.Abp.FeatureManagement.EntityFrameworkCore;
 using Volo.Abp.Identity;
 using Volo.Abp.Identity.EntityFrameworkCore;
-using Volo.Abp.IdentityServer.EntityFrameworkCore;
+using Volo.Abp.OpenIddict.EntityFrameworkCore;
 using Volo.Abp.PermissionManagement.EntityFrameworkCore;
 using Volo.Abp.SettingManagement.EntityFrameworkCore;
 using Volo.Abp.TenantManagement;
@@ -44,15 +44,15 @@ public class CrossChainServerDbContext :
      * uses this DbContext on runtime. Otherwise, it will use its own DbContext class.
      */
 
-    //Identity
+    // Identity
     public DbSet<IdentityUser> Users { get; set; }
     public DbSet<IdentityRole> Roles { get; set; }
     public DbSet<IdentityClaimType> ClaimTypes { get; set; }
     public DbSet<OrganizationUnit> OrganizationUnits { get; set; }
     public DbSet<IdentitySecurityLog> SecurityLogs { get; set; }
     public DbSet<IdentityLinkUser> LinkUsers { get; set; }
-    public DbSet<IdentityUserDelegation> UserDelegations { get; }
-    public DbSet<IdentitySession> Sessions { get; }
+    public DbSet<IdentityUserDelegation> UserDelegations { get; set; }
+    public DbSet<IdentitySession> Sessions { get; set; }
 
     // Tenant Management
     public DbSet<Tenant> Tenants { get; set; }
@@ -72,7 +72,6 @@ public class CrossChainServerDbContext :
     public CrossChainServerDbContext(DbContextOptions<CrossChainServerDbContext> options)
         : base(options)
     {
-
     }
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -85,9 +84,9 @@ public class CrossChainServerDbContext :
         builder.ConfigureSettingManagement();
         builder.ConfigureBackgroundJobs();
         builder.ConfigureAuditLogging();
-        builder.ConfigureIdentity();
-        builder.ConfigureIdentityServer();
         builder.ConfigureFeatureManagement();
+        builder.ConfigureIdentity();
+        builder.ConfigureOpenIddict();
         builder.ConfigureTenantManagement();
 
         /* Configure your own tables/entities inside here */
@@ -95,20 +94,21 @@ public class CrossChainServerDbContext :
         builder.Entity<Chain>(b =>
         {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "Chains", CrossChainServerConsts.DbSchema);
-            b.ConfigureByConvention(); 
+            b.ConfigureByConvention();
         });
-        
+
         builder.Entity<Token>(b =>
         {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "Tokens", CrossChainServerConsts.DbSchema);
-            b.ConfigureByConvention(); 
+            b.ConfigureByConvention();
         });
-        
+
         builder.Entity<CrossChainIndexingInfo>(b =>
         {
-            b.ToTable(CrossChainServerConsts.DbTablePrefix + "CrossChainIndexingInfos", CrossChainServerConsts.DbSchema);
+            b.ToTable(CrossChainServerConsts.DbTablePrefix + "CrossChainIndexingInfos",
+                CrossChainServerConsts.DbSchema);
             b.HasIndex(o => o.BlockTime);
-            b.ConfigureByConvention(); 
+            b.ConfigureByConvention();
         });
 
         builder.Entity<CrossChainTransfer>(b =>
@@ -119,11 +119,12 @@ public class CrossChainServerDbContext :
             b.HasIndex(o => new { o.Status, o.ProgressUpdateTime });
             b.ConfigureByConvention();
         });
-        
+
         builder.Entity<BridgeContractSyncInfo>(b =>
         {
-            b.ToTable(CrossChainServerConsts.DbTablePrefix + "BridgeContractSyncInfos", CrossChainServerConsts.DbSchema);
-            b.ConfigureByConvention(); 
+            b.ToTable(CrossChainServerConsts.DbTablePrefix + "BridgeContractSyncInfos",
+                CrossChainServerConsts.DbSchema);
+            b.ConfigureByConvention();
         });
 
         builder.Entity<OracleQueryInfo>(b =>
@@ -132,34 +133,34 @@ public class CrossChainServerDbContext :
             b.HasIndex(o => new { o.ChainId, o.QueryId });
             b.ConfigureByConvention();
         });
-        
+
         builder.Entity<ReportInfo>(b =>
         {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "ReportInfos", CrossChainServerConsts.DbSchema);
-            b.HasIndex(o => new {o.ChainId, o.RoundId, o.Token, o.TargetChainId});
-            b.ConfigureByConvention(); 
+            b.HasIndex(o => new { o.ChainId, o.RoundId, o.Token, o.TargetChainId });
+            b.ConfigureByConvention();
         });
-        
+
         builder.Entity<Settings.Settings>(b =>
         {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "Settings", CrossChainServerConsts.DbSchema);
-            b.HasIndex(o => new {o.ChainId, o.Name});
-            b.ConfigureByConvention(); 
+            b.HasIndex(o => new { o.ChainId, o.Name });
+            b.ConfigureByConvention();
         });
 
         builder.Entity<UserTokenAccessInfo>(b =>
         {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "UserTokenAccessInfo", CrossChainServerConsts.DbSchema);
-            b.HasIndex(o => new {o.Symbol}).IsUnique();
-            b.HasIndex(o => new {o.Address});
-            b.ConfigureByConvention(); 
+            b.HasIndex(o => new { o.Symbol }).IsUnique();
+            b.HasIndex(o => new { o.Address });
+            b.ConfigureByConvention();
         });
-        
+
         builder.Entity<TokenApplyOrder>(b =>
         {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "TokenApplyOrder", CrossChainServerConsts.DbSchema);
-            b.HasIndex(o => new {o.UserAddress, o.Symbol});
-            b.ConfigureByConvention(); 
+            b.HasIndex(o => new { o.UserAddress, o.Symbol });
+            b.ConfigureByConvention();
         });
     }
 }
