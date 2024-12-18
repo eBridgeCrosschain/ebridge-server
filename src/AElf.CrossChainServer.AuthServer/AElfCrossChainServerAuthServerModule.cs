@@ -24,7 +24,6 @@ using Volo.Abp.Caching.StackExchangeRedis;
 using Volo.Abp.DistributedLocking;
 using Volo.Abp.Localization;
 using Volo.Abp.Modularity;
-using Volo.Abp.OpenIddict;
 using Volo.Abp.OpenIddict.ExtensionGrantTypes;
 using Volo.Abp.OpenIddict.Tokens;
 using Volo.Abp.UI.Navigation.Urls;
@@ -38,7 +37,6 @@ namespace AElf.CrossChainServer.Auth;
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AbpDistributedLockingModule),
     typeof(AbpAccountApplicationModule),
-    // typeof(CrossChainServerDomainModule),
     typeof(AbpAccountWebOpenIddictModule),
     typeof(AbpCachingStackExchangeRedisModule),
     typeof(AbpAspNetCoreMvcUiLeptonXLiteThemeModule),
@@ -65,7 +63,7 @@ public class AElfCrossChainServerAuthServerModule : AbpModule
 
             builder.AddValidation(options =>
             {
-                options.AddAudiences("AElfCrossChainServer");
+                options.AddAudiences("CrossChainServer");
                 options.UseLocalServer();
                 options.UseAspNetCore();
             });
@@ -78,12 +76,6 @@ public class AElfCrossChainServerAuthServerModule : AbpModule
                 openIddictServerOptions.GrantTypes.Add("signature");
                 openIddictServerOptions.GrantTypes.Add(AuthConstant.GrantType);
             });
-        });
-
-
-        PreConfigure<OpenIddictValidationBuilder>(builder =>
-        {
-            //Set options here...		
         });
     }
 

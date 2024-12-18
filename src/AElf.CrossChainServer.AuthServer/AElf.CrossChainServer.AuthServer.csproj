@@ -30,19 +30,19 @@
     <PackageReference Include="AElf.CSharp.Core" Version="1.6.0" />
     <PackageReference Include="AElf.Kernel.Types" Version="1.6.0" />
     <PackageReference Include="AElf.Types" Version="1.6.0" />
-    <PackageReference Include="Com.Ctrip.Framework.Apollo.Configuration" Version="2.10.2" />
     <PackageReference Include="AElf.ExceptionHandler" Version="1.8.0" />
     <PackageReference Include="AElf.Types" Version="1.2.0" />
+    <PackageReference Include="Com.Ctrip.Framework.Apollo.Configuration" Version="2.10.2" />
     <PackageReference Include="GraphQL.Client" Version="5.1.1" />
     <PackageReference Include="GraphQL.Client.Serializer.Newtonsoft" Version="5.1.1" />
-    <PackageReference Include="NBitcoin" Version="7.0.46" />
     <PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
     <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
     <PackageReference Include="Serilog.Sinks.OpenTelemetry" Version="4.0.0" />
     <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="8.0.6" />
     <PackageReference Include="DistributedLock.Redis" Version="1.0.2" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.0-preview1" />
+<!--    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.0-preview1" />-->
+    <PackageReference Include="NBitcoin" Version="7.0.46" />
     <PackageReference Include="Nethereum.Util" Version="4.20.0" />
     <PackageReference Include="Nethereum.Web3" Version="4.20.0" />
     <PackageReference Include="Solnet.Wallet" Version="6.1.0" />
@@ -60,8 +60,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AElf.CrossChainServer.Domain.Shared\AElf.CrossChainServer.Domain.Shared.csproj" />
-    <ProjectReference Include="..\AElf.CrossChainServer.Domain\AElf.CrossChainServer.Domain.csproj" />
     <ProjectReference Include="..\AElf.CrossChainServer.EntityFrameworkCore\AElf.CrossChainServer.EntityFrameworkCore.csproj" />
   </ItemGroup>
 
