@@ -1,7 +1,10 @@
+using System;
+
 namespace AElf.CrossChainServer.TokenAccess;
 
 public class UserTokenAccessInfoDto
 {
+    public Guid Id { get; set; }
     public string Symbol { get; set; }
     public string Address { get; set; }
     public string OfficialWebsite { get; set; }

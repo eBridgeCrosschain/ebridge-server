@@ -63,16 +63,18 @@ public class IndexerAppService : CrossChainServerAppService, IIndexerAppService
             transferTransactionId));
         if (data == null)
         {
-            Logger.LogInformation("Get pending transaction failed. chainId: {chainId}, transferTransactionId: {transferTransactionId}",chainId,transferTransactionId);
+            Logger.LogInformation(
+                "Get pending transaction failed. chainId: {chainId}, transferTransactionId: {transferTransactionId}",
+                chainId, transferTransactionId);
             return null;
         }
 
-        Log.ForContext("chainId",chainId).Information(
+        Log.ForContext("chainId", chainId).Information(
             "Get pending transaction success. chainId: {chainId}, transferTransactionId: {transferTransactionId}, data: {data}",
             chainId, transferTransactionId, JsonConvert.SerializeObject(data.Data));
         return data.Data;
     }
-
+    
     private GraphQLRequest GetRequest(string chainId, string transactionId)
     {
         return new GraphQLRequest

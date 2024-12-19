@@ -71,5 +71,15 @@ namespace AElf.CrossChainServer.Chains
             }
             return await provider.GetMerklePathAsync(chainId, transactionId);
         }
+
+        public async Task<FilterLogsDto> GetContractLogsAsync(string chainId, string contractAddress, long startHeight, long endHeight)
+        {
+            var provider = await _blockchainClientProviderFactory.GetBlockChainClientProviderAsync(chainId);
+            if(provider == null)
+            {
+                return null;
+            }
+            return await provider.GetContractLogsAsync(chainId, contractAddress, startHeight, endHeight);
+        }
     }
 }

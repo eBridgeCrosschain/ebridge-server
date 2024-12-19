@@ -3,6 +3,7 @@ using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Contracts;
 using AElf.CrossChainServer.CrossChain;
 using AElf.CrossChainServer.TokenAccess;
+using AElf.CrossChainServer.TokenPool;
 using AElf.CrossChainServer.Tokens;
 using AutoMapper;
 using Token = AElf.CrossChainServer.Tokens.Token;
@@ -64,5 +65,16 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<TokenApplyOrderEto, UpdateTokenApplyOrderIndexInput>();
         CreateMap<AddTokenApplyOrderIndexInput, TokenApplyOrderIndex>();
         CreateMap<UpdateTokenApplyOrderIndexInput, TokenApplyOrderIndex>();
+
+        CreateMap<PoolLiquidityInfoInput, PoolLiquidityInfo>();
+        CreateMap<AddPoolLiquidityInfoIndexInput, PoolLiquidityInfoIndex>();
+        CreateMap<UserLiquidityInfoInput, UserLiquidityInfo>();
+        CreateMap<AddUserLiquidityInfoIndexInput, UserLiquidityInfoIndex>();
+        CreateMap<PoolLiquidityEto, AddPoolLiquidityInfoIndexInput>();
+        CreateMap<PoolLiquidityEto, UpdatePoolLiquidityInfoIndexInput>();
+        CreateMap<UserLiquidityEto, AddUserLiquidityInfoIndexInput>();
+        CreateMap<UserLiquidityEto, UpdateUserLiquidityInfoIndexInput>();
+        CreateMap<PoolLiquidityInfoIndex, PoolLiquidityIndexDto>();
+        CreateMap<UserLiquidityInfoIndex, UserLiquidityIndexDto>();
     }
 }

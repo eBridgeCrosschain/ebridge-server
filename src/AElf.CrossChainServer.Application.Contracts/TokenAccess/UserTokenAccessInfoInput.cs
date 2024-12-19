@@ -1,13 +1,18 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace AElf.CrossChainServer.TokenAccess;
 
-public class UserTokenAccessInfoInput
+public class UserTokenAccessInfoBaseInput
 {
-    public string Symbol { get; set; }
-    public string Address { get; set; }
-    public string OfficialWebsite { get; set; }
-    public string OfficialTwitter { get; set; }
-    public string Title { get; set; }
-    public string PersonName { get; set; }
-    public string TelegramHandler { get; set; }
-    public string Email { get; set; }
+    [Required] public string Symbol { get; set; }
+}
+
+public class UserTokenAccessInfoInput : UserTokenAccessInfoBaseInput
+{
+    [Required] public string OfficialWebsite { get; set; }
+    [Required] public string OfficialTwitter { get; set; }
+    [Required] public string Title { get; set; }
+    [Required] public string PersonName { get; set; }
+    [Required] public string TelegramHandler { get; set; }
+    [Required] public string Email { get; set; }
 }

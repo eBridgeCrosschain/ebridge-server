@@ -2,6 +2,7 @@
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.CrossChain;
 using AElf.CrossChainServer.TokenAccess;
+using AElf.CrossChainServer.TokenPool;
 using AElf.CrossChainServer.Tokens;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
@@ -68,6 +69,8 @@ public class CrossChainServerDbContext :
     public DbSet<OracleQueryInfo> OracleQueryInfos { get; set; }
     public DbSet<ReportInfo> ReportInfos { get; set; }
     public DbSet<Settings.Settings> Settings { get; set; }
+    public DbSet<PoolLiquidityInfo> PoolLiquidityInfos { get; set; }
+    public DbSet<UserLiquidityInfo> UserLiquidityInfos { get; set; }
 
     public CrossChainServerDbContext(DbContextOptions<CrossChainServerDbContext> options)
         : base(options)
@@ -160,6 +163,19 @@ public class CrossChainServerDbContext :
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "TokenApplyOrder", CrossChainServerConsts.DbSchema);
             b.HasIndex(o => new {o.UserAddress, o.Symbol});
             b.ConfigureByConvention(); 
+        });
+        
+        builder.Entity<PoolLiquidityInfo>(b =>
+        {
+            b.ToTable(CrossChainServerConsts.DbTablePrefix + "PoolLiquidityInfos", CrossChainServerConsts.DbSchema);
+            b.HasIndex(o => new {o.ChainId, o.TokenId}).IsUnique();
+            b.ConfigureByConvention(); 
+        });
+        
+        builder.Entity<UserLiquidityInfo>(b=>{
+            b.ToTable(CrossChainServerConsts.DbTablePrefix + "UserLiquidityInfos", CrossChainServerConsts.DbSchema);
+            b.HasIndex(o => new {o.ChainId, o.TokenId, o.Provider}).IsUnique();
+            b.ConfigureByConvention();
         });
     }
 }

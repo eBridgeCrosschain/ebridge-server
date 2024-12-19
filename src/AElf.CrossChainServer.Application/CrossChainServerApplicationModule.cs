@@ -58,7 +58,8 @@ public class CrossChainServerApplicationModule : AbpModule
         Configure<ReportQueryTimesOptions>(configuration.GetSection("ReportQueryTimes"));
         Configure<AutoReceiveConfigOptions>(configuration.GetSection("AutoReceiveConfig"));
         Configure<SyncStateServiceOption>(configuration.GetSection("SyncStateService"));
-
+        Configure<TokenPriceIdMappingOptions>(configuration.GetSection("TokenPriceIdMapping"));
+        
         context.Services.AddSingleton<IBlockchainClientFactory<AElfClient>, AElfClientFactory>();
         context.Services.AddSingleton<IBlockchainClientFactory<Nethereum.Web3.Web3>, EvmClientFactory>();
         context.Services.AddSingleton<IGraphQLClientFactory, GraphQLClientFactory>();

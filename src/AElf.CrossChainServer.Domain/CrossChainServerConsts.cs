@@ -15,4 +15,8 @@ public static class CrossChainServerConsts
     public const long DefaultMaxReportResendTimes = 3;
     public const long DefaultDailyLimitRefreshTime = 86400;
     public const long DefaultRateLimitSeconds = 60;
+    public const string MinedEvmTransaction = "mined";
+    public const string NativeTokenSymbol = "ELF";
+    public const string Underline = "_";
+
 }

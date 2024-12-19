@@ -428,6 +428,11 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
             Symbol = symbol
         });
     }
+
+    public async Task GetLogsAsync(string chainId)
+    {
+        await _bridgeContractAppService.GetTokenPoolLogAsync(chainId);
+    }
 }
 
 public class FromChainDailyLimitsDto

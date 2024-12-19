@@ -1,4 +1,5 @@
 using AElf.CrossChainServer.CrossChain;
+using AElf.CrossChainServer.TokenPool;
 using AutoMapper;
 
 namespace AElf.CrossChainServer
@@ -11,6 +12,8 @@ namespace AElf.CrossChainServer
             CreateMap<CrossChainIndexingInfo, CrossChainIndexingInfoEto>();
             CreateMap<OracleQueryInfo, OracleQueryInfoEto>();
             CreateMap<ReportInfo, ReportInfoEto>();
+            CreateMap<PoolLiquidityInfo, PoolLiquidityEto>();
+            CreateMap<UserLiquidityInfo, UserLiquidityEto>();
         }
     }
 }

@@ -305,7 +305,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         var isTransferExist = true;
         if (transfer == null)
         {
-            Logger.LogDebug("New receive {TransferTransactionId} from {FromChainId} to {ToChainId}",
+            Log.Debug("New receive {TransferTransactionId} from {FromChainId} to {ToChainId}",
                 input.TransferTransactionId, input.FromChainId, input.ToChainId);
             isTransferExist = false;
             transfer = ObjectMapper.Map<CrossChainReceiveInput, CrossChainTransfer>(input);
