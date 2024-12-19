@@ -1,4 +1,6 @@
-﻿namespace AElf.CrossChainServer;
+﻿using Volo.Abp.Identity;
+
+namespace AElf.CrossChainServer;
 
 public static class CrossChainServerConsts
 {

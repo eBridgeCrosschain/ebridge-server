@@ -64,8 +64,8 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
         return await _reportInfoAppService.CalculateCrossChainProgressAsync(transfer.FromChainId, transfer.ReceiptId);
     }
     
-    [ExceptionHandler(typeof(Exception),typeof(InvalidOperationException),typeof(WebException), Message = "Send receive transaction failed.", 
-        ReturnDefault = ReturnDefault.Default, LogTargets = ["transfer"])]
+    // [ExceptionHandler(typeof(Exception),typeof(InvalidOperationException),typeof(WebException), Message = "Send receive transaction failed.", 
+    //     ReturnDefault = ReturnDefault.Default, LogTargets = ["transfer"])]
     public virtual async Task<string> SendReceiveTransactionAsync(CrossChainTransfer transfer)
     {
         var transferToken = await _tokenRepository.GetAsync(transfer.TransferTokenId);

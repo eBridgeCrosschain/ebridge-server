@@ -1,12 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Serilog;
 using Volo.Abp;
 using Volo.Abp.Authorization;
 using Volo.Abp.Autofac;
 using Volo.Abp.BackgroundJobs;
 using Volo.Abp.Data;
-using Volo.Abp.IdentityServer;
 using Volo.Abp.Modularity;
 using Volo.Abp.Threading;
 using Volo.Abp.Uow;
@@ -23,15 +20,15 @@ public class CrossChainServerTestBaseModule : AbpModule
 {
     public override void PreConfigureServices(ServiceConfigurationContext context)
     {
-        PreConfigure<AbpIdentityServerBuilderOptions>(options =>
-        {
-            options.AddDeveloperSigningCredential = false;
-        });
-
-        PreConfigure<IIdentityServerBuilder>(identityServerBuilder =>
-        {
-            identityServerBuilder.AddDeveloperSigningCredential(false, System.Guid.NewGuid().ToString());
-        });
+        // PreConfigure<AbpIdentityServerBuilderOptions>(options =>
+        // {
+        //     options.AddDeveloperSigningCredential = false;
+        // });
+        //
+        // PreConfigure<IIdentityServerBuilder>(identityServerBuilder =>
+        // {
+        //     identityServerBuilder.AddDeveloperSigningCredential(false, System.Guid.NewGuid().ToString());
+        // });
     }
 
     public override void ConfigureServices(ServiceConfigurationContext context)

@@ -1,38 +1,39 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Serilog;
+﻿using Serilog;
 using Serilog.Events;
 
-namespace AElf.CrossChainServer;
+namespace AElf.CrossChainServer.Auth;
 
 public class Program
 {
-    public async static Task<int> Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
+        var configuration = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json")
+            .Build();
+
         Log.Logger = new LoggerConfiguration()
 #if DEBUG
             .MinimumLevel.Debug()
 #else
-            .MinimumLevel.Information()
+                .MinimumLevel.Information()
 #endif
             .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
             .Enrich.FromLogContext()
-            .WriteTo.Async(c => c.File("Logs/logs.txt"))
+            .ReadFrom.Configuration(configuration)
+#if DEBUG
             .WriteTo.Async(c => c.Console())
+#endif
             .CreateLogger();
 
         try
         {
-            Log.Information("Starting AElf.CrossChainServer.IdentityServer.");
+            Log.Information("Starting CrossChainServer.AuthServer.");
             var builder = WebApplication.CreateBuilder(args);
             builder.Host.AddAppSettingsSecretsJson()
                 .UseAutofac()
                 .UseSerilog();
-            await builder.AddApplicationAsync<CrossChainServerIdentityServerModule>();
+            await builder.AddApplicationAsync<AElfCrossChainServerAuthServerModule>();
             var app = builder.Build();
             await app.InitializeApplicationAsync();
             await app.RunAsync();
@@ -40,7 +41,12 @@ public class Program
         }
         catch (Exception ex)
         {
-            Log.Fatal(ex, "AElf.CrossChainServer.IdentityServer terminated unexpectedly!");
+            if (ex is HostAbortedException)
+            {
+                throw;
+            }
+
+            Log.Fatal(ex, "CrossChainServer.AuthServer terminated unexpectedly!");
             return 1;
         }
         finally
