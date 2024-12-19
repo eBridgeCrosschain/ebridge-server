@@ -5,7 +5,6 @@ using AElf.Client.Service;
 using AElf.CrossChainServer.Auth.Common;
 using AElf.CrossChainServer.Auth.DTOs;
 using AElf.CrossChainServer.Auth.Options;
-using AElf.CrossChainServer.Auth.Provider;
 using AElf.CrossChainServer.CrossChain;
 using AElf.Types;
 using Google.Protobuf;
@@ -56,7 +55,7 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
         var recaptchaToken = context.Request.GetParameter("recaptchaToken")?.ToString();
 
         _logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<SignatureGrantHandler>>();
-        _logger.LogInformation(
+        _logger.LogDebug(
             "before publicKeyVal:{publicKeyVal}, signatureVal:{signatureVal}, plainText:{plainText}, caHash:{caHash}, chainId:{chainId}, version:{version}, source:{source}, sourceType:{sourceType}, recaptchaToken: {recaptchaToken}",
             publicKeyVal, signatureVal, plainText, caHash, chainId, version, source, sourceType, recaptchaToken);
 
@@ -67,22 +66,22 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
             return invalidParamResult;
         }
 
-        _logger.LogInformation(
+        _logger.LogDebug(
             "publicKeyVal:{publicKeyVal}, signatureVal:{signatureVal}, plainText:{plainText}, caHash:{caHash}, chainId:{chainId}, version:{version}, source:{source}",
             publicKeyVal, signatureVal, plainText, caHash, chainId, version, source);
 
         var rawText = Encoding.UTF8.GetString(ByteArrayHelper.HexStringToByteArray(plainText));
-        _logger.LogInformation("rawText:{rawText}", rawText);
+        _logger.LogDebug("rawText:{rawText}", rawText);
         var nonce = rawText.TrimEnd().Substring(rawText.LastIndexOf("Nonce:") + 6);
-        _logger.LogInformation("nonce:{nonce}", nonce);
+        _logger.LogDebug("nonce:{nonce}", nonce);
         var publicKey = ByteArrayHelper.HexStringToByteArray(publicKeyVal);
-        _logger.LogInformation("publicKey:{publicKey}", publicKey);
+        _logger.LogDebug("publicKey:{publicKey}", publicKey);
         var signature = ByteArrayHelper.HexStringToByteArray(signatureVal);
-        _logger.LogInformation("signature:{signature}", signature);
+        _logger.LogDebug("signature:{signature}", signature);
         var timestamp = long.Parse(nonce);
-        _logger.LogInformation("timestamp:{timestamp}", timestamp);
+        _logger.LogDebug("timestamp:{timestamp}", timestamp);
         var time = DateTime.UnixEpoch.AddMilliseconds(timestamp);
-        _logger.LogInformation("time:{time}", time);
+        _logger.LogDebug("time:{time}", time);
         var timeRangeConfig = context.HttpContext.RequestServices
             .GetRequiredService<IOptionsSnapshot<TimeRangeOption>>().Value;
 
@@ -112,10 +111,10 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
         if (source == AuthConstant.PortKeySource || source == AuthConstant.NightElfSource)
         {
             address = Address.FromPublicKey(publicKey).ToBase58();
-            _logger.LogInformation("address:{address}", address);
+            _logger.LogDebug("address:{address}", address);
         }
 
-        _logger.LogInformation("before create User, source: {source}", source);
+        _logger.LogDebug("before create User, source: {source}", source);
         if (source == AuthConstant.PortKeySource)
         {
             var managerCheck = await CheckAddressAsync(chainId,
@@ -128,13 +127,13 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
                 return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest, "Manager validation failed.");
             }
 
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "before var userManager = context.HttpContext.RequestServices.GetRequiredService<IdentityUserManager>();");
             var userManager = context.HttpContext.RequestServices.GetRequiredService<IdentityUserManager>();
             user = await userManager.FindByNameAsync(caHash);
             if (user == null)
             {
-                _logger.LogInformation("before CreatePortKeyUserAsync(userManager, userId, caHash, version)");
+                _logger.LogDebug("before CreatePortKeyUserAsync(userManager, userId, caHash, version)");
                 var userId = await GetUserIdAsync(chainId, caHash, version);
                 var createUserResult = await CreatePortKeyUserAsync(userManager, userId, caHash, version);
                 if (!createUserResult)
@@ -146,11 +145,11 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
             }
             else
             {
-                _logger.LogInformation("check user data consistency, userId:{userId}", user.Id.ToString());
+                _logger.LogDebug("check user data consistency, userId:{userId}", user.Id.ToString());
                 var userInfo = await _crossChainUserRepository.GetAsync(user.Id);
                 if (userInfo.AddressInfos.IsNullOrEmpty() || userInfo.AddressInfos.Count == 1)
                 {
-                    _logger.LogInformation("save user info into storage, userId:{userId}", user.Id.ToString());
+                    _logger.LogDebug("save user info into storage, userId:{userId}", user.Id.ToString());
                     var addressInfos = await GetAddressInfosAsync(caHash, version);
                     await _crossChainUserRepository.InsertAsync(new()
                     {
@@ -159,7 +158,7 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
                         AppId = AuthConstant.PortKeyAppId,
                         AddressInfos = addressInfos
                     });
-                    _logger.LogInformation("save user success, userId:{userId}", user.Id.ToString());
+                    _logger.LogDebug("save user success, userId:{userId}", user.Id.ToString());
                 }
             }
         }
@@ -189,13 +188,13 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
             }
             else
             {
-                _logger.LogInformation("check user data consistency, userId:{userId}", user.Id.ToString());
+                _logger.LogDebug("check user data consistency, userId:{userId}", user.Id.ToString());
                 var userInfo = await _crossChainUserRepository.GetAsync(user.Id);
                 var chainIds = _recaptchaOptions.Value.ChainIds;
-                _logger.LogInformation("_recaptchaOptions chainIds: {chainIds}", chainIds);
+                _logger.LogDebug("_recaptchaOptions chainIds: {chainIds}", chainIds);
                 if (userInfo.AddressInfos.IsNullOrEmpty() || IsChainIdMismatch(userInfo.AddressInfos, chainIds))
                 {
-                    _logger.LogInformation("save user info into grain again, userId:{userId}", user.Id.ToString());
+                    _logger.LogDebug("save user info into grain again, userId:{userId}", user.Id.ToString());
 
                     var addressInfos = chainIds
                         .Select(chainId => new AddressInfoDto { ChainId = chainId, Address = address }).ToList();
@@ -206,7 +205,7 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
                         AppId = AuthConstant.NightElfAppId,
                         AddressInfos = addressInfos
                     });
-                    _logger.LogInformation("save user success, userId:{userId}", user.Id.ToString());
+                    _logger.LogDebug("save user success, userId:{userId}", user.Id.ToString());
                 }
             }
         }
@@ -218,7 +217,7 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
             user = await userManager.FindByNameAsync(fullAddress);
             if (user == null)
             {
-                _logger.LogInformation("check new wallet user data, address:{address}", fullAddress);
+                _logger.LogDebug("check new wallet user data, address:{address}", fullAddress);
                 _httpClient = context.HttpContext.RequestServices.GetRequiredService<IHttpClientFactory>()
                     .CreateClient();
                 var valid = !recaptchaToken.IsNullOrEmpty() && await IsCaptchaValid(recaptchaToken);
@@ -276,11 +275,11 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
 
     private async Task<bool> IsCaptchaValid(string token)
     {
-        _logger.LogInformation("method IsCaptchaValid, token: {token}", token);
+        _logger.LogDebug("method IsCaptchaValid, token: {token}", token);
         var response = await _httpClient.PostAsync(
             $"{_recaptchaOptions.Value.BaseUrl}?secret={_recaptchaOptions.Value.SecretKey}&response={token}", null);
         var jsonString = await response.Content.ReadAsStringAsync();
-        _logger.LogInformation("IsCaptchaValid response, jsonString: {json}", jsonString);
+        _logger.LogDebug("IsCaptchaValid response, jsonString: {json}", jsonString);
         dynamic jsonData = JObject.Parse(jsonString);
         return (bool)jsonData.success;
     }
@@ -385,10 +384,9 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
         {
             var user = new IdentityUser(userId, userName: caHash, email: Guid.NewGuid().ToString("N") + "@ABP.IO");
             var identityResult = await userManager.CreateAsync(user);
-
             if (identityResult.Succeeded)
             {
-                _logger.LogInformation("save user info into storage, userId:{userId}", userId.ToString());
+                _logger.LogDebug("save user info into storage, userId:{userId}", userId.ToString());
                 var addressInfos = await GetAddressInfosAsync(caHash, version);
                 await _crossChainUserRepository.InsertAsync(new()
                 {
@@ -397,7 +395,7 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
                     AppId = AuthConstant.PortKeyAppId,
                     AddressInfos = addressInfos
                 });
-                _logger.LogInformation("create user success, userId:{userId}", userId.ToString());
+                _logger.LogDebug("create user success, userId:{userId}", userId.ToString());
             }
 
             result = identityResult.Succeeded;
@@ -422,13 +420,13 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
 
             if (identityResult.Succeeded)
             {
-                _logger.LogInformation("save user info into storage, userId:{userId}", userId.ToString());
+                _logger.LogDebug("save user info into storage, userId:{userId}", userId.ToString());
 
                 List<AddressInfoDto> addressInfos;
                 if (sourceType.IsNullOrEmpty())
                 {
                     var chainIds = _recaptchaOptions.Value.ChainIds;
-                    _logger.LogInformation("_recaptchaOptions chainIds: {chainIds}", chainIds);
+                    _logger.LogDebug("_recaptchaOptions chainIds: {chainIds}", chainIds);
                     addressInfos = chainIds
                         .Select(chainId => new AddressInfoDto { ChainId = chainId, Address = address }).ToList();
                 }
@@ -447,7 +445,7 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
                             : sourceType,
                     AddressInfos = addressInfos
                 });
-                _logger.LogInformation("create user success, userId:{userId}", userId.ToString());
+                _logger.LogDebug("create user success, userId:{userId}", userId.ToString());
             }
 
             result = identityResult.Succeeded;
@@ -463,10 +461,9 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
     private async Task<List<AddressInfoDto>> GetAddressInfosAsync(string caHash, string version)
     {
         var addressInfos = new List<AddressInfoDto>();
-        var holderInfoDto =
-            await GetHolderInfosAsync(
-                AuthConstant.PortKeyVersion2.Equals(version) ? _graphQlOptions.Value.Url2 : _graphQlOptions.Value.Url,
-                caHash);
+        var holderInfoDto = await GetHolderInfosAsync(
+            AuthConstant.PortKeyVersion2.Equals(version) ? _graphQlOptions.Value.Url2 : _graphQlOptions.Value.Url,
+            caHash);
 
         var chainIds = new List<string>();
         if (holderInfoDto != null && !holderInfoDto.CaHolderInfo.IsNullOrEmpty())

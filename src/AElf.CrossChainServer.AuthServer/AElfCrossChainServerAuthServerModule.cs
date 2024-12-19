@@ -40,6 +40,7 @@ namespace AElf.CrossChainServer.Auth;
     typeof(AbpAccountWebOpenIddictModule),
     typeof(AbpCachingStackExchangeRedisModule),
     typeof(AbpAspNetCoreMvcUiLeptonXLiteThemeModule),
+    typeof(CrossChainServerDomainModule),
     typeof(CrossChainServerEntityFrameworkCoreModule)
 )]
 public class AElfCrossChainServerAuthServerModule : AbpModule

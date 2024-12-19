@@ -63,4 +63,8 @@
     <ProjectReference Include="..\AElf.CrossChainServer.EntityFrameworkCore\AElf.CrossChainServer.EntityFrameworkCore.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Provider" />
+  </ItemGroup>
+
 </Project>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
+using AElf.CrossChainServer.OpenIddict;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
 using OpenIddict.Abstractions;
@@ -14,7 +15,7 @@ using Volo.Abp.OpenIddict.Applications;
 using Volo.Abp.PermissionManagement;
 using Volo.Abp.Uow;
 
-namespace AElf.CrossChainServer.OpenIddict;
+namespace CrossChainServer.OpenIddict;
 
 public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDependency
 {
@@ -31,11 +32,11 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
         IPermissionDataSeeder permissionDataSeeder,
         IStringLocalizer<OpenIddictResponse> l)
     {
-        L = l;
-        _scopeManager = scopeManager;
         _configuration = configuration;
         _applicationManager = applicationManager;
+        _scopeManager = scopeManager;
         _permissionDataSeeder = permissionDataSeeder;
+        L = l;
     }
 
     [UnitOfWork]
@@ -47,19 +48,17 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
 
     private async Task CreateScopesAsync()
     {
-        try
+        if (await _scopeManager.FindByNameAsync("CrossChainServer") == null)
         {
-            var scope = await _scopeManager.FindByNameAsync("CrossChainServer");
-            if (scope == null)
+            await _scopeManager.CreateAsync(new OpenIddictScopeDescriptor
             {
-                await _scopeManager.CreateAsync(new OpenIddictScopeDescriptor
+                Name = "CrossChainServer",
+                DisplayName = "CrossChainServer API",
+                Resources =
                 {
-                    Name = "CrossChainServer", DisplayName = "CrossChainServer API", Resources = { "CrossChainServer" }
-                });
-            }
-        }
-        catch (Exception)
-        {
+                    "CrossChainServer"
+                }
+            });
         }
     }
 
@@ -166,14 +165,12 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
         string postLogoutRedirectUri = null,
         List<string> permissions = null)
     {
-        if (!string.IsNullOrEmpty(secret) && string.Equals(type, OpenIddictConstants.ClientTypes.Public,
-                StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrEmpty(secret) && string.Equals(type, OpenIddictConstants.ClientTypes.Public, StringComparison.OrdinalIgnoreCase))
         {
             throw new BusinessException(L["NoClientSecretCanBeSetForPublicApplications"]);
         }
 
-        if (string.IsNullOrEmpty(secret) && string.Equals(type, OpenIddictConstants.ClientTypes.Confidential,
-                StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrEmpty(secret) && string.Equals(type, OpenIddictConstants.ClientTypes.Confidential, StringComparison.OrdinalIgnoreCase))
         {
             throw new BusinessException(L["TheClientSecretIsRequiredForConfidentialApplications"]);
         }
@@ -200,8 +197,7 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
             Check.NotNullOrEmpty(grantTypes, nameof(grantTypes));
             Check.NotNullOrEmpty(scopes, nameof(scopes));
 
-            if (new[] { OpenIddictConstants.GrantTypes.AuthorizationCode, OpenIddictConstants.GrantTypes.Implicit }.All(
-                    grantTypes.Contains))
+            if (new[] { OpenIddictConstants.GrantTypes.AuthorizationCode, OpenIddictConstants.GrantTypes.Implicit }.All(grantTypes.Contains))
             {
                 application.Permissions.Add(OpenIddictConstants.Permissions.ResponseTypes.CodeIdToken);
 
@@ -225,8 +221,7 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
                     application.Permissions.Add(OpenIddictConstants.Permissions.ResponseTypes.Code);
                 }
 
-                if (grantType == OpenIddictConstants.GrantTypes.AuthorizationCode ||
-                    grantType == OpenIddictConstants.GrantTypes.Implicit)
+                if (grantType == OpenIddictConstants.GrantTypes.AuthorizationCode || grantType == OpenIddictConstants.GrantTypes.Implicit)
                 {
                     application.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Authorization);
                 }
@@ -266,7 +261,7 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
                 {
                     application.Permissions.Add(GrantTypeConstants.PERMISSIONS_SIGNATURE);
                 }
-
+                
                 if (grantType == GrantTypeConstants.LOGIN_CREDENTIALS)
                 {
                     application.Permissions.Add(GrantTypeConstants.PERMISSIONS_LOGIN_CREDENTIALS);
@@ -330,8 +325,7 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
             {
                 if (!postLogoutRedirectUri.IsNullOrEmpty())
                 {
-                    if (!Uri.TryCreate(postLogoutRedirectUri, UriKind.Absolute, out var uri) ||
-                        !uri.IsWellFormedOriginalString())
+                    if (!Uri.TryCreate(postLogoutRedirectUri, UriKind.Absolute, out var uri) || !uri.IsWellFormedOriginalString())
                     {
                         throw new BusinessException(L["InvalidPostLogoutRedirectUri", postLogoutRedirectUri]);
                     }
