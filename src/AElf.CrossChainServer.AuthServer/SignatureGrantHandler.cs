@@ -146,7 +146,7 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
             else
             {
                 _logger.LogDebug("check user data consistency, userId:{userId}", user.Id.ToString());
-                var userInfo = await _crossChainUserRepository.GetAsync(user.Id);
+                var userInfo = await _crossChainUserRepository.FindAsync(o => o.UserId == user.Id);
                 if (userInfo.AddressInfos.IsNullOrEmpty() || userInfo.AddressInfos.Count == 1)
                 {
                     _logger.LogDebug("save user info into storage, userId:{userId}", user.Id.ToString());
@@ -189,7 +189,7 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
             else
             {
                 _logger.LogDebug("check user data consistency, userId:{userId}", user.Id.ToString());
-                var userInfo = await _crossChainUserRepository.GetAsync(user.Id);
+                var userInfo = await _crossChainUserRepository.FindAsync(o => o.UserId == user.Id);
                 var chainIds = _recaptchaOptions.Value.ChainIds;
                 _logger.LogDebug("_recaptchaOptions chainIds: {chainIds}", chainIds);
                 if (userInfo.AddressInfos.IsNullOrEmpty() || IsChainIdMismatch(userInfo.AddressInfos, chainIds))
@@ -561,9 +561,8 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
             LoginGuardianIdentifierHash = Hash.Empty
         };
 
-        var output =
-            await CallTransactionAsync<GetHolderInfoOutput>(chainId, AuthConstant.GetHolderInfo, version,
-                param, false, chainOptions);
+        var output = await CallTransactionAsync<GetHolderInfoOutput>(chainId, AuthConstant.GetHolderInfo, version,
+            param, false, chainOptions);
 
         return output?.ManagerInfos?.Any(t => t.Address.ToBase58() == manager);
     }
@@ -586,16 +585,10 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
                     ? chainInfo.ContractAddress2
                     : chainInfo.ContractAddress;
 
-            var transaction =
-                await client.GenerateTransactionAsync(address, contractAddress,
-                    methodName, param);
-
+            var transaction = await client.GenerateTransactionAsync(address, contractAddress, methodName, param);
             var txWithSign = client.SignTransaction(_contractOptions.Value.CommonPrivateKeyForCallTx, transaction);
-            var result = await client.ExecuteTransactionAsync(new ExecuteTransactionDto
-            {
-                RawTransaction = txWithSign.ToByteArray().ToHex()
-            });
-
+            var result =
+                await client.ExecuteTransactionAsync(new() { RawTransaction = txWithSign.ToByteArray().ToHex() });
             var value = new T();
             value.MergeFrom(ByteArrayHelper.HexStringToByteArray(result));
             return value;
