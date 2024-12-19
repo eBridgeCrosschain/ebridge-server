@@ -57,6 +57,7 @@ public class ScanProvider : IScanProvider
                 Holders = token.Holders,
                 Symbol = token.Token.Symbol,
                 TokenName = token.Token.Name,
+                // TokenImage = token.
             });
         }
 

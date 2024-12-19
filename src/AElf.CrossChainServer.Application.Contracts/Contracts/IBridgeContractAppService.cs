@@ -23,6 +23,4 @@ public interface IBridgeContractAppService
     Task<List<TokenBucketDto>> GetCurrentReceiptTokenBucketStatesAsync(string chainId, List<Guid> tokenIds, List<string> targetChainIds);
     Task<List<TokenBucketDto>> GetCurrentSwapTokenBucketStatesAsync(string chainId, List<Guid> tokenIds, List<string> fromChainIds);
     
-    Task GetTokenPoolLogAsync(string chainId);
- 
 }

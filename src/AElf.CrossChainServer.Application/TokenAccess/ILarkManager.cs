@@ -15,7 +15,7 @@ public class LarkManager : ILarkManager
 {
     private readonly TokenAccessOptions _tokenAccessOptions;
     private readonly IHttpProvider _httpProvider;
-    private ApiInfo _webHookUri => new(HttpMethod.Post, _tokenAccessOptions.WebHookUrl);
+    private ApiInfo _webHookUri => new(HttpMethod.Post, _tokenAccessOptions.LarkWebhook);
     public async Task SendMessageAsync(string message)
     {
         var payload = new

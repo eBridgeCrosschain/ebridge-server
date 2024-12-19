@@ -13,16 +13,23 @@ public interface ISymbolMarketProvider
 {
     Task IssueTokenAsync(IssueTokenInput input);
     Task<List<string>> GetIssueChainListAsync(string symbol);
-    Task<List<AvailableTokenDto>> GetOwnTokensAsync(string address);
+    Task<List<UserTokenItemDto>> GetOwnTokensAsync(string address);
 }
 
 public class SymbolMarketProvider : ISymbolMarketProvider
 {
     private readonly TokenAccessOptions _tokenAccessOptions;
     private readonly IHttpProvider _httpProvider;
-    private ApiInfo _myTokenUri => new(HttpMethod.Get, _tokenAccessOptions.SymbolMarketMyTokenUri);
 
-    
+    public SymbolMarketProvider(TokenAccessOptions tokenAccessOptions, IHttpProvider httpProvider)
+    {
+        _tokenAccessOptions = tokenAccessOptions;
+        _httpProvider = httpProvider;
+    }
+
+    private ApiInfo MyTokenUri => new(HttpMethod.Get, _tokenAccessOptions.SymbolMarketUserTokenListUri);
+
+
     public Task IssueTokenAsync(IssueTokenInput input)
     {
         throw new System.NotImplementedException();
@@ -33,21 +40,24 @@ public class SymbolMarketProvider : ISymbolMarketProvider
         throw new System.NotImplementedException();
     }
 
-    public async Task<List<AvailableTokenDto>> GetOwnTokensAsync(string address)
+    public async Task<List<UserTokenItemDto>> GetOwnTokensAsync(string address)
     {
-        var addressList = new List<string>();
-        foreach (var chainId in _tokenAccessOptions.ChainIdList)
-        {
-            addressList.Add("ELF_" + address + "_" + chainId);
-        }
-        var pathParams = new Dictionary<string, string>();
-        pathParams["AddressList"] = JsonConvert.SerializeObject(addressList);
-        var resultDto = await _httpProvider.InvokeAsync<ApiCommonResult<PagedResultDto<AvailableTokenDto>>>(_tokenAccessOptions.SymbolMarketBaseUrl, _myTokenUri, pathParams);
-        if (resultDto.Code != "20000")
-        {
-            Log.Error("Get token tvl fail: code {code}, message: {message}", resultDto.Code, resultDto.Message);
-            return new List<AvailableTokenDto>();
-        }
-        return resultDto.Data.Items.ToList();
+        // var addressList = _tokenAccessOptions.ChainIdList.Select(chainId =>
+        //     CrossChainServerConsts.NativeTokenSymbol + CrossChainServerConsts.Underline + address +
+        //     CrossChainServerConsts.Underline + chainId).ToList();
+        //
+        // var pathParams = new Dictionary<string, string>();
+        // pathParams["AddressList"] = JsonConvert.SerializeObject(addressList);
+        // var resultDto =
+        //     await _httpProvider.InvokeAsync<UserTokenListResultDto>(
+        //         _tokenAccessOptions.SymbolMarketBaseUrl, MyTokenUri, pathParams);
+        // if (resultDto.Code != "20000")
+        // {
+        //     Log.Error("Get token tvl fail: code {code}, message: {message}", resultDto.Code, resultDto.Message);
+        //     return new List<UserTokenListResultDto>();
+        // }
+        //
+        // return resultDto.Data.Items.ToList();
+        return null;
     }
 }

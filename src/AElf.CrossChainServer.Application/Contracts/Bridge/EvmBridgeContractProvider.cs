@@ -246,7 +246,7 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
 
     public async Task<List<PoolLiquidityDto>> GetPoolLiquidityAsync(string chainId, string contractAddress, List<Guid> tokenIds)
     {
-        var result = new List<PoolLiquidityDto>()
+        var result = new List<PoolLiquidityDto>();
         foreach (var tokenId in tokenIds)
         {
             var token = await _tokenAppService.GetAsync(tokenId);

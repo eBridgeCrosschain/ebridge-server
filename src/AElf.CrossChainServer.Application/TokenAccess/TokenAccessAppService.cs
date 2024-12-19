@@ -99,8 +99,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         // // if (address.IsNullOrEmpty()) return result;
         // string address = null;
         // var symbolMarketTokenList = await _symbolMarketProvider.GetOwnTokensAsync(address);
-
         
+        throw new NotImplementedException();
     }
 
     Task<bool> ITokenAccessAppService.CommitTokenAccessInfoAsync(UserTokenAccessInfoInput input)
@@ -474,7 +474,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         {
             TotalCount = poolLiquidityInfos.TotalCount,
             Items = result.OrderByDescending(r => r.TotalTvlInUsd).ToList()
-        }
+        };
     }
 
     public async Task<PoolInfoDto> GetPoolDetailAsync(GetPoolDetailInput input)

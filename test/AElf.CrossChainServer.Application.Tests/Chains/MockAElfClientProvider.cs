@@ -77,4 +77,9 @@ public class MockAElfClientProvider : IBlockchainClientProvider
             }
         });
     }
+
+    public Task<FilterLogsDto> GetContractLogsAsync(string chainId, string contractAddress, long startHeight, long endHeight)
+    {
+        throw new NotImplementedException();
+    }
 }

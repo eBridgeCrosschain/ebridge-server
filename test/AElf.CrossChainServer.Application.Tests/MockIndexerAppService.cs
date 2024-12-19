@@ -16,14 +16,4 @@ public class MockIndexerAppService: CrossChainServerAppService, IIndexerAppServi
     {
         throw new System.NotImplementedException();
     }
-
-    public Task<PoolLiquidityInfoDto> GetPoolLiquidityInfoAsync(string chainId, string tokenSymbol)
-    {
-        throw new System.NotImplementedException();
-    }
-
-    public Task<UserLiquidityInfoDto> GetUserLiquidityInfoAsync(string chainId, string tokenSymbol, string provider)
-    {
-        throw new System.NotImplementedException();
-    }
 }
