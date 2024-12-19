@@ -76,5 +76,7 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<UserLiquidityEto, UpdateUserLiquidityInfoIndexInput>();
         CreateMap<PoolLiquidityInfoIndex, PoolLiquidityIndexDto>();
         CreateMap<UserLiquidityInfoIndex, UserLiquidityIndexDto>();
+        
+        CreateMap<UserTokenAccessInfoInput, UserTokenAccessInfo>().ReverseMap();
     }
 }

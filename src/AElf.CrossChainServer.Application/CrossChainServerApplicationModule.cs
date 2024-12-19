@@ -7,6 +7,7 @@ using AElf.CrossChainServer.Contracts.Token;
 using AElf.CrossChainServer.CrossChain;
 using AElf.CrossChainServer.HttpClient;
 using AElf.CrossChainServer.Indexer;
+using AElf.CrossChainServer.TokenAccess;
 using AElf.CrossChainServer.Tokens;
 using AElf.ExceptionHandler.ABP;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,11 +37,8 @@ public class CrossChainServerApplicationModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        Configure<AbpAutoMapperOptions>(options =>
-        {
-            options.AddMaps<CrossChainServerApplicationModule>();
-        });
-        
+        Configure<AbpAutoMapperOptions>(options => { options.AddMaps<CrossChainServerApplicationModule>(); });
+
         var configuration = context.Services.GetConfiguration();
         Configure<ChainApiOptions>(configuration.GetSection("ChainApi"));
         Configure<BridgeContractOptions>(configuration.GetSection("BridgeContract"));
@@ -59,19 +57,21 @@ public class CrossChainServerApplicationModule : AbpModule
         Configure<AutoReceiveConfigOptions>(configuration.GetSection("AutoReceiveConfig"));
         Configure<SyncStateServiceOption>(configuration.GetSection("SyncStateService"));
         Configure<TokenPriceIdMappingOptions>(configuration.GetSection("TokenPriceIdMapping"));
-        
+        Configure<TokenAccessOptions>(configuration.GetSection("TokenAccess"));
+
         context.Services.AddSingleton<IBlockchainClientFactory<AElfClient>, AElfClientFactory>();
         context.Services.AddSingleton<IBlockchainClientFactory<Nethereum.Web3.Web3>, EvmClientFactory>();
         context.Services.AddSingleton<IGraphQLClientFactory, GraphQLClientFactory>();
         context.Services.AddTransient<IBlockchainClientProvider, AElfClientProvider>();
         context.Services.AddTransient<IBlockchainClientProvider, EvmClientProvider>();
-        
+
         context.Services.AddTransient<IBridgeContractProvider, EvmBridgeContractProvider>();
         context.Services.AddTransient<IBridgeContractProvider, AElfBridgeContractProvider>();
         context.Services.AddTransient<IReportContractProvider, AElfReportContractProvider>();
         context.Services.AddTransient<ICrossChainContractProvider, AElfCrossChainContractProvider>();
         context.Services.AddTransient<ITokenContractProvider, AElfTokenContractProvider>();
         context.Services.AddTransient<ICheckTransferProvider, CheckTransferProvider>();
+        context.Services.AddTransient<ITokenInvokeProvider, TokenInvokeProvider>();
         context.Services.AddTransient<IHttpProvider, HttpProvider>();
     }
 }
