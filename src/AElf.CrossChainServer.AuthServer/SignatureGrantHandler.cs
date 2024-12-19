@@ -614,21 +614,6 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
         }
     }
 
-    // private async Task<CAHolderManagerInfo> GetManagerList(string url, string caHash)
-    // {
-    //     using var graphQlClient = new GraphQLHttpClient(url, new NewtonsoftJsonSerializer());
-    //
-    //     var request = new GraphQLRequest
-    //     {
-    //         Query =
-    //             "query{caHolderManagerInfo(dto: {skipCount:0,maxResultCount:10,caHash:\"" + caHash +
-    //             "\"}){chainId,caHash,caAddress,managerInfos{address,extraData}}}"
-    //     };
-    //
-    //     var graphQlResponse = await graphQlClient.SendQueryAsync<CAHolderManagerInfo>(request);
-    //     return graphQlResponse.Data;
-    // }
-
     private ForbidResult GetForbidResult(string errorType, string errorDescription)
     {
         return new ForbidResult(
@@ -649,11 +634,11 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
             return resources;
         }
 
-        // await foreach (var resource in context.HttpContext.RequestServices.GetRequiredService<IOpenIddictScopeManager>()
-        //                    .ListResourcesAsync(scopes))
-        // {
-        //     resources.Add(resource);
-        // }
+        await foreach (var resource in context.HttpContext.RequestServices.GetRequiredService<IOpenIddictScopeManager>()
+                           .ListResourcesAsync(scopes))
+        {
+            resources.Add(resource);
+        }
 
         return resources;
     }

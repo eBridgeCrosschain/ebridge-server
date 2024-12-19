@@ -17,6 +17,6 @@ public class WalletUserDto : CrossChainServerEntity<Guid>
 
 public class AddressInfoDto
 {
-    [Keyword] public string ChainId { get; set; }
-    [Keyword] public string Address { get; set; }
+    public string ChainId { get; set; }
+    public string Address { get; set; }
 }

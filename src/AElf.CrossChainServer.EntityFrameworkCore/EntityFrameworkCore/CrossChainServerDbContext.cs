@@ -64,6 +64,7 @@ public class CrossChainServerDbContext :
     public DbSet<Token> Tokens { get; set; }
     public DbSet<CrossChainIndexingInfo> CrossChainIndexingInfos { get; set; }
     public DbSet<CrossChainTransfer> CrossChainTransfers { get; set; }
+    public DbSet<WalletUserDto> WalletUsers { get; set; }
     public DbSet<BridgeContractSyncInfo> BridgeContractSyncInfos { get; set; }
     public DbSet<OracleQueryInfo> OracleQueryInfos { get; set; }
     public DbSet<ReportInfo> ReportInfos { get; set; }
@@ -118,6 +119,13 @@ public class CrossChainServerDbContext :
             b.HasIndex(o => new { o.FromChainId, o.ToChainId, o.ReceiptId });
             b.HasIndex(o => new { o.Status, o.ProgressUpdateTime });
             b.ConfigureByConvention();
+        });
+
+        builder.Entity<WalletUserDto>(entity =>
+        {
+            entity.ToTable(CrossChainServerConsts.DbTablePrefix + "WalletUsers", CrossChainServerConsts.DbSchema);
+            entity.HasKey(e => e.UserId);
+            entity.OwnsMany(e => e.AddressInfos);
         });
 
         builder.Entity<BridgeContractSyncInfo>(b =>
