@@ -22,7 +22,4 @@ public class UserTokenAccessInfoBase : CrossChainServerEntity<Guid>
     public string TelegramHandler { get; set; }
     [Keyword]
     public string Email { get; set; }
-
-    [Keyword] public string ChainIds { get; set; } = "[]";
-    [Keyword] public string OtherChainIds { get; set; } = "[]";
 }

@@ -72,6 +72,11 @@ public class CrossChainServerDbContext :
     public DbSet<Settings.Settings> Settings { get; set; }
     public DbSet<PoolLiquidityInfo> PoolLiquidityInfos { get; set; }
     public DbSet<UserLiquidityInfo> UserLiquidityInfos { get; set; }
+    public DbSet<TokenApplyOrder> TokenApplyOrders { get; set; }
+    public DbSet<ChainTokenInfo> ChainTokenInfos { get; set; }
+    public DbSet<StatusChangedRecord> StatusChangedRecords { get; set; }
+    public DbSet<UserTokenAccessInfo> UserTokenAccessInfos { get; set; }
+    
 
     public CrossChainServerDbContext(DbContextOptions<CrossChainServerDbContext> options)
         : base(options)
@@ -170,7 +175,28 @@ public class CrossChainServerDbContext :
         builder.Entity<TokenApplyOrder>(b =>
         {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "TokenApplyOrder", CrossChainServerConsts.DbSchema);
+            b.ConfigureByConvention();
             b.HasIndex(o => new { o.UserAddress, o.Symbol });
+            //Define the relation
+            b.HasMany(x => x.ChainTokenInfo)
+                .WithOne(x => x.Order)
+                .HasForeignKey(x => x.Id)
+                .IsRequired();
+            b.HasMany(x => x.StatusChangedRecords)
+                .WithOne(x => x.Order)
+                .HasForeignKey(x => x.Id)
+                .IsRequired();
+        });
+        
+        builder.Entity<ChainTokenInfo>(b =>
+        {
+            b.ToTable(CrossChainServerConsts.DbTablePrefix + "ApplyOrderChainTokenInfo", CrossChainServerConsts.DbSchema);
+            b.ConfigureByConvention();
+        });
+        
+        builder.Entity<StatusChangedRecord>(b =>
+        {
+            b.ToTable(CrossChainServerConsts.DbTablePrefix + "ApplyOrderStatusChangedRecord", CrossChainServerConsts.DbSchema);
             b.ConfigureByConvention();
         });
         

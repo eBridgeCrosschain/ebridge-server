@@ -2,8 +2,12 @@ namespace AElf.CrossChainServer.TokenAccess;
 
 public enum TokenApplyOrderStatus
 {
+    Unissued,
+    Issuing,
+    Issued,
     PoolInitializing,
-    AddLiquidity,
-    Completed,
+    PoolInitialized,
+    LiquidityAdded,
+    Complete,
     Failed
 }
