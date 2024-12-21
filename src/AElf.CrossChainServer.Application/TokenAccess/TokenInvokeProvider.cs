@@ -105,12 +105,21 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             if (resultDto.Data.Items.Count < PageSize) break;
         }
 
-        var userTokenOwner = new UserTokenOwnerDto
+        var entity = await _userTokenOwnerRepository.FindAsync(o => o.Address == address);
+        if (entity != null)
         {
-            TokenOwnerList = tokenOwnerList.TokenOwnerList,
-            Address = address
-        };
-        await _userTokenOwnerRepository.InsertAsync(userTokenOwner, autoSave: true);
+            entity.TokenOwnerList = tokenOwnerList.TokenOwnerList;
+            await _userTokenOwnerRepository.UpdateAsync(entity);
+        }
+        else
+        {
+            var userTokenOwner = new UserTokenOwnerDto
+            {
+                TokenOwnerList = tokenOwnerList.TokenOwnerList,
+                Address = address
+            };
+            await _userTokenOwnerRepository.InsertAsync(userTokenOwner, autoSave: true);
+        }
 
         return tokenOwnerList;
     }
@@ -128,16 +137,20 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
         tokenParams["aelfToken"] = symbol;
         var resultDto = await _httpProvider.InvokeAsync<ThirdTokenResultDto>(
             _tokenAccessOptions.SymbolMarketBaseUrl, _userThirdTokenListUri, param: tokenParams);
-        if (resultDto.Code == "20000" && resultDto.Data != null && resultDto.Data.TotalCount > 0)
+        if (resultDto.Code != "20000" || resultDto.Data == null || resultDto.Data.TotalCount <= 0) return false;
+
+        foreach (var item in resultDto.Data.Items)
         {
-            foreach (var item in resultDto.Data.Items)
+            var res = await _userTokenIssueRepository.FindAsync(o =>
+                o.Address == address && o.OtherChainId == item.ThirdChain);
+            if (res != null)
             {
-                // var userTokenIssueGrain = GrainFactory.GetGrain<IUserTokenIssueGrain>(
-                //     GuidHelper.UniqGuid(symbol, address, item.ThirdChain));
-                // var res = await userTokenIssueGrain.Get();
-                var res = await _userTokenIssueRepository.FindAsync(o =>
-                    o.Address == address && o.OtherChainId == item.ThirdChain);
-                res ??= new UserTokenIssueDto
+                res.Status = TokenApplyOrderStatus.Issued.ToString();
+                await _userTokenIssueRepository.UpdateAsync(res);
+            }
+            else
+            {
+                await _userTokenIssueRepository.InsertAsync(new UserTokenIssueDto
                 {
                     Address = address,
                     Symbol = item.ThirdSymbol,
@@ -146,11 +159,9 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
                     TokenImage = item.ThirdTokenImage,
                     OtherChainId = item.ThirdChain,
                     ContractAddress = item.ThirdContractAddress,
-                    TotalSupply = item.ThirdTotalSupply
-                };
-                res.Status = TokenApplyOrderStatus.Issued.ToString();
-
-                await _userTokenIssueRepository.InsertAsync(res);
+                    TotalSupply = item.ThirdTotalSupply,
+                    Status = TokenApplyOrderStatus.Issued.ToString()
+                });
             }
         }
 
@@ -159,8 +170,6 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
 
     public async Task<UserTokenBindingDto> PrepareBinding(UserTokenIssueDto dto)
     {
-        // var userTokenIssueGrain = GrainFactory.GetGrain<IUserTokenIssueGrain>(dto.Id);
-        // var res = await userTokenIssueGrain.Get();
         var res = await _userTokenIssueRepository.FindAsync(o =>
             o.Address == dto.Address && o.Symbol == dto.Symbol && o.OtherChainId == dto.OtherChainId);
         if (res != null && !res.BindingId.IsNullOrEmpty() && !res.ThirdTokenId.IsNullOrEmpty())
@@ -188,26 +197,19 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
                     dto.Symbol, dto.TokenImage, dto.TotalSupply, dto.WalletAddress, dto.OtherChainId,
                     dto.ContractAddress))
             }, HttpProvider.DefaultJsonSettings));
-        if (resultDto.Code == "20000")
-        {
-            dto.BindingId = resultDto.Data?.BindingId;
-            dto.ThirdTokenId = resultDto.Data?.ThirdTokenId;
-            dto.Status = TokenApplyOrderStatus.Issuing.ToString();
-            // await userTokenIssueGrain.AddOrUpdate(dto);
-            await _userTokenIssueRepository.InsertAsync(dto);
-            await _invokeRepository.InsertAsync(new()
-            {
-                BindingId = dto.BindingId,
-                UserTokenIssueId = dto.Id,
-                ThirdTokenId = dto.ThirdTokenId
-            });
-            // var tokenInvokeGrain = GrainFactory.GetGrain<ITokenInvokeGrain>(
-            //     string.Join(CommonConstant.Underline, dto.BindingId, dto.ThirdTokenId));
-            // await tokenInvokeGrain.AddOrUpdateTokenIssue(dto.Id);
-            return new UserTokenBindingDto { BindingId = dto.BindingId, ThirdTokenId = dto.ThirdTokenId };
-        }
+        if (resultDto.Code != "20000") return new UserTokenBindingDto();
 
-        return new UserTokenBindingDto();
+        dto.BindingId = resultDto.Data?.BindingId;
+        dto.ThirdTokenId = resultDto.Data?.ThirdTokenId;
+        dto.Status = TokenApplyOrderStatus.Issuing.ToString();
+        await _userTokenIssueRepository.InsertAsync(dto);
+        await _invokeRepository.InsertAsync(new()
+        {
+            BindingId = dto.BindingId,
+            UserTokenIssueId = dto.Id,
+            ThirdTokenId = dto.ThirdTokenId
+        });
+        return new UserTokenBindingDto { BindingId = dto.BindingId, ThirdTokenId = dto.ThirdTokenId };
     }
 
     public async Task<bool> Binding(UserTokenBindingDto dto)
@@ -220,15 +222,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             if (res != null && res.Status == TokenApplyOrderStatus.Issued.ToString()) return true;
         }
 
-        // if (State != null && State.UserTokenIssueId != Guid.Empty)
-        // {
-        //     var userTokenIssueGrain = GrainFactory.GetGrain<IUserTokenIssueGrain>(State.UserTokenIssueId);
-        //     var res = await userTokenIssueGrain.Get();
-        //     if (res != null && res.Status == TokenApplyOrderStatus.Issued.ToString()) return true;
-        // }
-
-        var url =
-            $"{_tokenAccessOptions.SymbolMarketBaseUrl}{_tokenAccessOptions.SymbolMarketBindingUri}";
+        var url = $"{_tokenAccessOptions.SymbolMarketBaseUrl}{_tokenAccessOptions.SymbolMarketBindingUri}";
         var resultDto = await _httpProvider.InvokeAsync<CommonResponseDto<string>>(HttpMethod.Post, url,
             body: JsonConvert.SerializeObject(new BindingInput
             {
@@ -236,29 +230,24 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
                 ThirdTokenId = dto.ThirdTokenId,
                 Signature = BuildRequestHash(string.Concat(dto.BindingId, dto.ThirdTokenId))
             }, HttpProvider.DefaultJsonSettings));
-        if (resultDto.Code == "20000" && tokenInvoke != null && tokenInvoke.UserTokenIssueId != Guid.Empty)
-        {
-            // var userTokenIssueGrain = GrainFactory.GetGrain<IUserTokenIssueGrain>(State.UserTokenIssueId);
-            // var res = await userTokenIssueGrain.Get();
-            var res = await _userTokenIssueRepository.FindAsync(o => o.Id == tokenInvoke.UserTokenIssueId);
-            res.BindingId = dto.BindingId;
-            res.ThirdTokenId = dto.ThirdTokenId;
-            res.Status = TokenApplyOrderStatus.Issued.ToString();
-            await _userTokenIssueRepository.InsertAsync(res);
-            // await userTokenIssueGrain.AddOrUpdate(res);
-            return true;
-        }
+        if (resultDto.Code != "20000" || tokenInvoke == null || tokenInvoke.UserTokenIssueId == Guid.Empty)
+            return false;
 
-        return false;
+        var tokenIssueFindByIssueId =
+            await _userTokenIssueRepository.FindAsync(o => o.Id == tokenInvoke.UserTokenIssueId);
+        tokenIssueFindByIssueId.BindingId = dto.BindingId;
+        tokenIssueFindByIssueId.ThirdTokenId = dto.ThirdTokenId;
+        tokenIssueFindByIssueId.Status = TokenApplyOrderStatus.Issued.ToString();
+        await _userTokenIssueRepository.UpdateAsync(tokenIssueFindByIssueId);
+        return true;
     }
 
     private async Task<string> GetLiquidityInUsd(string symbol)
     {
         var tokenParams = new Dictionary<string, string>();
         tokenParams["symbol"] = symbol;
-        var resultDto =
-            await _httpProvider.InvokeAsync<CommonResponseDto<string>>(_tokenAccessOptions.AwakenBaseUrl,
-                _tokenLiquidityUri, param: tokenParams);
+        var resultDto = await _httpProvider.InvokeAsync<CommonResponseDto<string>>(_tokenAccessOptions.AwakenBaseUrl,
+            _tokenLiquidityUri, param: tokenParams);
         return resultDto.Code == "20000" ? resultDto.Value : "0";
     }
 
