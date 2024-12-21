@@ -20,9 +20,6 @@ public static class CommonConstant
     public const string SuccessStatus = "success";
     public const string Withdraw = "withdraw";
     public const string Deposit = "deposit";
-    public const string ETransferTokenPoolContractName = "ETransfer.Contracts.TokenPool";
-    public const string ETransferReleaseToken = "ReleaseToken";
-    public const string ETransferSwapToken = "SwapToken";
 
     public const string DepositOrderLostAlarm = "DepositOrderLostAlarm";
     public const string DepositOrderCoinNotSupportAlarm = "DepositOrderCoinNotSupportAlarm";
@@ -35,7 +32,6 @@ public static class CommonConstant
         public const int ThirdPartDigitals = 4;
         public const int ElfDecimals = 8;
         public const decimal DefaultMinThirdPartFee = 0.1M;
-        public const string TokenPoolContractName = "ETransfer.Contracts.TokenPool";
         public const string CaContractName = "Portkey.Contracts.CA";
         public const string CaContractName2 = "Portkey.Contracts.CA2";
         public const string ManagerForwardCall = "ManagerForwardCall";

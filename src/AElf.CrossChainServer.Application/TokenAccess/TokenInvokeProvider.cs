@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AElf.CrossChainServer.HttpClient;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Volo.Abp.DependencyInjection;
 
 namespace AElf.CrossChainServer.TokenAccess;
@@ -14,6 +15,8 @@ public interface ITokenInvokeProvider
     Task<TokenOwnerListDto> GetUserTokenOwnerList(string address);
     Task<List<TokenOwnerDto>> GetAsync(string address);
     Task<bool> GetThirdTokenList(string address, string symbol);
+    Task<UserTokenBindingDto> PrepareBinding(UserTokenIssueDto dto);
+    Task<bool> Binding(UserTokenBindingDto dto);
 }
 
 public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
@@ -21,6 +24,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
     private readonly IHttpProvider _httpProvider;
     private readonly ILogger<TokenInvokeProvider> _logger;
     private readonly TokenAccessOptions _tokenAccessOptions;
+    private readonly ITokenInvokeRepository _invokeRepository;
     private readonly IUserTokenOwnerRepository _userTokenOwnerRepository;
     private readonly IUserTokenIssueRepository _userTokenIssueRepository;
 
@@ -34,13 +38,14 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
 
     public TokenInvokeProvider(IHttpProvider httpProvider, IOptionsSnapshot<TokenAccessOptions> tokenAccessOptions,
         ILogger<TokenInvokeProvider> logger, IUserTokenOwnerRepository userTokenOwnerRepository,
-        IUserTokenIssueRepository userTokenIssueRepository)
+        IUserTokenIssueRepository userTokenIssueRepository, ITokenInvokeRepository invokeRepository)
     {
         _logger = logger;
         _httpProvider = httpProvider;
         _tokenAccessOptions = tokenAccessOptions.Value;
         _userTokenOwnerRepository = userTokenOwnerRepository;
         _userTokenIssueRepository = userTokenIssueRepository;
+        _invokeRepository = invokeRepository;
     }
 
     public async Task<TokenOwnerListDto> GetUserTokenOwnerList(string address)
@@ -105,7 +110,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             TokenOwnerList = tokenOwnerList.TokenOwnerList,
             Address = address
         };
-        await _userTokenOwnerRepository.InsertAsync(userTokenOwner);
+        await _userTokenOwnerRepository.InsertAsync(userTokenOwner, autoSave: true);
 
         return tokenOwnerList;
     }
@@ -146,8 +151,102 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
                 res.Status = TokenApplyOrderStatus.Issued.ToString();
 
                 await _userTokenIssueRepository.InsertAsync(res);
-                // await userTokenIssueGrain.AddOrUpdate(res);
             }
+        }
+
+        return false;
+    }
+
+    public async Task<UserTokenBindingDto> PrepareBinding(UserTokenIssueDto dto)
+    {
+        // var userTokenIssueGrain = GrainFactory.GetGrain<IUserTokenIssueGrain>(dto.Id);
+        // var res = await userTokenIssueGrain.Get();
+        var res = await _userTokenIssueRepository.FindAsync(o =>
+            o.Address == dto.Address && o.Symbol == dto.Symbol && o.OtherChainId == dto.OtherChainId);
+        if (res != null && !res.BindingId.IsNullOrEmpty() && !res.ThirdTokenId.IsNullOrEmpty())
+            return new UserTokenBindingDto { BindingId = res.BindingId, ThirdTokenId = res.ThirdTokenId };
+
+        var url =
+            $"{_tokenAccessOptions.SymbolMarketBaseUrl}{_tokenAccessOptions.SymbolMarketPrepareBindingUri}";
+        var resultDto = await _httpProvider.InvokeAsync<PrepareBindingResultDto>(HttpMethod.Post, url,
+            body: JsonConvert.SerializeObject(new PrepareBindingInput
+            {
+                Address = dto.Address,
+                AelfToken = dto.Symbol,
+                AelfChain = dto.ChainId,
+                ThirdTokens = new ThirdTokenDto
+                {
+                    TokenName = dto.TokenName,
+                    Symbol = dto.Symbol,
+                    TokenImage = dto.TokenImage,
+                    TotalSupply = dto.TotalSupply,
+                    ThirdChain = dto.OtherChainId,
+                    Owner = dto.WalletAddress,
+                    ContractAddress = dto.ContractAddress
+                },
+                Signature = BuildRequestHash(string.Concat(dto.Address, dto.Symbol, dto.ChainId, dto.TokenName,
+                    dto.Symbol, dto.TokenImage, dto.TotalSupply, dto.WalletAddress, dto.OtherChainId,
+                    dto.ContractAddress))
+            }, HttpProvider.DefaultJsonSettings));
+        if (resultDto.Code == "20000")
+        {
+            dto.BindingId = resultDto.Data?.BindingId;
+            dto.ThirdTokenId = resultDto.Data?.ThirdTokenId;
+            dto.Status = TokenApplyOrderStatus.Issuing.ToString();
+            // await userTokenIssueGrain.AddOrUpdate(dto);
+            await _userTokenIssueRepository.InsertAsync(dto);
+            await _invokeRepository.InsertAsync(new()
+            {
+                BindingId = dto.BindingId,
+                UserTokenIssueId = dto.Id,
+                ThirdTokenId = dto.ThirdTokenId
+            });
+            // var tokenInvokeGrain = GrainFactory.GetGrain<ITokenInvokeGrain>(
+            //     string.Join(CommonConstant.Underline, dto.BindingId, dto.ThirdTokenId));
+            // await tokenInvokeGrain.AddOrUpdateTokenIssue(dto.Id);
+            return new UserTokenBindingDto { BindingId = dto.BindingId, ThirdTokenId = dto.ThirdTokenId };
+        }
+
+        return new UserTokenBindingDto();
+    }
+
+    public async Task<bool> Binding(UserTokenBindingDto dto)
+    {
+        var tokenInvoke = await _invokeRepository.FindAsync(o =>
+            o.BindingId == dto.BindingId && o.ThirdTokenId == dto.ThirdTokenId);
+        if (tokenInvoke != null && tokenInvoke.UserTokenIssueId != Guid.Empty)
+        {
+            var res = await _userTokenIssueRepository.FindAsync(o => o.Id == tokenInvoke.UserTokenIssueId);
+            if (res != null && res.Status == TokenApplyOrderStatus.Issued.ToString()) return true;
+        }
+
+        // if (State != null && State.UserTokenIssueId != Guid.Empty)
+        // {
+        //     var userTokenIssueGrain = GrainFactory.GetGrain<IUserTokenIssueGrain>(State.UserTokenIssueId);
+        //     var res = await userTokenIssueGrain.Get();
+        //     if (res != null && res.Status == TokenApplyOrderStatus.Issued.ToString()) return true;
+        // }
+
+        var url =
+            $"{_tokenAccessOptions.SymbolMarketBaseUrl}{_tokenAccessOptions.SymbolMarketBindingUri}";
+        var resultDto = await _httpProvider.InvokeAsync<CommonResponseDto<string>>(HttpMethod.Post, url,
+            body: JsonConvert.SerializeObject(new BindingInput
+            {
+                BindingId = dto.BindingId,
+                ThirdTokenId = dto.ThirdTokenId,
+                Signature = BuildRequestHash(string.Concat(dto.BindingId, dto.ThirdTokenId))
+            }, HttpProvider.DefaultJsonSettings));
+        if (resultDto.Code == "20000" && tokenInvoke != null && tokenInvoke.UserTokenIssueId != Guid.Empty)
+        {
+            // var userTokenIssueGrain = GrainFactory.GetGrain<IUserTokenIssueGrain>(State.UserTokenIssueId);
+            // var res = await userTokenIssueGrain.Get();
+            var res = await _userTokenIssueRepository.FindAsync(o => o.Id == tokenInvoke.UserTokenIssueId);
+            res.BindingId = dto.BindingId;
+            res.ThirdTokenId = dto.ThirdTokenId;
+            res.Status = TokenApplyOrderStatus.Issued.ToString();
+            await _userTokenIssueRepository.InsertAsync(res);
+            // await userTokenIssueGrain.AddOrUpdate(res);
+            return true;
         }
 
         return false;
@@ -161,5 +260,12 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             await _httpProvider.InvokeAsync<CommonResponseDto<string>>(_tokenAccessOptions.AwakenBaseUrl,
                 _tokenLiquidityUri, param: tokenParams);
         return resultDto.Code == "20000" ? resultDto.Value : "0";
+    }
+
+    private string BuildRequestHash(string request)
+    {
+        var hashVerifyKey = _tokenAccessOptions.HashVerifyKey;
+        var requestHash = HashHelper.ComputeFrom(string.Concat(request, hashVerifyKey));
+        return requestHash.ToHex();
     }
 }

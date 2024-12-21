@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AElf.CrossChainServer.Domain.Shared\AElf.CrossChainServer.Domain.Shared.csproj" />
+    <ProjectReference Include="..\AElf.CrossChainServer.Domain\AElf.CrossChainServer.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

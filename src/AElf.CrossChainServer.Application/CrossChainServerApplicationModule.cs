@@ -1,3 +1,4 @@
+using AElf.AetherlinkApi;
 using AElf.Client.Service;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Contracts.Bridge;
@@ -5,7 +6,6 @@ using AElf.CrossChainServer.Contracts.CrossChain;
 using AElf.CrossChainServer.Contracts.Report;
 using AElf.CrossChainServer.Contracts.Token;
 using AElf.CrossChainServer.CrossChain;
-using AElf.CrossChainServer.HttpClient;
 using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.TokenAccess;
 using AElf.CrossChainServer.Tokens;
@@ -31,6 +31,7 @@ namespace AElf.CrossChainServer;
     typeof(AbpTenantManagementApplicationModule),
     typeof(AbpFeatureManagementApplicationModule),
     typeof(AbpSettingManagementApplicationModule),
+    typeof(CrossChainServerAetherlinkApiModule),
     typeof(AOPExceptionModule)
 )]
 public class CrossChainServerApplicationModule : AbpModule
@@ -58,7 +59,8 @@ public class CrossChainServerApplicationModule : AbpModule
         Configure<SyncStateServiceOption>(configuration.GetSection("SyncStateService"));
         Configure<TokenPriceIdMappingOptions>(configuration.GetSection("TokenPriceIdMapping"));
         Configure<TokenAccessOptions>(configuration.GetSection("TokenAccess"));
-
+        Configure<NetworkOptions>(configuration.GetSection("TokenNetworks"));
+        
         context.Services.AddSingleton<IBlockchainClientFactory<AElfClient>, AElfClientFactory>();
         context.Services.AddSingleton<IBlockchainClientFactory<Nethereum.Web3.Web3>, EvmClientFactory>();
         context.Services.AddSingleton<IGraphQLClientFactory, GraphQLClientFactory>();
@@ -72,6 +74,5 @@ public class CrossChainServerApplicationModule : AbpModule
         context.Services.AddTransient<ITokenContractProvider, AElfTokenContractProvider>();
         context.Services.AddTransient<ICheckTransferProvider, CheckTransferProvider>();
         context.Services.AddTransient<ITokenInvokeProvider, TokenInvokeProvider>();
-        context.Services.AddTransient<IHttpProvider, HttpProvider>();
     }
 }

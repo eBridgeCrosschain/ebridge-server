@@ -5,12 +5,12 @@ using AElf.CrossChainServer.TokenPrice;
 using AElf.ExceptionHandler;
 using Aetherlink.PriceServer;
 using Aetherlink.PriceServer.Dtos;
-using Microsoft.Extensions.Options;
 using Serilog;
+using Volo.Abp.DependencyInjection;
 
 namespace AElf.AetherlinkApi;
 
-public class TokenPriceProvider : ITokenPriceProvider
+public class TokenPriceProvider : ITokenPriceProvider, ISingletonDependency
 {
     private readonly IPriceServerProvider _priceServerProvider;
 
@@ -34,6 +34,7 @@ public class TokenPriceProvider : ITokenPriceProvider
 
         return (decimal)(result.Price / Math.Pow(10, (double)result.Decimal));
     }
+
     [ExceptionHandler(typeof(Exception), Message = "Get history price error", LogOnly = true)]
     public async Task<decimal> GetHistoryPriceAsync(string pair, string dateTime)
     {

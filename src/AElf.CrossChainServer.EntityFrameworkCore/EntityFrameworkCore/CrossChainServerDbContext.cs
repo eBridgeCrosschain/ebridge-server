@@ -72,6 +72,8 @@ public class CrossChainServerDbContext :
     public DbSet<Settings.Settings> Settings { get; set; }
     public DbSet<PoolLiquidityInfo> PoolLiquidityInfos { get; set; }
     public DbSet<UserLiquidityInfo> UserLiquidityInfos { get; set; }
+    public DbSet<UserTokenAccessInfo> TokenAccessInfos { get; set; }
+    public DbSet<UserTokenOwnerDto> UserTokenOwners { get; set; }
 
     public CrossChainServerDbContext(DbContextOptions<CrossChainServerDbContext> options)
         : base(options)
@@ -159,6 +161,13 @@ public class CrossChainServerDbContext :
             b.ConfigureByConvention();
         });
 
+        // builder.Entity<UserTokenAccessInfo>(b =>
+        // {
+        //     b.ToTable(CrossChainServerConsts.DbTablePrefix + "UserTokenAccessInfo", CrossChainServerConsts.DbSchema);
+        //     b.HasIndex(o => new { o.Symbol }).IsUnique();
+        //     b.HasIndex(o => new { o.Address });
+        //     b.ConfigureByConvention();
+        // });
         builder.Entity<UserTokenAccessInfo>(b =>
         {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "UserTokenAccessInfo", CrossChainServerConsts.DbSchema);
@@ -171,19 +180,32 @@ public class CrossChainServerDbContext :
         {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "TokenApplyOrder", CrossChainServerConsts.DbSchema);
             b.HasIndex(o => new { o.UserAddress, o.Symbol });
+            b.Ignore(o => o.ExtensionInfo);
+            b.Ignore(o => o.StatusChangedRecord);
+            b.Ignore(o => o.OtherChainTokenInfo);
+            b.OwnsMany(o => o.ChainTokenInfo);
             b.ConfigureByConvention();
         });
-        
+
         builder.Entity<PoolLiquidityInfo>(b =>
         {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "PoolLiquidityInfos", CrossChainServerConsts.DbSchema);
-            b.HasIndex(o => new {o.ChainId, o.TokenId}).IsUnique();
-            b.ConfigureByConvention(); 
+            b.HasIndex(o => new { o.ChainId, o.TokenId }).IsUnique();
+            b.ConfigureByConvention();
         });
-        
-        builder.Entity<UserLiquidityInfo>(b=>{
+
+        builder.Entity<UserLiquidityInfo>(b =>
+        {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "UserLiquidityInfos", CrossChainServerConsts.DbSchema);
-            b.HasIndex(o => new {o.ChainId, o.TokenId, o.Provider}).IsUnique();
+            b.HasIndex(o => new { o.ChainId, o.TokenId, o.Provider }).IsUnique();
+            b.ConfigureByConvention();
+        });
+
+        builder.Entity<UserTokenOwnerDto>(b =>
+        {
+            b.ToTable(CrossChainServerConsts.DbTablePrefix + "UserTokenOwners", CrossChainServerConsts.DbSchema);
+            b.HasIndex(o => new { o.Address });
+            b.OwnsMany(e => e.TokenOwnerList);
             b.ConfigureByConvention();
         });
     }

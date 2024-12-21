@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using AElf.CrossChainServer.EntityFrameworkCore;
+using AElf.CrossChainServer.HttpClient;
 using StackExchange.Redis;
 using Microsoft.OpenApi.Models;
 using Volo.Abp;
@@ -19,6 +20,7 @@ using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
 using Volo.Abp.Caching;
 using Volo.Abp.Caching.StackExchangeRedis;
+using Volo.Abp.EventBus.RabbitMq;
 using Volo.Abp.Identity;
 using Volo.Abp.Localization;
 using Volo.Abp.Modularity;
@@ -33,6 +35,7 @@ namespace AElf.CrossChainServer;
     typeof(AbpCachingStackExchangeRedisModule),
     typeof(AbpAspNetCoreMvcUiMultiTenancyModule),
     typeof(CrossChainServerApplicationModule),
+    typeof(AbpEventBusRabbitMqModule),
     typeof(CrossChainServerEntityFrameworkCoreModule),
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AbpIdentityDomainModule),
@@ -44,6 +47,9 @@ public class CrossChainServerHttpApiHostModule : AbpModule
     {
         var configuration = context.Services.GetConfiguration();
         var hostingEnvironment = context.Services.GetHostingEnvironment();
+
+        context.Services.AddHttpClient();
+        context.Services.AddScoped<IHttpProvider, HttpProvider>();
 
         ConfigureConventionalControllers();
         ConfigureAuthentication(context, configuration);

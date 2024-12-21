@@ -31,7 +31,7 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<UpdateOracleQueryInfoIndexInput, OracleQueryInfoIndex>();
         CreateMap<OracleQueryInfoEto, AddOracleQueryInfoIndexInput>();
         CreateMap<OracleQueryInfoEto, UpdateOracleQueryInfoIndexInput>();
-        
+
         CreateMap<CreateReportInfoInput, ReportInfo>();
         CreateMap<AddReportInfoIndexInput, ReportInfoIndex>();
         CreateMap<UpdateReportInfoIndexInput, ReportInfoIndex>();
@@ -40,7 +40,7 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
 
         CreateMap<CrossChainTransferInput, CrossChainTransfer>();
         CreateMap<CrossChainReceiveInput, CrossChainTransfer>();
-        
+
         CreateMap<AddCrossChainTransferIndexInput, CrossChainTransferIndex>();
         CreateMap<UpdateCrossChainTransferIndexInput, CrossChainTransferIndex>();
         CreateMap<CrossChainTransferIndex, CrossChainTransferIndexDto>()
@@ -50,7 +50,7 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
                 opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.ReceiveTime)))
             .ForMember(destination => destination.ProgressUpdateTime,
                 opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.ProgressUpdateTime)));
-        
+
         CreateMap<CrossChainTransferIndex, CrossChainTransferStatusDto>();
         CreateMap<CrossChainTransferEto, AddCrossChainTransferIndexInput>();
         CreateMap<CrossChainTransferEto, UpdateCrossChainTransferIndexInput>();
@@ -76,7 +76,9 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<UserLiquidityEto, UpdateUserLiquidityInfoIndexInput>();
         CreateMap<PoolLiquidityInfoIndex, PoolLiquidityIndexDto>();
         CreateMap<UserLiquidityInfoIndex, UserLiquidityIndexDto>();
-        
+
         CreateMap<UserTokenAccessInfoInput, UserTokenAccessInfo>().ReverseMap();
+        CreateMap<UserTokenAccessInfoIndex, UserTokenAccessInfoDto>();
+        CreateMap<UserTokenAccessInfoIndex, UserTokenAccessInfo>();
     }
 }

@@ -20,6 +20,7 @@ public interface ITokenAccessAppService
     
     Task AddUserTokenAccessInfoIndexAsync(AddUserTokenAccessInfoIndexInput input);
     Task UpdateUserTokenAccessInfoIndexAsync(UpdateUserTokenAccessInfoIndexInput input);
+    Task DeleteUserTokenAccessInfoIndexAsync(DeleteUserTokenAccessInfoIndexInput input);
 
     Task AddTokenApplyOrderIndexAsync(AddTokenApplyOrderIndexInput input);
     Task UpdateTokenApplyOrderIndexAsync(UpdateTokenApplyOrderIndexInput input);
@@ -32,6 +33,5 @@ public interface ITokenAccessAppService
     
     Task<PagedResultDto<PoolInfoDto>> GetPoolListAsync(GetPoolListInput input);
     Task<PoolInfoDto> GetPoolDetailAsync(GetPoolDetailInput input);
-
-
+    
 }

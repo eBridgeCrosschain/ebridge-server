@@ -23,16 +23,19 @@ namespace AElf.CrossChainServer.TokenAccess;
 [RemoteService(IsEnabled = false)]
 public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessAppService
 {
-    private readonly ISymbolMarketProvider _symbolMarketProvider;
-    private readonly ILiquidityDataProvider _liquidityDataProvider;
-    private readonly IScanProvider _scanProvider;
-    private readonly ITokenApplyOrderRepository _tokenApplyOrderRepository;
-    private readonly INESTRepository<TokenApplyOrderIndex, Guid> _tokenApplyOrderIndexRepository;
+    // private readonly ISymbolMarketProvider _symbolMarketProvider;
+    // private readonly ILiquidityDataProvider _liquidityDataProvider;
+    // private readonly IScanProvider _scanProvider;
+    // private readonly ITokenApplyOrderRepository _tokenApplyOrderRepository;
+    // private readonly AElfClientProvider _aElfClientProvider;
+    // private readonly ILarkManager _larkManager;
+    // private readonly IUserAccessTokenInfoRepository _userAccessTokenInfoRepository;
     private readonly IUserAccessTokenInfoRepository _userAccessTokenInfoRepository;
+    private readonly IUserTokenIssueRepository _userTokenIssueRepository;
+    private readonly ICrossChainUserRepository _crossChainUserRepository;
+    private readonly INESTRepository<TokenApplyOrderIndex, Guid> _tokenApplyOrderIndexRepository;
     private readonly INESTRepository<UserTokenAccessInfoIndex, Guid> _userAccessTokenInfoIndexRepository;
-    private readonly AElfClientProvider _aElfClientProvider;
     private readonly TokenAccessOptions _tokenAccessOptions;
-    private readonly ILarkManager _larkManager;
     private readonly TokenWhitelistOptions _tokenWhitelistOptions;
     private readonly IPoolLiquidityInfoAppService _poolLiquidityInfoAppService;
     private readonly IUserLiquidityInfoAppService _userLiquidityInfoAppService;
@@ -42,51 +45,55 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     private const int DefaultSkipCount = 0;
     private readonly IChainAppService _chainAppService;
     private readonly ITokenAppService _tokenAppService;
-    private readonly ICrossChainUserRepository _crossChainUserRepository;
     private readonly ITokenInvokeProvider _tokenInvokeProvider;
     private readonly IObjectMapper _objectMapper;
     private readonly NetworkOptions _networkInfoOptions;
     private readonly TokenOptions _tokenOptions;
     private readonly TokenInfoOptions _tokenInfoOptions;
-    private readonly IUserTokenIssueRepository _userTokenIssueRepository;
 
-    public TokenAccessAppService(ISymbolMarketProvider symbolMarketProvider,
-        ILiquidityDataProvider liquidityDataProvider,
-        IScanProvider scanProvider, ITokenApplyOrderRepository tokenApplyOrderRepository,
+    public TokenAccessAppService(
+        // ISymbolMarketProvider symbolMarketProvider,
+        // ILiquidityDataProvider liquidityDataProvider,
+        // IScanProvider scanProvider, ITokenApplyOrderRepository tokenApplyOrderRepository,
+        // ILarkManager larkManager, 
+        // AElfClientProvider aElfClientProvider,
+        IUserTokenIssueRepository userTokenIssueRepository,
+        ICrossChainUserRepository crossChainUserRepository,
+        // IUserAccessTokenInfoRepository userAccessTokenInfoRepository,
         INESTRepository<TokenApplyOrderIndex, Guid> tokenApplyOrderIndexRepository,
-        IUserAccessTokenInfoRepository userAccessTokenInfoRepository,
         INESTRepository<UserTokenAccessInfoIndex, Guid> userAccessTokenInfoIndexRepository,
-        AElfClientProvider aElfClientProvider,
         IOptionsSnapshot<TokenAccessOptions> tokenAccessOptions,
-        ILarkManager larkManager, IOptionsSnapshot<TokenWhitelistOptions> tokenWhitelistOptions,
+        IOptionsSnapshot<TokenWhitelistOptions> tokenWhitelistOptions,
         IOptionsSnapshot<TokenPriceIdMappingOptions> tokenPriceIdMappingOptions,
         IPoolLiquidityInfoAppService poolLiquidityInfoAppService,
-        IUserLiquidityInfoAppService userLiquidityInfoAppService, ITokenPriceProvider tokenPriceProvider,
+        IUserLiquidityInfoAppService userLiquidityInfoAppService,
+        ITokenPriceProvider tokenPriceProvider,
         IChainAppService chainAppService, ITokenAppService tokenAppService,
-        ICrossChainUserRepository crossChainUserRepository, ITokenInvokeProvider tokenInvokeProvider,
+        ITokenInvokeProvider tokenInvokeProvider,
         IObjectMapper objectMapper, IOptionsSnapshot<NetworkOptions> networkInfoOptions,
         IOptionsSnapshot<TokenOptions> tokenOptions, IOptionsSnapshot<TokenInfoOptions> tokenInfoOptions,
-        IUserTokenIssueRepository userTokenIssueRepository)
+        IUserAccessTokenInfoRepository userAccessTokenInfoRepository)
     {
-        _symbolMarketProvider = symbolMarketProvider;
-        _liquidityDataProvider = liquidityDataProvider;
-        _scanProvider = scanProvider;
-        _tokenApplyOrderRepository = tokenApplyOrderRepository;
+        // _symbolMarketProvider = symbolMarketProvider;
+        // _liquidityDataProvider = liquidityDataProvider;
+        // _scanProvider = scanProvider;
+        // _tokenApplyOrderRepository = tokenApplyOrderRepository;
+        _userTokenIssueRepository = userTokenIssueRepository;
+        _crossChainUserRepository = crossChainUserRepository;
+        // _userAccessTokenInfoRepository = userAccessTokenInfoRepository;
         _tokenApplyOrderIndexRepository = tokenApplyOrderIndexRepository;
-        _userAccessTokenInfoRepository = userAccessTokenInfoRepository;
         _userAccessTokenInfoIndexRepository = userAccessTokenInfoIndexRepository;
-        _aElfClientProvider = aElfClientProvider;
+        // _aElfClientProvider = aElfClientProvider;
         _tokenAccessOptions = tokenAccessOptions.Value;
-        _larkManager = larkManager;
+        // _larkManager = larkManager;
         _poolLiquidityInfoAppService = poolLiquidityInfoAppService;
         _userLiquidityInfoAppService = userLiquidityInfoAppService;
         _tokenPriceProvider = tokenPriceProvider;
         _chainAppService = chainAppService;
         _tokenAppService = tokenAppService;
-        _crossChainUserRepository = crossChainUserRepository;
         _tokenInvokeProvider = tokenInvokeProvider;
         _objectMapper = objectMapper;
-        _userTokenIssueRepository = userTokenIssueRepository;
+        _userAccessTokenInfoRepository = userAccessTokenInfoRepository;
         _tokenInfoOptions = tokenInfoOptions.Value;
         _tokenOptions = tokenOptions.Value;
         _networkInfoOptions = networkInfoOptions.Value;
@@ -138,14 +145,14 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         var address = await GetUserAddressAsync();
         AssertHelper.IsTrue(!address.IsNullOrEmpty(), "No permission.");
         AssertHelper.IsTrue(input.Email.Contains(CommonConstant.At), "Please enter a valid email address");
-        // var tokenOwnerGrain = _clusterClient.GetGrain<IUserTokenOwnerGrain>(address);
         var listDto = await _tokenInvokeProvider.GetAsync(address);
+
         AssertHelper.IsTrue(listDto != null && listDto.Exists(t => t.Symbol == input.Symbol) &&
                             CheckLiquidityAndHolderAvailable(listDto, input.Symbol), "Symbol invalid.");
 
         var dto = _objectMapper.Map<UserTokenAccessInfoInput, UserTokenAccessInfo>(input);
         dto.Address = address;
-        await _userAccessTokenInfoRepository.InsertAsync(dto);
+        await _userAccessTokenInfoRepository.InsertAsync(dto, autoSave: true);
         return true;
     }
 
@@ -270,14 +277,45 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         throw new NotImplementedException();
     }
 
-    public Task<UserTokenBindingDto> PrepareBindingIssueAsync(PrepareBindIssueInput input)
+    public async Task<UserTokenBindingDto> PrepareBindingIssueAsync(PrepareBindIssueInput input)
     {
-        throw new NotImplementedException();
+        AssertHelper.IsTrue(!input.ChainId.IsNullOrEmpty() || !input.OtherChainId.IsNullOrEmpty(),
+            "Param invalid.");
+        var chainStatus = await CheckChainAccessStatusAsync(new CheckChainAccessStatusInput { Symbol = input.Symbol });
+        AssertHelper.IsTrue(input.ChainId.IsNullOrEmpty() || chainStatus.ChainList.Exists(
+            c => c.ChainId == input.ChainId), "Param invalid.");
+        AssertHelper.IsTrue(input.OtherChainId.IsNullOrEmpty() || chainStatus.OtherChainList.Exists(
+            c => c.ChainId == input.OtherChainId), "Param invalid.");
+
+        var address = await GetUserAddressAsync();
+        // var tokenInvokeGrain = _clusterClient.GetGrain<ITokenInvokeGrain>(
+        //     string.Join(CommonConstant.Underline, input.Symbol, address, input.OtherChainId));
+        var dto = new UserTokenIssueDto
+        {
+            // Id = GuidHelper.UniqGuid(input.Symbol, address, input.OtherChainId),
+            Address = address,
+            WalletAddress = input.Address,
+            Symbol = input.Symbol,
+            ChainId = input.ChainId,
+            TokenName = chainStatus.ChainList.FirstOrDefault(t => t.ChainId == input.ChainId).TokenName,
+            TokenImage = chainStatus.ChainList.FirstOrDefault(t => t.ChainId == input.ChainId).Icon,
+            OtherChainId = input.OtherChainId,
+            ContractAddress = input.ContractAddress,
+            TotalSupply = input.Supply
+        };
+        return await _tokenInvokeProvider.PrepareBinding(dto);
+        // return await tokenInvokeGrain.PrepareBinding(dto);
     }
 
-    public Task<bool> GetBindingIssueAsync(UserTokenBindingDto input)
+    public async Task<bool> GetBindingIssueAsync(UserTokenBindingDto input)
     {
-        throw new NotImplementedException();
+        var address = await GetUserAddressAsync();
+        AssertHelper.IsTrue(!address.IsNullOrEmpty(), "No permission.");
+
+        // var tokenInvokeGrain = _clusterClient.GetGrain<ITokenInvokeGrain>(
+        //     string.Join(CommonConstant.Underline, input.BindingId, input.ThirdTokenId));
+        // return await tokenInvokeGrain.Binding(input);
+        return await _tokenInvokeProvider.Binding(input);
     }
 
     Task<PagedResultDto<TokenApplyOrderResultDto>> ITokenAccessAppService.GetTokenApplyOrderListAsync(
@@ -510,6 +548,12 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         await _userAccessTokenInfoIndexRepository.UpdateAsync(index);
     }
 
+    public async Task DeleteUserTokenAccessInfoIndexAsync(DeleteUserTokenAccessInfoIndexInput input)
+    {
+        var index = ObjectMapper.Map<DeleteUserTokenAccessInfoIndexInput, UserTokenAccessInfoIndex>(input);
+        await _userAccessTokenInfoIndexRepository.DeleteAsync(index);
+    }
+
     public async Task AddTokenApplyOrderIndexAsync(AddTokenApplyOrderIndexInput input)
     {
         var index = ObjectMapper.Map<AddTokenApplyOrderIndexInput, TokenApplyOrderIndex>(input);
@@ -680,6 +724,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         {
             var coinId = _tokenPriceIdMappingOptions.CoinIdMapping[symbol];
             var priceInUsd = await _tokenPriceProvider.GetPriceAsync(coinId);
+            // var priceInUsd = 1000;
             tokenPrices[symbol] = priceInUsd;
         }
 
@@ -728,21 +773,22 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     {
         var userId = CurrentUser.IsAuthenticated ? CurrentUser?.GetId() : null;
         if (!userId.HasValue) return null;
-        var userDto = await _crossChainUserRepository.FindAsync(userId.Value);
+        var userDto = await _crossChainUserRepository.FindAsync(o => o.UserId == userId);
         return userDto?.AddressInfos?.FirstOrDefault()?.Address;
     }
 
     private bool CheckLiquidityAndHolderAvailable(List<TokenOwnerDto> TokenOwnerList, string symbol)
     {
-        var tokenOwnerDto = TokenOwnerList.FirstOrDefault(t => t.Symbol == symbol);
-        var liquidityInUsd = !_tokenAccessOptions.TokenConfig.ContainsKey(symbol)
-            ? _tokenAccessOptions.DefaultConfig.Liquidity
-            : _tokenAccessOptions.TokenConfig[symbol].Liquidity;
-        var holders = !_tokenAccessOptions.TokenConfig.ContainsKey(symbol)
-            ? _tokenAccessOptions.DefaultConfig.Holders
-            : _tokenAccessOptions.TokenConfig[symbol].Holders;
-        return tokenOwnerDto.LiquidityInUsd.SafeToDecimal() > liquidityInUsd.SafeToDecimal()
-               && tokenOwnerDto.Holders > holders;
+        return true;
+        // var tokenOwnerDto = TokenOwnerList.FirstOrDefault(t => t.Symbol == symbol);
+        // var liquidityInUsd = !_tokenAccessOptions.TokenConfig.ContainsKey(symbol)
+        //     ? _tokenAccessOptions.DefaultConfig.Liquidity
+        //     : _tokenAccessOptions.TokenConfig[symbol].Liquidity;
+        // var holders = !_tokenAccessOptions.TokenConfig.ContainsKey(symbol)
+        //     ? _tokenAccessOptions.DefaultConfig.Holders
+        //     : _tokenAccessOptions.TokenConfig[symbol].Holders;
+        // return tokenOwnerDto.LiquidityInUsd.SafeToDecimal() > liquidityInUsd.SafeToDecimal()
+        //        && tokenOwnerDto.Holders > holders;
     }
 
     private async Task<UserTokenAccessInfoIndex> GetUserTokenAccessInfoIndexAsync(string symbol, string address)

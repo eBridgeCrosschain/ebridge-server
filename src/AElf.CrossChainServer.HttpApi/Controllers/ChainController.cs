@@ -21,7 +21,6 @@ namespace AElf.CrossChainServer.Controllers
             _chainAppService = chainAppService;
         }
 
-        [Authorize]
         [HttpGet]
         public Task<ListResultDto<ChainDto>> GetChainsAsync(GetChainsInput input)
         {
