@@ -13,6 +13,4 @@ public class UserTokenAccessInfoBaseDto
     public string PersonName { get; set; }
     public string TelegramHandler { get; set; }
     public string Email { get; set; }
-    public string ChainIds { get; set; } = "[]";
-    public string OtherChainIds { get; set; } = "[]";
 }

@@ -12,6 +12,10 @@ public class TokenApplyOrderBase : CrossChainServerEntity<Guid>
     [Keyword] public string UserAddress { get; set; }
     [Keyword] public string Status { get; set; }
     public long CreateTime { get; set; }
+    [Keyword] public string Symbol { get; set; }
+    [Keyword] public string UserAddress { get; set; }
+    [Keyword] public string Status { get; set; }
+    public long CreateTime { get; set; }
     public long UpdateTime { get; set; }
     public List<ChainTokenInfo> ChainTokenInfo { get; set; }
     public ChainTokenInfo OtherChainTokenInfo { get; set; }
