@@ -184,16 +184,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         var address = await GetUserAddressAsync();
         AssertHelper.IsTrue(!address.IsNullOrEmpty(), "No permission.");
         var listDto = await _tokenInvokeProvider.GetAsync(address);
-
-
         AssertHelper.IsTrue(listDto != null && listDto.Exists(t => t.Symbol == input.Symbol) &&
                             CheckLiquidityAndHolderAvailable(listDto, input.Symbol), "Symbol invalid.");
-
-        // var networkList = _tokenAccessOptions.ChainIdList.OrderBy(m =>
-        //         _tokenOptions.Transfer.Select(t => t.Symbol).ToList().IndexOf(m.Key))
-        //     .SelectMany(kvp => kvp.Value).Where(a =>
-        //         a.SupportType.Contains(OrderTypeEnum.Transfer.ToString())).GroupBy(g => g.NetworkInfo.Network)
-        //     .Select(s => s.First().NetworkInfo).ToList();
 
         result.ChainList.AddRange(_tokenAccessOptions.ChainIdList.Select(
             t => new ChainAccessInfo { ChainId = t, ChainName = t, Symbol = input.Symbol }));

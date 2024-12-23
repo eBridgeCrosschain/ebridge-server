@@ -79,6 +79,7 @@ public class CrossChainServerDbContext :
     public DbSet<StatusChangedRecord> StatusChangedRecords { get; set; }
     public DbSet<UserTokenAccessInfo> UserTokenAccessInfos { get; set; }
     public DbSet<UserTokenIssueDto> UserTokenIssues { get; set; }
+    public DbSet<TokenInvokeDto> TokenInvokes { get; set; }
 
     public CrossChainServerDbContext(DbContextOptions<CrossChainServerDbContext> options)
         : base(options)
@@ -200,16 +201,18 @@ public class CrossChainServerDbContext :
             //     .HasForeignKey(x => x.Id)
             //     .IsRequired();
         });
-        
+
         builder.Entity<ChainTokenInfo>(b =>
         {
-            b.ToTable(CrossChainServerConsts.DbTablePrefix + "ApplyOrderChainTokenInfo", CrossChainServerConsts.DbSchema);
+            b.ToTable(CrossChainServerConsts.DbTablePrefix + "ApplyOrderChainTokenInfo",
+                CrossChainServerConsts.DbSchema);
             b.ConfigureByConvention();
         });
-        
+
         builder.Entity<StatusChangedRecord>(b =>
         {
-            b.ToTable(CrossChainServerConsts.DbTablePrefix + "ApplyOrderStatusChangedRecord", CrossChainServerConsts.DbSchema);
+            b.ToTable(CrossChainServerConsts.DbTablePrefix + "ApplyOrderStatusChangedRecord",
+                CrossChainServerConsts.DbSchema);
             b.ConfigureByConvention();
         });
 

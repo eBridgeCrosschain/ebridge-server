@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 
 namespace AElf.CrossChainServer.TokenAccess;
@@ -24,6 +25,7 @@ public class TokenAccessOptions
     public AvailableTokenConfigDto DefaultConfig { get; set; } = new();
     public Dictionary<string, AvailableTokenConfigDto> TokenConfig { get; set; } = new();
     public string LarkWebhook { get; set; }
+    public Dictionary<string, string> ChainIdMap { get; set; }
 }
 
 public class AvailablePoolConfigDto

@@ -395,6 +395,25 @@ namespace AElf.CrossChainServer.Migrations
                     b.ToTable("AppTokenApplyOrder", (string)null);
                 });
 
+            modelBuilder.Entity("AElf.CrossChainServer.TokenAccess.TokenInvokeDto", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("BindingId")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ThirdTokenId")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("UserTokenIssueId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TokenInvokes");
+                });
+
             modelBuilder.Entity("AElf.CrossChainServer.TokenAccess.UserTokenAccessInfo", b =>
                 {
                     b.Property<Guid>("Id")
