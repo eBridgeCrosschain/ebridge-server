@@ -92,7 +92,13 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         var address = " ";
         if (address.IsNullOrEmpty()) return result;
         var listDto = await _tokenInvokeProvider.GetUserTokenOwnerListAsync(address);
-        if (listDto == null || listDto.TokenOwnerList.IsNullOrEmpty()) return result;
+        if (listDto == null || listDto.TokenOwnerList.IsNullOrEmpty())
+        {
+            Log.Debug($"{address} has no own tokens.");
+            return result;
+        }
+
+        Log.Debug($"{address} has {listDto.TokenOwnerList.Count} tokens.");
         foreach (var token in listDto.TokenOwnerList)
         {
             result.TokenList.Add(new()
@@ -114,8 +120,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         var address = " ";
         AssertHelper.IsTrue(!address.IsNullOrEmpty(), "No permission.");
         AssertHelper.IsTrue(input.Email.Contains(CommonConstant.At), "Please enter a valid email address");
-        var listDto = await _tokenInvokeProvider.GetAsync(address);
 
+        var listDto = await _tokenInvokeProvider.GetAsync(address);
         AssertHelper.IsTrue(listDto != null && listDto.Exists(t => t.Symbol == input.Symbol) &&
                             CheckLiquidityAndHolderAvailable(listDto, input.Symbol), "Symbol invalid.");
 
@@ -124,10 +130,12 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         var existDto = await _userAccessTokenInfoRepository.FindAsync(o => o.Address == address);
         if (existDto != null)
         {
+            Log.Debug($"update {address} accessTokenInfo");
             await _userAccessTokenInfoRepository.UpdateAsync(dto, autoSave: true);
         }
         else
         {
+            Log.Debug($"create {address} accessTokenInfo");
             await _userAccessTokenInfoRepository.InsertAsync(dto, autoSave: true);
         }
 

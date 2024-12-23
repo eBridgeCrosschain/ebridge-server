@@ -139,22 +139,36 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             tokenParams["aelfToken"] = symbol;
             var resultDto = await _httpProvider.InvokeAsync<ThirdTokenResultDto>(
                 _tokenAccessOptions.SymbolMarketBaseUrl, _userThirdTokenListUri, param: tokenParams);
-            if (resultDto.Code != "20000" || resultDto.Data == null) return false;
+            if (resultDto.Code != "20000" || resultDto.Data == null)
+            {
+                _logger.LogWarning($"get {address} {symbol} failed, message: {resultDto.Message}");
+                return false;
+            }
 
             foreach (var item in resultDto.Data)
             {
                 var aelfChainId = FindMatchChainId(item.AelfChain);
                 var thirdChainId = FindMatchChainId(item.ThirdChain);
-                if (string.IsNullOrWhiteSpace(aelfChainId) || string.IsNullOrWhiteSpace(thirdChainId)) break;
+                if (string.IsNullOrWhiteSpace(aelfChainId) || string.IsNullOrWhiteSpace(thirdChainId))
+                {
+                    _logger.LogWarning(
+                        $"skip not supported chainId, aelf chain: {aelfChainId} third chain: {thirdChainId}");
+                    break;
+                }
+
                 var res = await _userTokenIssueRepository.FindAsync(o =>
                     o.Address == address && o.Symbol == item.ThirdSymbol && o.OtherChainId == thirdChainId);
                 if (res != null)
                 {
+                    _logger.LogDebug(
+                        $"Update address: {address}, Symbol: {item.ThirdSymbol}, OtherChainId: {thirdChainId} TokenIssue");
                     res.Status = TokenApplyOrderStatus.Issued.ToString();
                     await _userTokenIssueRepository.UpdateAsync(res);
                 }
                 else
                 {
+                    _logger.LogDebug(
+                        $"Create address: {address}, Symbol: {item.ThirdSymbol}, OtherChainId: {thirdChainId} TokenIssue");
                     await _userTokenIssueRepository.InsertAsync(new UserTokenIssueDto
                     {
                         Address = address,
@@ -184,7 +198,10 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
         var res = await _userTokenIssueRepository.FindAsync(o =>
             o.Address == dto.Address && o.Symbol == dto.Symbol && o.OtherChainId == dto.OtherChainId);
         if (res != null && !res.BindingId.IsNullOrEmpty() && !res.ThirdTokenId.IsNullOrEmpty())
+        {
+            _logger.LogDebug("Get existing TokenIssue, no need request symbol market again.");
             return new UserTokenBindingDto { BindingId = res.BindingId, ThirdTokenId = res.ThirdTokenId };
+        }
 
         var url =
             $"{_tokenAccessOptions.SymbolMarketBaseUrl}{_tokenAccessOptions.SymbolMarketPrepareBindingUri}";
@@ -213,6 +230,8 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
 
         if (res != null)
         {
+            _logger.LogDebug(
+                $"get exist TokenIssue, will update BindingId, ThirdTokenId and status {res.Status} to issuing");
             res.BindingId = resultDto.Data?.BindingId;
             res.ThirdTokenId = resultDto.Data?.ThirdTokenId;
             res.Status = TokenApplyOrderStatus.Issuing.ToString();
@@ -220,12 +239,14 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
         }
         else
         {
+            _logger.LogDebug($"create TokenIssue, will update {dto.Id} status to issuing");
             dto.BindingId = resultDto.Data?.BindingId;
             dto.ThirdTokenId = resultDto.Data?.ThirdTokenId;
             dto.Status = TokenApplyOrderStatus.Issuing.ToString();
             await _userTokenIssueRepository.InsertAsync(dto);
         }
 
+        _logger.LogDebug("Insert token invoke");
         await _invokeRepository.InsertAsync(new()
         {
             BindingId = resultDto.Data?.BindingId,
@@ -243,7 +264,11 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
         if (tokenInvoke != null && tokenInvoke.UserTokenIssueId != Guid.Empty)
         {
             var res = await _userTokenIssueRepository.FindAsync(o => o.Id == tokenInvoke.UserTokenIssueId);
-            if (res != null && res.Status == TokenApplyOrderStatus.Issued.ToString()) return true;
+            if (res != null && res.Status == TokenApplyOrderStatus.Issued.ToString())
+            {
+                _logger.LogDebug($"Skip, Token {dto.BindingId} {dto.ThirdTokenId} had issued");
+                return true;
+            }
         }
 
         var url = $"{_tokenAccessOptions.SymbolMarketBaseUrl}{_tokenAccessOptions.SymbolMarketBindingUri}";
@@ -255,8 +280,12 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
                 Signature = BuildRequestHash(string.Concat(dto.BindingId, dto.ThirdTokenId))
             }, HttpProvider.DefaultJsonSettings));
         if (resultDto.Code != "20000" || tokenInvoke == null || tokenInvoke.UserTokenIssueId == Guid.Empty)
+        {
+            _logger.LogWarning($"request symbol market fail, {resultDto.Message}");
             return false;
+        }
 
+        _logger.LogDebug($"request symbol market success, update user token issue {tokenInvoke.UserTokenIssueId} status to issued");
         var tokenIssueFindByIssueId =
             await _userTokenIssueRepository.FindAsync(o => o.Id == tokenInvoke.UserTokenIssueId);
         tokenIssueFindByIssueId.BindingId = dto.BindingId;
@@ -283,22 +312,5 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
     }
 
     private string FindMatchChainId(string sourceChainId)
-    {
-        // 检查输入是否为key
-        if (_tokenAccessOptions.ChainIdMap.TryGetValue(sourceChainId, out string value))
-        {
-            return value;
-        }
-
-        // 检查输入是否为value
-        // foreach (var kvp in _tokenAccessOptions.ChainIdMap)
-        // {
-        //     if (kvp.Value == sourceChainId)
-        //     {
-        //         return kvp.Key;
-        //     }
-        // }
-
-        return string.Empty;
-    }
+        => _tokenAccessOptions.ChainIdMap.TryGetValue(sourceChainId, out string value) ? value : string.Empty;
 }
