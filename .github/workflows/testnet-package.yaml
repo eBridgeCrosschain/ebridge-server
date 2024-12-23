@@ -12,6 +12,7 @@ jobs:
       matrix:
         servicename:
           [
+            AElf.CrossChainServer.AuthServer,
             AElf.CrossChainServer.EntityHandler,
             AElf.CrossChainServer.HttpApi.Host
           ]
@@ -34,6 +35,7 @@ jobs:
       matrix:
         servicename:
           [
+            AElf.CrossChainServer.AuthServer,
             AElf.CrossChainServer.EntityHandler,
             AElf.CrossChainServer.HttpApi.Host
           ]
