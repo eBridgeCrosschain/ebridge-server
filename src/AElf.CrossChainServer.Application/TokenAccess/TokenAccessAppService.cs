@@ -9,6 +9,7 @@ using AElf.CrossChainServer.TokenPool;
 using AElf.CrossChainServer.TokenPrice;
 using AElf.CrossChainServer.Tokens;
 using AElf.Indexing.Elasticsearch;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nest;
 using Serilog;
@@ -50,6 +51,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     private readonly NetworkOptions _networkInfoOptions;
     private readonly TokenOptions _tokenOptions;
     private readonly TokenInfoOptions _tokenInfoOptions;
+    private readonly ILogger<TokenAccessAppService> _logger;
 
     public TokenAccessAppService(
         // ISymbolMarketProvider symbolMarketProvider,
@@ -72,7 +74,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         ITokenInvokeProvider tokenInvokeProvider,
         IObjectMapper objectMapper, IOptionsSnapshot<NetworkOptions> networkInfoOptions,
         IOptionsSnapshot<TokenOptions> tokenOptions, IOptionsSnapshot<TokenInfoOptions> tokenInfoOptions,
-        IUserAccessTokenInfoRepository userAccessTokenInfoRepository)
+        IUserAccessTokenInfoRepository userAccessTokenInfoRepository, ILogger<TokenAccessAppService> logger)
     {
         // _symbolMarketProvider = symbolMarketProvider;
         // _liquidityDataProvider = liquidityDataProvider;
@@ -94,6 +96,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         _tokenInvokeProvider = tokenInvokeProvider;
         _objectMapper = objectMapper;
         _userAccessTokenInfoRepository = userAccessTokenInfoRepository;
+        _logger = logger;
         _tokenInfoOptions = tokenInfoOptions.Value;
         _tokenOptions = tokenOptions.Value;
         _networkInfoOptions = networkInfoOptions.Value;
@@ -124,7 +127,13 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         var address = await GetUserAddressAsync();
         if (address.IsNullOrEmpty()) return result;
         var listDto = await _tokenInvokeProvider.GetUserTokenOwnerList(address);
-        if (listDto == null || listDto.TokenOwnerList.IsNullOrEmpty()) return result;
+        if (listDto == null || listDto.TokenOwnerList.IsNullOrEmpty())
+        {
+            _logger.LogDebug($"{address} has no own tokens.");
+            return result;
+        }
+
+        _logger.LogDebug($"{address} has {listDto.TokenOwnerList.Count} tokens.");
         foreach (var token in listDto.TokenOwnerList)
         {
             result.TokenList.Add(new()
@@ -145,8 +154,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         var address = await GetUserAddressAsync();
         AssertHelper.IsTrue(!address.IsNullOrEmpty(), "No permission.");
         AssertHelper.IsTrue(input.Email.Contains(CommonConstant.At), "Please enter a valid email address");
-        var listDto = await _tokenInvokeProvider.GetAsync(address);
 
+        var listDto = await _tokenInvokeProvider.GetAsync(address);
         AssertHelper.IsTrue(listDto != null && listDto.Exists(t => t.Symbol == input.Symbol) &&
                             CheckLiquidityAndHolderAvailable(listDto, input.Symbol), "Symbol invalid.");
 
@@ -155,10 +164,12 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         var existDto = await _userAccessTokenInfoRepository.FindAsync(o => o.Address == address);
         if (existDto != null)
         {
+            _logger.LogDebug($"update {address} accessTokenInfo");
             await _userAccessTokenInfoRepository.UpdateAsync(dto, autoSave: true);
         }
         else
         {
+            _logger.LogDebug($"create {address} accessTokenInfo");
             await _userAccessTokenInfoRepository.InsertAsync(dto, autoSave: true);
         }
 
