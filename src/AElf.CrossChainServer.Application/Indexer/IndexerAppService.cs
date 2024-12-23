@@ -41,7 +41,6 @@ public class IndexerAppService : CrossChainServerAppService, IIndexerAppService
         MethodName = nameof(ExceptionHandlingService.HandleExceptionReturnLong))]
     public virtual async Task<long> GetLatestIndexHeightAsync(string chainId)
     {
-        return 0;
         var chain = await _chainAppService.GetAsync(chainId);
         if (chain == null)
         {
