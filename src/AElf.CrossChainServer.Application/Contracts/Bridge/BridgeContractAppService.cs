@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.BridgeContract;
 using AElf.CrossChainServer.ExceptionHandler;
+using AElf.CrossChainServer.TokenPool;
 using AElf.ExceptionHandler;
 using Microsoft.Extensions.Options;
 using Volo.Abp;
@@ -201,5 +202,16 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
         }
         return await provider.GetCurrentSwapTokenBucketStatesAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].LimiterContract, tokenIds, fromChainIds);
+    }
+    
+    public async Task<List<PoolLiquidityDto>> GetPoolLiquidityAsync(string chainId, string contractAddress,
+        List<Guid> tokenIds)
+    {
+        var provider = await _bridgeContractProviderFactory.GetBridgeContractProviderAsync(chainId);
+        if (provider == null)
+        {
+            return new List<PoolLiquidityDto>();
+        }
+        return await provider.GetPoolLiquidityAsync(chainId, contractAddress, tokenIds);
     }
 }

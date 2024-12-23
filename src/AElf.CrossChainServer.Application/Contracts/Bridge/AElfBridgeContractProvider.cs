@@ -129,7 +129,7 @@ public class AElfBridgeContractProvider: AElfClientProvider, IBridgeContractProv
         foreach (var tokenId in tokenIds)
         {
             var tokenInfo = await _tokenAppService.GetAsync(tokenId);
-            var param = new GetLiquidityInput
+            var param = new GetTokenPoolInfoInput
             {
                 TokenSymbol = tokenInfo.Symbol
             };

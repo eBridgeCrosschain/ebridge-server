@@ -88,8 +88,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     public async Task<AvailableTokensDto> GetAvailableTokensAsync()
     {
         var result = new AvailableTokensDto();
-        // var address = await GetUserAddressAsync();
-        var address = " ";
+        var address = await GetUserAddressAsync();
         if (address.IsNullOrEmpty()) return result;
         var listDto = await _tokenInvokeProvider.GetUserTokenOwnerListAsync(address);
         if (listDto == null || listDto.TokenOwnerList.IsNullOrEmpty())
@@ -116,8 +115,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
 
     public async Task<bool> CommitTokenAccessInfoAsync(UserTokenAccessInfoInput input)
     {
-        // var address = await GetUserAddressAsync();
-        var address = " ";
+        var address = await GetUserAddressAsync();
         AssertHelper.IsTrue(!address.IsNullOrEmpty(), "No permission.");
         AssertHelper.IsTrue(input.Email.Contains(CommonConstant.At), "Please enter a valid email address");
 
@@ -144,8 +142,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
 
     public async Task<UserTokenAccessInfoDto> GetUserTokenAccessInfoAsync(UserTokenAccessInfoBaseInput input)
     {
-        // var address = await GetUserAddressAsync();
-        var address = " ";
+        var address = await GetUserAddressAsync();
         AssertHelper.IsTrue(!address.IsNullOrEmpty(), "No permission.");
         var listDto = await _tokenInvokeProvider.GetAsync(address);
         AssertHelper.IsTrue(listDto != null && !listDto.IsNullOrEmpty() &&
@@ -161,8 +158,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     public async Task<CheckChainAccessStatusResultDto> CheckChainAccessStatusAsync(CheckChainAccessStatusInput input)
     {
         var result = new CheckChainAccessStatusResultDto();
-        // var address = await GetUserAddressAsync();
-        var address = " ";
+        var address = await GetUserAddressAsync();
         // Validate user address
         AssertHelper.IsTrue(!address.IsNullOrEmpty(), "No permission.");
 
@@ -353,8 +349,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     /// <exception cref="UserFriendlyException"></exception>
     public async Task<AddChainResultDto> AddChainAsync(AddChainInput input)
     {
-        // var address = await GetUserAddressAsync();
-        var address = " ";
+        var address = await GetUserAddressAsync();
         if (address.IsNullOrEmpty())
         {
             throw new UserFriendlyException("Invalid address.");
@@ -596,8 +591,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         AssertHelper.IsTrue(input.OtherChainId.IsNullOrEmpty() || chainStatus.OtherChainList.Exists(
             c => c.ChainId == input.OtherChainId), "Param invalid.");
 
-        // var address = await GetUserAddressAsync();
-        var address = " ";
+        var address = await GetUserAddressAsync();
+
         var dto = new UserTokenIssueDto
         {
             Id = GuidHelper.UniqGuid(input.Symbol, address, input.OtherChainId),
@@ -618,8 +613,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
 
     public async Task<bool> GetBindingIssueAsync(UserTokenBindingDto input)
     {
-        // var address = await GetUserAddressAsync();
-        var address = " ";
+        var address = await GetUserAddressAsync();
+
         AssertHelper.IsTrue(!address.IsNullOrEmpty(), "No permission.");
         return await _tokenInvokeProvider.BindingAsync(input);
     }
@@ -627,8 +622,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     public async Task<PagedResultDto<TokenApplyOrderResultDto>> GetTokenApplyOrderListAsync(
         GetTokenApplyOrderListInput input)
     {
-        // var address = await GetUserAddressAsync();
-        var address = " ";
+        var address = await GetUserAddressAsync();
+
         if (address.IsNullOrEmpty()) return new PagedResultDto<TokenApplyOrderResultDto>();
         var mustQuery = new List<Func<QueryContainerDescriptor<TokenApplyOrderIndex>, QueryContainer>>();
         mustQuery.Add(q => q.Term(i => i.Field(f => f.UserAddress).Value(address)));
@@ -645,8 +640,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
 
     public async Task<List<TokenApplyOrderResultDto>> GetTokenApplyOrderDetailAsync(GetTokenApplyOrderInput input)
     {
-        // var address = await GetUserAddressAsync();
-        var address = " ";
+        var address = await GetUserAddressAsync();
+
         if (address.IsNullOrEmpty()) return new List<TokenApplyOrderResultDto>();
         var list = await GetTokenApplyOrderIndexListAsync(address, input.Symbol, input.Id, input.ChainId);
         return await LoopCollectionItemsAsync(
@@ -989,6 +984,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         {
             var coinId = _tokenPriceIdMappingOptions.CoinIdMapping[symbol];
             var priceInUsd = await _tokenPriceProvider.GetPriceAsync(coinId);
+            Log.Debug("Token price: {symbol} {priceInUsd}", symbol, priceInUsd);
             tokenPrices[symbol] = priceInUsd;
         }
 
