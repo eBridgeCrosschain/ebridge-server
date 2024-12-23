@@ -179,13 +179,6 @@ public class CrossChainServerDbContext :
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "CrossChainRateLimits", CrossChainServerConsts.DbSchema);
             b.ConfigureByConvention(); 
         });
-        // builder.Entity<UserTokenAccessInfo>(b =>
-        // {
-        //     b.ToTable(CrossChainServerConsts.DbTablePrefix + "UserTokenAccessInfo", CrossChainServerConsts.DbSchema);
-        //     b.HasIndex(o => new { o.Symbol }).IsUnique();
-        //     b.HasIndex(o => new { o.Address });
-        //     b.ConfigureByConvention();
-        // });
         builder.Entity<UserTokenAccessInfo>(b =>
         {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "UserTokenAccessInfo", CrossChainServerConsts.DbSchema);
@@ -202,11 +195,11 @@ public class CrossChainServerDbContext :
             //Define the relation
             b.HasMany(x => x.ChainTokenInfo)
                 .WithOne(x => x.Order)
-                .HasForeignKey(x => x.Id)
+                .HasForeignKey(x => x.OrderId)
                 .IsRequired();
             b.HasMany(x => x.StatusChangedRecords)
                 .WithOne(x => x.Order)
-                .HasForeignKey(x => x.Id)
+                .HasForeignKey(x => x.OrderId)
                 .IsRequired();
         });
         

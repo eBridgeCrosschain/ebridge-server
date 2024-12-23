@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using Nethereum.BlockchainProcessing.BlockStorage.Entities.Mapping;
 using Nethereum.Contracts.Standards.ERC20.ContractDefinition;
 using Nethereum.RPC.Eth.DTOs;
+using Serilog;
 
 namespace AElf.CrossChainServer.Chains
 {
@@ -75,6 +76,7 @@ namespace AElf.CrossChainServer.Chains
         public async Task<FilterLogsDto> GetContractLogsAsync(string chainId, string contractAddress, long startHeight,
             long endHeight)
         {
+            Log.Debug("Get contract logs from {startHeight} to {endHeight}", startHeight, endHeight);
             var client = BlockchainClientFactory.GetClient(chainId);
             var filterLogs = await client.Eth.Filters.GetLogs.SendRequestAsync(new NewFilterInput
             {

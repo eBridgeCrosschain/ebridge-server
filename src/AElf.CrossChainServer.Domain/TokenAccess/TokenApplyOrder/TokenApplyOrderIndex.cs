@@ -15,6 +15,7 @@ public class TokenApplyOrderIndex : TokenApplyOrderBase, IIndexBuild
 public class ChainTokenInfoIndex
 {
     public Guid Id { get; set; }
+    public Guid OrderId { get; set; }
     [Keyword] public string ChainId { get; set; }
     [Keyword] public string ChainName { get; set; }
     [Keyword] public string TokenName { get; set; }

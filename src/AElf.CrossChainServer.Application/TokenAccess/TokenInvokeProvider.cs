@@ -12,7 +12,7 @@ namespace AElf.CrossChainServer.TokenAccess;
 
 public interface ITokenInvokeProvider
 {
-    Task<TokenOwnerListDto> GetUserTokenOwnerListAsync(string address);
+    Task<TokenOwnerListDto> GetUserTokenOwnerListAndUpdateAsync(string address);
     Task<List<TokenOwnerDto>> GetAsync(string address);
     Task<bool> GetThirdTokenListAndUpdateAsync(string address, string symbol);
     Task<UserTokenBindingDto> PrepareBindingAsync(UserTokenIssueDto dto);
@@ -48,7 +48,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
         _invokeRepository = invokeRepository;
     }
 
-    public async Task<TokenOwnerListDto> GetUserTokenOwnerListAsync(string address)
+    public async Task<TokenOwnerListDto> GetUserTokenOwnerListAndUpdateAsync(string address)
     {
         var skipCount = 0;
         var tokenOwnerList = new TokenOwnerListDto();

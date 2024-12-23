@@ -89,7 +89,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         var result = new AvailableTokensDto();
         var address = await GetUserAddressAsync();
         if (address.IsNullOrEmpty()) return result;
-        var listDto = await _tokenInvokeProvider.GetUserTokenOwnerListAsync(address);
+        var listDto = await _tokenInvokeProvider.GetUserTokenOwnerListAndUpdateAsync(address);
         if (listDto == null || listDto.TokenOwnerList.IsNullOrEmpty())
         {
             Log.Debug($"{address} has no own tokens.");
@@ -458,6 +458,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         chain.Status = TokenApplyOrderStatus.PoolInitializing.ToString();
         var tokenApplyOrder =
             CreateTokenApplyOrder(orderId, symbol, address, TokenApplyOrderStatus.PoolInitializing.ToString());
+        tokenApplyOrder.ChainTokenInfo ??= new List<ChainTokenInfo>();
         tokenApplyOrder.ChainTokenInfo.Add(await CreateChainTokenInfo(chain, orderId));
         // Step 4: If ChainIds are provided, link them to the OtherChainId order
         if (IsNonEmpty(chainIds))
@@ -477,6 +478,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
 
         // Step 5: Insert to mysql and send lark notify
         await _tokenApplyOrderRepository.InsertAsync(tokenApplyOrder, autoSave: true);
+        result.OtherChainList ??= new List<AddChainDto>();
         result.OtherChainList.Add(new AddChainDto
         {
             Id = orderId.ToString(),
@@ -548,7 +550,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             UpdateTime = ToUtcMilliSeconds(DateTime.UtcNow),
             StatusChangedRecords = new List<StatusChangedRecord>
             {
-                new() { Id = orderId, Status = status, Time = DateTime.UtcNow }
+                new() { Id = Guid.NewGuid(), OrderId = orderId, Status = status, Time = DateTime.UtcNow }
             }
         };
     }
@@ -557,7 +559,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     private async Task<ChainTokenInfo> CreateChainTokenInfo(ChainAccessInfo chain, Guid orderId)
     {
         var chainTokenInfo = ObjectMapper.Map<ChainAccessInfo, ChainTokenInfo>(chain);
-        chainTokenInfo.Id = orderId;
+        chainTokenInfo.Id = Guid.NewGuid();
+        chainTokenInfo.OrderId = orderId;
         chainTokenInfo.Type = (await _chainAppService.GetAsync(chain.ChainId)).Type;
         return chainTokenInfo;
     }
@@ -622,7 +625,6 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         GetTokenApplyOrderListInput input)
     {
         var address = await GetUserAddressAsync();
-
         if (address.IsNullOrEmpty()) return new PagedResultDto<TokenApplyOrderResultDto>();
         var mustQuery = new List<Func<QueryContainerDescriptor<TokenApplyOrderIndex>, QueryContainer>>();
         mustQuery.Add(q => q.Term(i => i.Field(f => f.UserAddress).Value(address)));
@@ -736,6 +738,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         {
             if (chainTokenInfo.Type == BlockchainType.AElf)
             {
+                index.ChainTokenInfo ??= new List<ChainTokenInfoIndex>();
                 index.ChainTokenInfo.Add(ObjectMapper.Map<ChainTokenInfoDto, ChainTokenInfoIndex>(chainTokenInfo));
             }
             else
@@ -746,10 +749,12 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
 
         foreach (var statusChangedRecord in input.StatusChangedRecords)
         {
+            index.StatusChangedRecord ??= new Dictionary<string, string>();
             index.StatusChangedRecord.Add(statusChangedRecord.Status,
                 ToUtcMilliSeconds(statusChangedRecord.Time).ToString());
         }
 
+        Log.Debug("AddTokenApplyOrderIndexAsync start.{orderId}", input.Id);
         await _tokenApplyOrderIndexRepository.AddAsync(index);
     }
 
@@ -760,6 +765,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         {
             if (chainTokenInfo.Type == BlockchainType.AElf)
             {
+                index.ChainTokenInfo ??= new List<ChainTokenInfoIndex>();
                 index.ChainTokenInfo.Add(ObjectMapper.Map<ChainTokenInfoDto, ChainTokenInfoIndex>(chainTokenInfo));
             }
             else
@@ -770,10 +776,12 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
 
         foreach (var statusChangedRecord in input.StatusChangedRecords)
         {
+            index.StatusChangedRecord ??= new Dictionary<string, string>();
             index.StatusChangedRecord.Add(statusChangedRecord.Status,
                 ToUtcMilliSeconds(statusChangedRecord.Time).ToString());
         }
 
+        Log.Debug("UpdateTokenApplyOrderIndexAsync start.{orderId}", input.Id);
         await _tokenApplyOrderIndexRepository.UpdateAsync(index);
     }
 
@@ -894,11 +902,21 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             return new PoolInfoDto();
         }
 
-        var tokenSymbol = (await _tokenAppService.GetAsync(new GetTokenInput
+        var chainType = await _chainAppService.GetAsync(input.ChainId);
+        string tokenSymbol;
+        if (chainType.Type == BlockchainType.AElf)
         {
-            ChainId = input.ChainId,
-            Address = input.Token
-        })).Symbol;
+            tokenSymbol = input.Token;
+        }
+        else
+        {
+            tokenSymbol = (await _tokenAppService.GetAsync(new GetTokenInput
+            {
+                ChainId = input.ChainId,
+                Address = input.Token
+            })).Symbol;
+        }
+
         var coinId = _tokenPriceIdMappingOptions.CoinIdMapping[tokenSymbol];
         var priceInUsd = await _tokenPriceProvider.GetPriceAsync(coinId);
         var myLiquidity = 0m;
@@ -981,10 +999,16 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         var tokenPrices = new Dictionary<string, decimal>();
         foreach (var symbol in allSymbols)
         {
-            var coinId = _tokenPriceIdMappingOptions.CoinIdMapping[symbol];
-            var priceInUsd = await _tokenPriceProvider.GetPriceAsync(coinId);
-            Log.Debug("Token price: {symbol} {priceInUsd}", symbol, priceInUsd);
-            tokenPrices[symbol] = priceInUsd;
+            if (_tokenPriceIdMappingOptions.CoinIdMapping.TryGetValue(symbol, out var coinId))
+            {
+                var priceInUsd = await _tokenPriceProvider.GetPriceAsync(coinId);
+                Log.Debug("Token price: {symbol} {priceInUsd}", symbol, priceInUsd);
+                tokenPrices[symbol] = priceInUsd;
+            }
+            else
+            {
+                tokenPrices[symbol] = 0;
+            }
         }
 
         return tokenPrices;
@@ -1038,7 +1062,6 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
 
     private bool CheckLiquidityAndHolderAvailable(List<TokenOwnerDto> TokenOwnerList, string symbol)
     {
-        return true;
         var tokenOwnerDto = TokenOwnerList.FirstOrDefault(t => t.Symbol == symbol);
         var liquidityInUsd = !_tokenAccessOptions.TokenConfig.ContainsKey(symbol)
             ? _tokenAccessOptions.DefaultConfig.Liquidity

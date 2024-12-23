@@ -7,6 +7,7 @@ using AElf.CrossChainServer.TokenAccess;
 using AElf.CrossChainServer.TokenPool;
 using AElf.CrossChainServer.Tokens;
 using AutoMapper;
+using Volo.Abp.AutoMapper;
 using TonAddressHelper = AElf.CrossChainServer.Chains.TonAddressHelper;
 using Token = AElf.CrossChainServer.Tokens.Token;
 
@@ -33,7 +34,7 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<UpdateOracleQueryInfoIndexInput, OracleQueryInfoIndex>();
         CreateMap<OracleQueryInfoEto, AddOracleQueryInfoIndexInput>();
         CreateMap<OracleQueryInfoEto, UpdateOracleQueryInfoIndexInput>();
-        
+
         CreateMap<CreateReportInfoInput, ReportInfo>();
         CreateMap<AddReportInfoIndexInput, ReportInfoIndex>();
         CreateMap<UpdateReportInfoIndexInput, ReportInfoIndex>();
@@ -42,7 +43,7 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
 
         CreateMap<CrossChainTransferInput, CrossChainTransfer>();
         CreateMap<CrossChainReceiveInput, CrossChainTransfer>();
-        
+
         CreateMap<AddCrossChainTransferIndexInput, CrossChainTransferIndex>();
         CreateMap<UpdateCrossChainTransferIndexInput, CrossChainTransferIndex>();
         CreateMap<CrossChainTransferIndex, CrossChainTransferIndexDto>()
@@ -87,13 +88,22 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<UserTokenAccessInfoEto, UpdateUserTokenAccessInfoIndexInput>();
         CreateMap<AddUserTokenAccessInfoIndexInput, UserTokenAccessInfoIndex>();
         CreateMap<UpdateUserTokenAccessInfoIndexInput, UserTokenAccessInfoIndex>();
+        CreateMap<UserTokenAccessInfoInput, UserTokenAccessInfo>().ReverseMap();
+        CreateMap<UserTokenAccessInfoIndex, UserTokenAccessInfoDto>();
+        CreateMap<UserTokenAccessInfoIndex, UserTokenAccessInfo>();
+
         CreateMap<TokenApplyOrderEto, AddTokenApplyOrderIndexInput>();
         CreateMap<TokenApplyOrderEto, UpdateTokenApplyOrderIndexInput>();
-        CreateMap<AddTokenApplyOrderIndexInput, TokenApplyOrderIndex>();
-        CreateMap<UpdateTokenApplyOrderIndexInput, TokenApplyOrderIndex>();
+        CreateMap<AddTokenApplyOrderIndexInput, TokenApplyOrderIndex>().Ignore(t => t.ChainTokenInfo)
+            .Ignore(t => t.OtherChainTokenInfo).Ignore(t => t.StatusChangedRecord);
+        CreateMap<UpdateTokenApplyOrderIndexInput, TokenApplyOrderIndex>().Ignore(t => t.ChainTokenInfo)
+            .Ignore(t => t.OtherChainTokenInfo).Ignore(t => t.StatusChangedRecord);
         CreateMap<ChainTokenInfoDto, ChainTokenInfoIndex>();
         CreateMap<TokenApplyOrder, TokenApplyOrderIndex>();
         CreateMap<ChainAccessInfo, ChainTokenInfo>();
+        CreateMap<TokenApplyOrderIndex, TokenApplyOrderResultDto>();
+        CreateMap<ChainTokenInfoIndex, ChainTokenInfoResultDto>();
+
         CreateMap<PoolLiquidityInfoInput, PoolLiquidityInfo>();
         CreateMap<AddPoolLiquidityInfoIndexInput, PoolLiquidityInfoIndex>();
         CreateMap<UpdatePoolLiquidityInfoIndexInput, PoolLiquidityInfoIndex>();
@@ -108,10 +118,6 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<UserLiquidityInfoIndex, UserLiquidityIndexDto>();
         CreateMap<PoolLiquidityDto, PoolLiquidityInfoInput>();
         CreateMap<UserLiquidityDto, UserLiquidityInfoInput>();
-        
-        CreateMap<UserTokenAccessInfoInput, UserTokenAccessInfo>().ReverseMap();
-        CreateMap<UserTokenAccessInfoIndex, UserTokenAccessInfoDto>();
-        CreateMap<UserTokenAccessInfoIndex, UserTokenAccessInfo>();
 
         CreateMap<TokenInfo, TokenInfoDto>();
     }
