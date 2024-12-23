@@ -152,7 +152,16 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
 
         var dto = _objectMapper.Map<UserTokenAccessInfoInput, UserTokenAccessInfo>(input);
         dto.Address = address;
-        await _userAccessTokenInfoRepository.InsertAsync(dto, autoSave: true);
+        var existDto = await _userAccessTokenInfoRepository.FindAsync(o => o.Address == address);
+        if (existDto != null)
+        {
+            await _userAccessTokenInfoRepository.UpdateAsync(dto, autoSave: true);
+        }
+        else
+        {
+            await _userAccessTokenInfoRepository.InsertAsync(dto, autoSave: true);
+        }
+
         return true;
     }
 
@@ -175,26 +184,21 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         var address = await GetUserAddressAsync();
         AssertHelper.IsTrue(!address.IsNullOrEmpty(), "No permission.");
         var listDto = await _tokenInvokeProvider.GetAsync(address);
+
+
         AssertHelper.IsTrue(listDto != null && listDto.Exists(t => t.Symbol == input.Symbol) &&
                             CheckLiquidityAndHolderAvailable(listDto, input.Symbol), "Symbol invalid.");
 
-        var networkList = _networkInfoOptions.NetworkMap.OrderBy(m =>
-                _tokenOptions.Transfer.Select(t => t.Symbol).ToList().IndexOf(m.Key))
-            .SelectMany(kvp => kvp.Value).Where(a =>
-                a.SupportType.Contains(OrderTypeEnum.Transfer.ToString())).GroupBy(g => g.NetworkInfo.Network)
-            .Select(s => s.First().NetworkInfo).ToList();
+        // var networkList = _tokenAccessOptions.ChainIdList.OrderBy(m =>
+        //         _tokenOptions.Transfer.Select(t => t.Symbol).ToList().IndexOf(m.Key))
+        //     .SelectMany(kvp => kvp.Value).Where(a =>
+        //         a.SupportType.Contains(OrderTypeEnum.Transfer.ToString())).GroupBy(g => g.NetworkInfo.Network)
+        //     .Select(s => s.First().NetworkInfo).ToList();
 
-        result.ChainList.AddRange(networkList.Where(
-            t => t.Network == ChainId.AELF || t.Network == ChainId.tDVV || t.Network == ChainId.tDVW).Select(
-            t => new ChainAccessInfo { ChainId = t.Network, ChainName = t.Name, Symbol = input.Symbol }));
-        result.OtherChainList.AddRange(networkList.Where(
-            t => t.Network != ChainId.AELF && t.Network != ChainId.tDVV && t.Network != ChainId.tDVW).Select(
-            t => new ChainAccessInfo { ChainId = t.Network, ChainName = t.Name, Symbol = input.Symbol }));
-
-        // var tokenInvokeGrain = _clusterClient.GetGrain<ITokenInvokeGrain>(
-        //     string.Join(CommonConstant.Underline, input.Symbol, address));
-        // await tokenInvokeGrain.GetThirdTokenList(address, input.Symbol);
-        // var applyOrderList = await GetTokenApplyOrderIndexListAsync(address, input.Symbol);
+        result.ChainList.AddRange(_tokenAccessOptions.ChainIdList.Select(
+            t => new ChainAccessInfo { ChainId = t, ChainName = t, Symbol = input.Symbol }));
+        result.OtherChainList.AddRange(_tokenAccessOptions.OtherChainIdList.Select(
+            t => new ChainAccessInfo { ChainId = t, ChainName = t, Symbol = input.Symbol }));
 
         await _tokenInvokeProvider.GetThirdTokenList(address, input.Symbol);
         var applyOrderList = await GetTokenApplyOrderIndexListAsync(address, input.Symbol);
@@ -202,16 +206,10 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         {
             var isCompleted = _tokenInfoOptions.ContainsKey(item.Symbol) &&
                               _tokenInfoOptions[item.Symbol].Transfer.Contains(item.ChainId);
-            var tokenOwner = listDto.FirstOrDefault(t => t.Symbol == input.Symbol &&
-                                                         t.ChainIds.Contains(item.ChainId));
-            var applyStatus = applyOrderList.FirstOrDefault(t => t.OtherChainTokenInfo == null &&
-                                                                 t.ChainTokenInfo.Exists(c =>
-                                                                     c.ChainId == item.ChainId))?
+            var tokenOwner = listDto.FirstOrDefault(t => t.Symbol == input.Symbol && t.ChainIds.Contains(item.ChainId));
+            var applyStatus = applyOrderList.FirstOrDefault(t =>
+                    t.OtherChainTokenInfo == null && t.ChainTokenInfo.Exists(c => c.ChainId == item.ChainId))?
                 .ChainTokenInfo?.FirstOrDefault(c => c.ChainId == item.ChainId)?.Status;
-            // var userTokenIssueGrain = _clusterClient.GetGrain<IUserTokenIssueGrain>(
-            //     GuidHelper.UniqGuid(input.Symbol, address, item.ChainId));
-            // var res = await userTokenIssueGrain.Get();
-
             var res = await _userTokenIssueRepository.FindAsync(o =>
                 o.Address == address && o.OtherChainId == item.ChainId && o.Symbol == item.Symbol);
             item.TotalSupply = tokenOwner?.TotalSupply ?? 0;
@@ -242,9 +240,6 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
                               _tokenInfoOptions[item.Symbol].Transfer.Contains(item.ChainId);
             var applyStatus = applyOrderList.FirstOrDefault(t => t.OtherChainTokenInfo != null &&
                                                                  t.OtherChainTokenInfo.ChainId == item.ChainId)?.Status;
-            // var userTokenIssueGrain = _clusterClient.GetGrain<IUserTokenIssueGrain>(
-            //     GuidHelper.UniqGuid(input.Symbol, address, item.ChainId));
-            // var res = await userTokenIssueGrain.Get();
             var res = await _userTokenIssueRepository.FindAsync(o =>
                 o.Address == address && o.OtherChainId == item.ChainId && o.Symbol == item.Symbol);
             item.TotalSupply = res?.TotalSupply.SafeToDecimal() ?? 0M;
@@ -288,8 +283,6 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             c => c.ChainId == input.OtherChainId), "Param invalid.");
 
         var address = await GetUserAddressAsync();
-        // var tokenInvokeGrain = _clusterClient.GetGrain<ITokenInvokeGrain>(
-        //     string.Join(CommonConstant.Underline, input.Symbol, address, input.OtherChainId));
         var dto = new UserTokenIssueDto
         {
             // Id = GuidHelper.UniqGuid(input.Symbol, address, input.OtherChainId),

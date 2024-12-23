@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace AElf.CrossChainServer.TokenAccess;
 
@@ -6,7 +7,8 @@ public class ThirdTokenResultDto
 {
     public string Code { get; set; }
     public string Message { get; set; }
-    public ThirdTokenListDto Data { get; set; }
+    // public ThirdTokenListDto Data { get; set; }
+    public List<ThirdTokenItemDto> Data { get; set; }
 }
 
 public class ThirdTokenListDto

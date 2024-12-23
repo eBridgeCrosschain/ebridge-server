@@ -78,7 +78,7 @@ public class CrossChainServerDbContext :
     public DbSet<ChainTokenInfo> ChainTokenInfos { get; set; }
     public DbSet<StatusChangedRecord> StatusChangedRecords { get; set; }
     public DbSet<UserTokenAccessInfo> UserTokenAccessInfos { get; set; }
-    
+    public DbSet<UserTokenIssueDto> UserTokenIssues { get; set; }
 
     public CrossChainServerDbContext(DbContextOptions<CrossChainServerDbContext> options)
         : base(options)
@@ -189,16 +189,16 @@ public class CrossChainServerDbContext :
             b.Ignore(o => o.ExtensionInfo);
             b.Ignore(o => o.StatusChangedRecord);
             b.Ignore(o => o.OtherChainTokenInfo);
-            b.OwnsMany(o => o.ChainTokenInfo);
+            // b.OwnsMany(o => o.ChainTokenInfo);
             //Define the relation
             b.HasMany(x => x.ChainTokenInfo)
                 .WithOne(x => x.Order)
                 .HasForeignKey(x => x.Id)
                 .IsRequired();
-            b.HasMany(x => x.StatusChangedRecords)
-                .WithOne(x => x.Order)
-                .HasForeignKey(x => x.Id)
-                .IsRequired();
+            // b.HasMany(x => x.StatusChangedRecords)
+            //     .WithOne(x => x.Order)
+            //     .HasForeignKey(x => x.Id)
+            //     .IsRequired();
         });
         
         builder.Entity<ChainTokenInfo>(b =>

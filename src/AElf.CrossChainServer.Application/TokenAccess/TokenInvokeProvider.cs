@@ -132,40 +132,48 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
 
     public async Task<bool> GetThirdTokenList(string address, string symbol)
     {
-        var tokenParams = new Dictionary<string, string>();
-        tokenParams["address"] = address;
-        tokenParams["aelfToken"] = symbol;
-        var resultDto = await _httpProvider.InvokeAsync<ThirdTokenResultDto>(
-            _tokenAccessOptions.SymbolMarketBaseUrl, _userThirdTokenListUri, param: tokenParams);
-        if (resultDto.Code != "20000" || resultDto.Data == null || resultDto.Data.TotalCount <= 0) return false;
-
-        foreach (var item in resultDto.Data.Items)
+        try
         {
-            var res = await _userTokenIssueRepository.FindAsync(o =>
-                o.Address == address && o.OtherChainId == item.ThirdChain);
-            if (res != null)
-            {
-                res.Status = TokenApplyOrderStatus.Issued.ToString();
-                await _userTokenIssueRepository.UpdateAsync(res);
-            }
-            else
-            {
-                await _userTokenIssueRepository.InsertAsync(new UserTokenIssueDto
-                {
-                    Address = address,
-                    Symbol = item.ThirdSymbol,
-                    ChainId = item.AelfChain,
-                    TokenName = item.ThirdTokenName,
-                    TokenImage = item.ThirdTokenImage,
-                    OtherChainId = item.ThirdChain,
-                    ContractAddress = item.ThirdContractAddress,
-                    TotalSupply = item.ThirdTotalSupply,
-                    Status = TokenApplyOrderStatus.Issued.ToString()
-                });
-            }
-        }
+            var tokenParams = new Dictionary<string, string>();
+            tokenParams["address"] = address;
+            tokenParams["aelfToken"] = symbol;
+            var resultDto = await _httpProvider.InvokeAsync<ThirdTokenResultDto>(
+                _tokenAccessOptions.SymbolMarketBaseUrl, _userThirdTokenListUri, param: tokenParams);
+            if (resultDto.Code != "20000" || resultDto.Data == null) return false;
 
-        return false;
+            foreach (var item in resultDto.Data)
+            {
+                var res = await _userTokenIssueRepository.FindAsync(o =>
+                    o.Address == address && o.OtherChainId == item.ThirdChain);
+                if (res != null)
+                {
+                    res.Status = TokenApplyOrderStatus.Issued.ToString();
+                    await _userTokenIssueRepository.UpdateAsync(res);
+                }
+                else
+                {
+                    await _userTokenIssueRepository.InsertAsync(new UserTokenIssueDto
+                    {
+                        Address = address,
+                        Symbol = item.ThirdSymbol,
+                        ChainId = item.AelfChain,
+                        TokenName = item.ThirdTokenName,
+                        TokenImage = item.ThirdTokenImage,
+                        OtherChainId = item.ThirdChain,
+                        ContractAddress = item.ThirdContractAddress,
+                        TotalSupply = item.ThirdTotalSupply,
+                        Status = TokenApplyOrderStatus.Issued.ToString()
+                    });
+                }
+            }
+
+            return false;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Get SymbolMarket failed");
+            return false;
+        }
     }
 
     public async Task<UserTokenBindingDto> PrepareBinding(UserTokenIssueDto dto)
