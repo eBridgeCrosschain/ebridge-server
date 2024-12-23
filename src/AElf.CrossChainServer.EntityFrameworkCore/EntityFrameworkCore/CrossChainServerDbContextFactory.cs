@@ -11,9 +11,9 @@ public class CrossChainServerDbContextFactory : IDesignTimeDbContextFactory<Cros
 {
     public CrossChainServerDbContext CreateDbContext(string[] args)
     {
-        CrossChainServerEfCoreEntityExtensionMappings.Configure();
-
         var configuration = BuildConfiguration();
+
+        CrossChainServerEfCoreEntityExtensionMappings.Configure();
 
         var builder = new DbContextOptionsBuilder<CrossChainServerDbContext>()
             .UseMySql(configuration.GetConnectionString("Default"), MySqlServerVersion.LatestSupportedServerVersion);

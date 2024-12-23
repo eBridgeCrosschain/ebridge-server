@@ -42,4 +42,9 @@ public class MockEvmClientProvider : IBlockchainClientProvider
     {
         throw new System.NotImplementedException();
     }
+
+    public Task<FilterLogsDto> GetContractLogsAsync(string chainId, string contractAddress, long startHeight, long endHeight)
+    {
+        throw new System.NotImplementedException();
+    }
 }

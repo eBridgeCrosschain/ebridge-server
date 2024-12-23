@@ -1,3 +1,4 @@
+using AElf.AetherlinkApi;
 using AElf.Client.Service;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Chains.Ton;
@@ -6,8 +7,8 @@ using AElf.CrossChainServer.Contracts.CrossChain;
 using AElf.CrossChainServer.Contracts.Report;
 using AElf.CrossChainServer.Contracts.Token;
 using AElf.CrossChainServer.CrossChain;
-using AElf.CrossChainServer.HttpClient;
 using AElf.CrossChainServer.Indexer;
+using AElf.CrossChainServer.TokenAccess;
 using AElf.CrossChainServer.Tokens;
 using AElf.ExceptionHandler.ABP;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,6 +32,7 @@ namespace AElf.CrossChainServer;
     typeof(AbpTenantManagementApplicationModule),
     typeof(AbpFeatureManagementApplicationModule),
     typeof(AbpSettingManagementApplicationModule),
+    typeof(CrossChainServerAetherlinkApiModule),
     typeof(AOPExceptionModule)
 )]
 public class CrossChainServerApplicationModule : AbpModule
@@ -62,11 +64,15 @@ public class CrossChainServerApplicationModule : AbpModule
         Configure<AetherLinkOption>(configuration.GetSection("AetherLink"));
         Configure<ApiKeyOptions>(configuration.GetSection("ApiKey"));
 
+        Configure<TokenPriceIdMappingOptions>(configuration.GetSection("TokenPriceIdMapping"));
+        Configure<TokenAccessOptions>(configuration.GetSection("TokenAccess"));
+        
         context.Services.AddSingleton<IBlockchainClientFactory<AElfClient>, AElfClientFactory>();
         context.Services.AddSingleton<IBlockchainClientFactory<Nethereum.Web3.Web3>, EvmClientFactory>();
         context.Services.AddSingleton<IGraphQLClientFactory, GraphQLClientFactory>();
         context.Services.AddTransient<IBlockchainClientProvider, AElfClientProvider>();
         context.Services.AddTransient<IBlockchainClientProvider, EvmClientProvider>();
+
         context.Services.AddTransient<IBlockchainClientProvider, TonClientProvider>();
         
         context.Services.AddTransient<IBridgeContractProvider, EvmBridgeContractProvider>();
@@ -77,5 +83,6 @@ public class CrossChainServerApplicationModule : AbpModule
         context.Services.AddTransient<ICheckTransferProvider, CheckTransferProvider>();
         context.Services.AddTransient<IHttpProvider, HttpProvider>();
         context.Services.AddTransient<IAetherLinkProvider, AetherLinkProvider>();
+        context.Services.AddTransient<ITokenInvokeProvider, TokenInvokeProvider>();
     }
 }

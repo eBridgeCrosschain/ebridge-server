@@ -9,7 +9,7 @@ namespace AElf.CrossChainServer.DbMigrator;
     typeof(AbpAutofacModule),
     typeof(CrossChainServerEntityFrameworkCoreModule),
     typeof(CrossChainServerApplicationContractsModule)
-    )]
+)]
 public class CrossChainServerDbMigratorModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

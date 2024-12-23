@@ -13,5 +13,6 @@ namespace AElf.CrossChainServer.Chains
         Task<ChainStatusDto> GetChainStatusAsync(string chainId);
         Task<TransactionResultDto> GetTransactionResultAsync(string chainId, string transactionId);
         Task<MerklePathDto> GetMerklePathAsync(string chainId, string txId);
+        Task<FilterLogsDto> GetContractLogsAsync(string chainId, string contractAddress, long startHeight, long endHeight);
     }
 }

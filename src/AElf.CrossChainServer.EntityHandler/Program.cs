@@ -55,7 +55,11 @@ namespace AElf.CrossChainServer.EntityHandler
                 {
                     services.AddApplication<CrossChainServerEntityHandlerModule>();
                 })
-                .ConfigureAppConfiguration((h,c)=>c.AddJsonFile("apollo.appsettings.json")) 
+                // .ConfigureAppConfiguration((h,c)=>c.AddJsonFile("apollo.appsettings.json"))
+                .ConfigureAppConfiguration(build =>
+                {
+                    build.AddJsonFile("appsettings.secrets.json", optional: true);
+                })
                 .UseApollo()
                 .UseAutofac()
                 .UseAElfExceptionHandler()

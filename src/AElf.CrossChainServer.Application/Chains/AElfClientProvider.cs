@@ -44,7 +44,7 @@ namespace AElf.CrossChainServer.Chains
                 ChainId = chainId,
                 Address = address,
                 Decimals = token.Decimals,
-                Symbol = token.Symbol
+                Symbol = token.Symbol,
             };
         }
         
@@ -140,7 +140,12 @@ namespace AElf.CrossChainServer.Chains
             var client = BlockchainClientFactory.GetClient(chainId);
             return await client.GetMerklePathByTransactionIdAsync(txId);
         }
-        
+
+        public Task<FilterLogsDto> GetContractLogsAsync(string chainId, string contractAddress, long startHeight, long endHeight)
+        {
+            throw new NotImplementedException();
+        }
+
         protected string GetPrivateKey(string chainId)
         {
             return _accountOptions.PrivateKeys[chainId];

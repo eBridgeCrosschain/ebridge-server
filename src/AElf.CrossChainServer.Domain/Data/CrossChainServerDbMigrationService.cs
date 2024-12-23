@@ -5,8 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Serilog;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
@@ -18,7 +16,6 @@ namespace AElf.CrossChainServer.Data;
 
 public class CrossChainServerDbMigrationService : ITransientDependency
 {
-
     private readonly IDataSeeder _dataSeeder;
     private readonly IEnumerable<ICrossChainServerDbSchemaMigrator> _dbSchemaMigrators;
     private readonly ITenantRepository _tenantRepository;
@@ -34,7 +31,6 @@ public class CrossChainServerDbMigrationService : ITransientDependency
         _dbSchemaMigrators = dbSchemaMigrators;
         _tenantRepository = tenantRepository;
         _currentTenant = currentTenant;
-
     }
 
     public async Task MigrateAsync()
@@ -45,7 +41,7 @@ public class CrossChainServerDbMigrationService : ITransientDependency
         {
             return;
         }
-        
+
         Log.Information("Started database migrations...");
 
         await MigrateDatabaseSchemaAsync();
@@ -87,7 +83,7 @@ public class CrossChainServerDbMigrationService : ITransientDependency
     private async Task MigrateDatabaseSchemaAsync(Tenant tenant = null)
     {
         Log.Information(
-            "Migrating schema for {name} database...",tenant == null ? "host" : tenant.Name + " tenant");
+            "Migrating schema for {name} database...", tenant == null ? "host" : tenant.Name + " tenant");
 
         foreach (var migrator in _dbSchemaMigrators)
         {
@@ -97,11 +93,13 @@ public class CrossChainServerDbMigrationService : ITransientDependency
 
     private async Task SeedDataAsync(Tenant tenant = null)
     {
-        Log.Information("Executing {name} database seed...", tenant == null ? "host" : tenant.Name + " tenant");
+        Log.Information($"Executing {(tenant == null ? "host" : tenant.Name + " tenant")} database seed...");
 
         await _dataSeeder.SeedAsync(new DataSeedContext(tenant?.Id)
-            .WithProperty(IdentityDataSeedContributor.AdminEmailPropertyName, IdentityDataSeedContributor.AdminEmailDefaultValue)
-            .WithProperty(IdentityDataSeedContributor.AdminPasswordPropertyName, IdentityDataSeedContributor.AdminPasswordDefaultValue)
+            .WithProperty(IdentityDataSeedContributor.AdminEmailPropertyName,
+                IdentityDataSeedContributor.AdminEmailDefaultValue)
+            .WithProperty(IdentityDataSeedContributor.AdminPasswordPropertyName,
+                IdentityDataSeedContributor.AdminPasswordDefaultValue)
         );
     }
 

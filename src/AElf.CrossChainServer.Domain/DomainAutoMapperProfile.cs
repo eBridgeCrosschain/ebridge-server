@@ -1,4 +1,6 @@
 using AElf.CrossChainServer.CrossChain;
+using AElf.CrossChainServer.TokenAccess;
+using AElf.CrossChainServer.TokenPool;
 using AutoMapper;
 
 namespace AElf.CrossChainServer
@@ -13,6 +15,9 @@ namespace AElf.CrossChainServer
             CreateMap<ReportInfo, ReportInfoEto>();
             CreateMap<CrossChainDailyLimit, CrossChainDailyLimitEto>();
             CreateMap<CrossChainRateLimit, CrossChainRateLimitEto>();
+            CreateMap<PoolLiquidityInfo, PoolLiquidityEto>();
+            CreateMap<UserLiquidityInfo, UserLiquidityEto>();
+            CreateMap<UserTokenAccessInfo, UserTokenAccessInfoEto>();
         }
     }
 }

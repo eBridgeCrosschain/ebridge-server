@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
+using AElf.CrossChainServer.TokenPool;
 using AElf.CrossChainServer.Tokens;
 using AElf.ExceptionHandler;
 using Nethereum.Util;
@@ -241,6 +242,25 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
         var tokenBuckets = swapTokenBucket.SwapTokenBuckets.Select((t, i) =>
             GetTokenBuckets(t.TokenCapacity, t.Rate, tokenDecimals[i])).ToList();
         return tokenBuckets;
+    }
+
+    public async Task<List<PoolLiquidityDto>> GetPoolLiquidityAsync(string chainId, string contractAddress, List<Guid> tokenIds)
+    {
+        var result = new List<PoolLiquidityDto>();
+        foreach (var tokenId in tokenIds)
+        {
+            var token = await _tokenAppService.GetAsync(tokenId);
+            var web3 = BlockchainClientFactory.GetClient(chainId);
+            var balance = await web3.Eth.ERC20.GetContractService(token.Address).BalanceOfQueryAsync(contractAddress);
+            var liquidity = (decimal)((BigDecimal)balance / BigInteger.Pow(10, token.Decimals));
+            result.Add(new PoolLiquidityDto
+            {
+                ChainId = chainId,
+                Liquidity = liquidity,
+                TokenId = tokenId
+            });
+        }
+        return result;
     }
 
     private TokenBucketDto GetTokenBuckets(BigInteger capacity, BigInteger rate, int tokenDecimal)
