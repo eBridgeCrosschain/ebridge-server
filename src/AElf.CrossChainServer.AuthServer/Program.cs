@@ -30,6 +30,7 @@ public class Program
         {
             Log.Information("Starting CrossChainServer.AuthServer.");
             var builder = WebApplication.CreateBuilder(args);
+            builder.Configuration.AddJsonFile("apollo.appsettings.json");
             builder.Host.AddAppSettingsSecretsJson()
                 .UseAutofac()
                 .UseApollo()
