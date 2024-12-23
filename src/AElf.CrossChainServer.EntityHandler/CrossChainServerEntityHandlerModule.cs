@@ -85,15 +85,5 @@ namespace AElf.CrossChainServer.EntityHandler
                 options.IsEnabled = false;
             });
         }
-        
-        public override void OnApplicationInitialization(ApplicationInitializationContext context)
-        {
-            // var liquiditySyncOption = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<PoolLiquiditySyncOptions>>();
-            // if (liquiditySyncOption.Value.IsSyncEnabled)
-            // {
-            //     var service = context.ServiceProvider.GetRequiredService<PoolLiquidityInfoAppService>();
-            //     AsyncHelper.RunSync(async()=> await service.SyncPoolLiquidityInfoFromChainAsync());
-            // }
-        }
     }
 }

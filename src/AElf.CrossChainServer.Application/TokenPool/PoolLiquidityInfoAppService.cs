@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Contracts;
@@ -56,9 +57,10 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
         if (input.ChainId == null)
         {
             var chainList = await _chainAppService.GetListAsync(new GetChainsInput());
-            foreach (var chain in chainList.Items)
+            var chainIds = chainList.Items.Select(c => c.Id).ToList();
+            if (chainIds.Any())
             {
-                mustQuery.Add(q => q.Term(i => i.Field(f => f.ChainId).Value(chain.Id)));
+                mustQuery.Add(q => q.Terms(t => t.Field(f => f.ChainId).Terms(chainIds)));
             }
         }
         else if (!string.IsNullOrWhiteSpace(input.ChainId))
@@ -176,11 +178,15 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
         {
             Log.Debug("Sync pool liquidity info from chain {chainId}.", chain.Id);
             // // Step 1: Retrieve the current height of the best chain on AElf and insert a new AElf liquidity sync height
-            var bestChainHeight = await _blockchainAppService.GetChainStatusAsync(chain.Id);
-            await _settingManager.SetAsync(chain.Id, CrossChainServerSettings.PoolLiquidityIndexerSync,
-                bestChainHeight.BlockHeight.ToString());
-            await _settingManager.SetAsync(chain.Id, CrossChainServerSettings.UserLiquidityIndexerSync,
-                bestChainHeight.BlockHeight.ToString());
+            var chainStatus = await _blockchainAppService.GetChainStatusAsync(chain.Id);
+            await _settingManager.SetAsync(chain.Id, GetSettingKey(CrossChainServerSettings.PoolLiquidityIndexerSync,null),
+                chainStatus.BlockHeight.ToString());
+            await _settingManager.SetAsync(chain.Id, GetSettingKey(CrossChainServerSettings.UserLiquidityIndexerSync,null),
+                chainStatus.BlockHeight.ToString());
+            await _settingManager.SetAsync(chain.Id, GetSettingKey(CrossChainServerSettings.PoolLiquidityIndexerSync,"Confirmed"),
+                chainStatus.ConfirmedBlockHeight.ToString());
+            await _settingManager.SetAsync(chain.Id, GetSettingKey(CrossChainServerSettings.UserLiquidityIndexerSync,"Confirmed"),
+                chainStatus.ConfirmedBlockHeight.ToString());
             // Step 2: Query the AElf contract to sync the liquidity of configured tokens - getLiquidityInfo. 
             var tokenSymbols = _poolLiquiditySyncOptions.Token[chain.Id];
             var tokenIdList = new List<Guid>();
@@ -212,9 +218,9 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
             Log.Debug("Sync pool liquidity info from chain {chainId}.", chain.Id);
             // Step 1: Retrieve the current height of the EVM chain and insert a new EVM liquidity sync height.  
             var currentChainHeight = await _blockchainAppService.GetChainHeightAsync(chain.Id);
-            await _settingManager.SetAsync(chain.Id, CrossChainServerSettings.EvmPoolLiquidityIndexerSync,
+            await _settingManager.SetAsync(chain.Id, GetSettingKey(CrossChainServerSettings.EvmPoolLiquidityIndexerSync,null),
                 currentChainHeight.ToString());
-            await _settingManager.SetAsync(chain.Id, CrossChainServerSettings.EvmUserLiquidityIndexerSync,
+            await _settingManager.SetAsync(chain.Id, GetSettingKey(CrossChainServerSettings.EvmUserLiquidityIndexerSync,null),
                 currentChainHeight.ToString());
             // Step 2: Query the EVM contract to sync the liquidity of configured tokens - getBalance.  
             var tokenAddresses = _poolLiquiditySyncOptions.Token[chain.Id];
@@ -243,5 +249,10 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
     private async Task<PoolLiquidityInfo> FindPoolLiquidityInfoAsync(string chainId, Guid tokenId)
     {
         return await _poolLiquidityRepository.FindAsync(o => o.ChainId == chainId && o.TokenId == tokenId);
+    }
+    
+    private string GetSettingKey(string syncType, string typePrefix)
+    {
+        return string.IsNullOrWhiteSpace(typePrefix)? syncType : $"{typePrefix}-{syncType}";
     }
 }

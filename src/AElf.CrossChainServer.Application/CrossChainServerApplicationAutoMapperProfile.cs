@@ -96,8 +96,10 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<ChainAccessInfo, ChainTokenInfo>();
         CreateMap<PoolLiquidityInfoInput, PoolLiquidityInfo>();
         CreateMap<AddPoolLiquidityInfoIndexInput, PoolLiquidityInfoIndex>();
+        CreateMap<UpdatePoolLiquidityInfoIndexInput, PoolLiquidityInfoIndex>();
         CreateMap<UserLiquidityInfoInput, UserLiquidityInfo>();
         CreateMap<AddUserLiquidityInfoIndexInput, UserLiquidityInfoIndex>();
+        CreateMap<UpdateUserLiquidityInfoIndexInput, UserLiquidityInfoIndex>();
         CreateMap<PoolLiquidityEto, AddPoolLiquidityInfoIndexInput>();
         CreateMap<PoolLiquidityEto, UpdatePoolLiquidityInfoIndexInput>();
         CreateMap<UserLiquidityEto, AddUserLiquidityInfoIndexInput>();
@@ -105,6 +107,8 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<PoolLiquidityInfoIndex, PoolLiquidityIndexDto>();
         CreateMap<UserLiquidityInfoIndex, UserLiquidityIndexDto>();
         CreateMap<PoolLiquidityDto, PoolLiquidityInfoInput>();
+        CreateMap<UserLiquidityDto, UserLiquidityInfoInput>();
+        
         CreateMap<UserTokenAccessInfoInput, UserTokenAccessInfo>().ReverseMap();
         CreateMap<UserTokenAccessInfoIndex, UserTokenAccessInfoDto>();
         CreateMap<UserTokenAccessInfoIndex, UserTokenAccessInfo>();

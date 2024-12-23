@@ -60,7 +60,6 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         IChainAppService chainAppService, ITokenAppService tokenAppService,
         ICrossChainUserRepository crossChainUserRepository, IBridgeContractAppService bridgeContractAppService,
         IIndexerCrossChainLimitInfoService indexerCrossChainLimitInfoService, ITokenInvokeProvider tokenInvokeProvider,
-        IOptionsSnapshot<TokenOptions> tokenOptions, IOptionsSnapshot<TokenInfoOptions> tokenInfoOptions,
         IOptionsSnapshot<TokenAccessOptions> tokenAccessOptions,
         IOptionsSnapshot<TokenWhitelistOptions> tokenWhitelistOptions,
         IOptionsSnapshot<TokenPriceIdMappingOptions> tokenPriceIdMappingOptions)

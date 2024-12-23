@@ -34,12 +34,12 @@ public class UserLiquidityIndexerSyncProvider : IndexerSyncProviderBase
             "Start to sync user liquidity info {chainId} from {StartHeight} to {EndHeight}",
             aelfChainId, startHeight, endHeight);
         var data = await QueryDataAsync<UserLiquidityRecordInfoDto>(GetRequest(aelfChainId, startHeight, endHeight));
-        if (data == null || data.UserLiquidityRecordInfo.Count == 0)
+        if (data == null || data.UserLiquidityInfo.Count == 0)
         {
             return endHeight;
         }
 
-        foreach (var userLiquidityRecord in data.UserLiquidityRecordInfo)
+        foreach (var userLiquidityRecord in data.UserLiquidityInfo)
         {
             Log.ForContext("chainId", userLiquidityRecord.ChainId).Debug(
                 "Start to handle user liquidity record info {ChainId},token {symbol},provider {provider}, liquidity type:{liquidityType}",
@@ -51,23 +51,23 @@ public class UserLiquidityIndexerSyncProvider : IndexerSyncProviderBase
         return endHeight;
     }
 
-    private async Task HandleDataAsync(UserLiquidityRecordInfo userLiquidityRecord)
+    private async Task HandleDataAsync(UserLiquidityInfo userLiquidity)
     {
         var chain = await ChainAppService.GetByAElfChainIdAsync(
-            ChainHelper.ConvertBase58ToChainId(userLiquidityRecord.ChainId));
+            ChainHelper.ConvertBase58ToChainId(userLiquidity.ChainId));
         var token = await _tokenAppService.GetAsync(new GetTokenInput
         {
             ChainId = chain.Id,
-            Symbol = userLiquidityRecord.TokenSymbol
+            Symbol = userLiquidity.TokenSymbol
         });
         var input = new UserLiquidityInfoInput
         {
             ChainId = chain.Id,
-            Provider = userLiquidityRecord.Provider,
-            Liquidity = userLiquidityRecord.Liquidity / (decimal)Math.Pow(10, token.Decimals),
+            Provider = userLiquidity.Provider,
+            Liquidity = userLiquidity.Liquidity / (decimal)Math.Pow(10, token.Decimals),
             TokenId = token.Id
         };
-        switch (userLiquidityRecord.LiquidityType)
+        switch (userLiquidity.LiquidityType)
         {
             case LiquidityType.Add:
                 await _userLiquidityInfoAppService.AddUserLiquidityAsync(input);
@@ -76,7 +76,7 @@ public class UserLiquidityIndexerSyncProvider : IndexerSyncProviderBase
                 await _userLiquidityInfoAppService.RemoveUserLiquidityAsync(input);
                 break;
             default:
-                throw new ArgumentOutOfRangeException(nameof(userLiquidityRecord.LiquidityType),
+                throw new ArgumentOutOfRangeException(nameof(userLiquidity.LiquidityType),
                     "Unsupported liquidity type.");
         }
     }
@@ -112,10 +112,10 @@ public class UserLiquidityIndexerSyncProvider : IndexerSyncProviderBase
 
 public class UserLiquidityRecordInfoDto
 {
-    public List<UserLiquidityRecordInfo> UserLiquidityRecordInfo { get; set; }
+    public List<UserLiquidityInfo> UserLiquidityInfo { get; set; }
 }
 
-public class UserLiquidityRecordInfo : GraphQLDto
+public class UserLiquidityInfo : GraphQLDto
 {
     public string Provider { get; set; }
     public string TokenSymbol { get; set; }

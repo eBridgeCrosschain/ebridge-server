@@ -29,12 +29,12 @@ public class PoolLiquidityIndexerSyncProvider : IndexerSyncProviderBase
         Log.ForContext("chainId", aelfChainId).Debug("Start to sync pool liquidity info {chainId} from {StartHeight} to {EndHeight}",
             aelfChainId, startHeight, endHeight);
         var data = await QueryDataAsync<PoolLiquidityRecordInfoDto>(GetRequest(aelfChainId, startHeight, endHeight));
-        if (data == null || data.PoolLiquidityRecordInfo.Count == 0)
+        if (data == null || data.PoolLiquidityInfo.Count == 0)
         {
             return endHeight;
         }
 
-        foreach (var poolLiquidityRecord in data.PoolLiquidityRecordInfo)
+        foreach (var poolLiquidityRecord in data.PoolLiquidityInfo)
         {
             Log.ForContext("chainId", poolLiquidityRecord.ChainId).Debug(
                 "Start to handle pool liquidity record info {ChainId},token {symbol}, liquidity type:{liquidityType}",
@@ -46,7 +46,7 @@ public class PoolLiquidityIndexerSyncProvider : IndexerSyncProviderBase
         return endHeight;
     }
 
-    private async Task HandleDataAsync(PoolLiquidityRecordInfo poolLiquidityRecord)
+    private async Task HandleDataAsync(PoolLiquidityInfo poolLiquidityRecord)
     {
         var chain = await ChainAppService.GetByAElfChainIdAsync(ChainHelper.ConvertBase58ToChainId(poolLiquidityRecord.ChainId));
         var token = await _tokenAppService.GetAsync(new GetTokenInput
@@ -104,10 +104,10 @@ public class PoolLiquidityIndexerSyncProvider : IndexerSyncProviderBase
 
 public class PoolLiquidityRecordInfoDto
 {
-    public List<PoolLiquidityRecordInfo> PoolLiquidityRecordInfo { get; set; }
+    public List<PoolLiquidityInfo> PoolLiquidityInfo { get; set; }
 }
 
-public class PoolLiquidityRecordInfo : GraphQLDto
+public class PoolLiquidityInfo : GraphQLDto
 {
     public string TokenSymbol { get; set; }
     public long Liquidity { get; set; }
