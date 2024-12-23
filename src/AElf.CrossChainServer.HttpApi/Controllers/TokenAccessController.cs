@@ -117,4 +117,16 @@ public class TokenAccessController : CrossChainServerController
     {
         return await _tokenAccessAppService.GetPoolDetailAsync(input);
     }
+    
+    [HttpGet("token/price")]
+    public async Task<TokenPriceDto> GetTokenPriceAsync(GetTokenPriceInput input)
+    {
+        return await _tokenAccessAppService.GetTokenPriceAsync(input);
+    }
+    
+    [HttpPost("add-liquidity")]
+    public async Task<CommitAddLiquidityDto> CommitAddLiquidityAsync(CommitAddLiquidityInput input)
+    {
+        return await _tokenAccessAppService.CommitAddLiquidityAsync(input);
+    }
 }

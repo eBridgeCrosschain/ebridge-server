@@ -33,5 +33,8 @@ public interface ITokenAccessAppService
     
     Task<PagedResultDto<PoolInfoDto>> GetPoolListAsync(GetPoolListInput input);
     Task<PoolInfoDto> GetPoolDetailAsync(GetPoolDetailInput input);
-    
+
+    Task<TokenPriceDto> GetTokenPriceAsync(GetTokenPriceInput input);
+
+    Task<CommitAddLiquidityDto> CommitAddLiquidityAsync(CommitAddLiquidityInput input);
 }

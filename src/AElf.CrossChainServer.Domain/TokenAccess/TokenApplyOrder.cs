@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using AElf.CrossChainServer.Chains;
+using AElf.CrossChainServer.Entities;
 
 namespace AElf.CrossChainServer.TokenAccess;
 

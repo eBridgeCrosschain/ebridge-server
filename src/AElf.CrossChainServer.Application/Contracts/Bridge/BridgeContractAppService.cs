@@ -168,6 +168,17 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
             originAmount, receiverAddress);
     }
 
+    public async Task<DailyLimitDto> GetDailyLimitAsync(string chainId, Guid tokenId, string targetChainId)
+    {
+        var provider = await _bridgeContractProviderFactory.GetBridgeContractProviderAsync(chainId);
+        if (provider == null)
+        {
+            return new DailyLimitDto();
+        }
+        return await provider.GetDailyLimitAsync(chainId,
+            _bridgeContractOptions.ContractAddresses[chainId].LimiterContract, tokenId, targetChainId);
+    }
+
     public async Task<List<TokenBucketDto>> GetCurrentReceiptTokenBucketStatesAsync(string chainId, List<Guid> tokenIds,
         List<string> targetChainIds)
     {

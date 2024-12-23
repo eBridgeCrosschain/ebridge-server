@@ -61,7 +61,6 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<CrossChainTransferEto, UpdateCrossChainTransferIndexInput>();
 
         CreateMap<BridgeContractSyncInfo, BridgeContractSyncInfoDto>();
-
         CreateMap<TonIndexTransaction, TonTransactionDto>();
         CreateMap<TonBlockId, TonBlockIdDto>();
         CreateMap<TonMessage, TonMessageDto>();
@@ -92,7 +91,9 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<TokenApplyOrderEto, UpdateTokenApplyOrderIndexInput>();
         CreateMap<AddTokenApplyOrderIndexInput, TokenApplyOrderIndex>();
         CreateMap<UpdateTokenApplyOrderIndexInput, TokenApplyOrderIndex>();
-
+        CreateMap<ChainTokenInfoDto, ChainTokenInfoIndex>();
+        CreateMap<TokenApplyOrder, TokenApplyOrderIndex>();
+        CreateMap<ChainAccessInfo, ChainTokenInfo>();
         CreateMap<PoolLiquidityInfoInput, PoolLiquidityInfo>();
         CreateMap<AddPoolLiquidityInfoIndexInput, PoolLiquidityInfoIndex>();
         CreateMap<UserLiquidityInfoInput, UserLiquidityInfo>();
@@ -107,5 +108,7 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<UserTokenAccessInfoInput, UserTokenAccessInfo>().ReverseMap();
         CreateMap<UserTokenAccessInfoIndex, UserTokenAccessInfoDto>();
         CreateMap<UserTokenAccessInfoIndex, UserTokenAccessInfo>();
+
+        CreateMap<TokenInfo, TokenInfoDto>();
     }
 }

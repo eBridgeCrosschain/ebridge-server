@@ -74,5 +74,10 @@ namespace AElf.CrossChainServer.Chains.Ton
         {
             throw new NotImplementedException();
         }
+
+        public Task<FilterLogsDto> GetContractLogsAsync(string chainId, string contractAddress, long startHeight, long endHeight)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

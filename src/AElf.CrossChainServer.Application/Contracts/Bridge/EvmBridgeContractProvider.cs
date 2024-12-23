@@ -187,6 +187,32 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
         throw new NotImplementedException();
     }
 
+    public async Task<DailyLimitDto> GetDailyLimitAsync(string chainId, string contractAddress, Guid tokenId, string targetChainId)
+    {
+        var token = await _tokenAppService.GetAsync(tokenId);
+        var web3 = BlockchainClientFactory.GetClient(chainId);
+        var contractHandler = web3.Eth.GetContractHandler(contractAddress);
+        var receiptDailyLimit = await contractHandler
+            .QueryDeserializingToObjectAsync<GetDailyLimitFunctionMessage, ReceiptDailyLimitDto>(
+                new GetDailyLimitFunctionMessage
+                {
+                    Token = token.Address,
+                    TargetChainId = targetChainId
+                });
+        if (receiptDailyLimit != null && receiptDailyLimit.DailyLimit > 0)
+        {
+            return new DailyLimitDto
+            {
+                RefreshTime = receiptDailyLimit.RefreshTime,
+                DefaultDailyLimit =
+                    (decimal)((BigDecimal)receiptDailyLimit.DailyLimit / BigInteger.Pow(10, token.Decimals)),
+                CurrentDailyLimit = (decimal)((BigDecimal)receiptDailyLimit.CurrentTokenAmount /
+                                              BigInteger.Pow(10, token.Decimals))
+            };
+        }
+        return new DailyLimitDto();
+    }
+
     [ExceptionHandler(typeof(Exception), Message = "[Evm bridge contract] Get current receipt token bucket states failed.",
         ReturnDefault = ReturnDefault.New, LogTargets = new[]{"chainId","contractAddress","tokenIds","targetChainIds"})]
     public virtual async Task<List<TokenBucketDto>> GetCurrentReceiptTokenBucketStatesAsync(string chainId,

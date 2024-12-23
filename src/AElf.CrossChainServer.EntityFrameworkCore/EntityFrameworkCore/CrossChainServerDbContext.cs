@@ -168,7 +168,17 @@ public class CrossChainServerDbContext :
             b.HasIndex(o => new { o.ChainId, o.Name });
             b.ConfigureByConvention();
         });
-
+        builder.Entity<CrossChainDailyLimit>(b =>
+        {
+            b.ToTable(CrossChainServerConsts.DbTablePrefix + "CrossChainDailyLimits", CrossChainServerConsts.DbSchema);
+            b.ConfigureByConvention(); 
+        });
+        
+        builder.Entity<CrossChainRateLimit>(b =>
+        {
+            b.ToTable(CrossChainServerConsts.DbTablePrefix + "CrossChainRateLimits", CrossChainServerConsts.DbSchema);
+            b.ConfigureByConvention(); 
+        });
         // builder.Entity<UserTokenAccessInfo>(b =>
         // {
         //     b.ToTable(CrossChainServerConsts.DbTablePrefix + "UserTokenAccessInfo", CrossChainServerConsts.DbSchema);
@@ -189,19 +199,15 @@ public class CrossChainServerDbContext :
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "TokenApplyOrder", CrossChainServerConsts.DbSchema);
             b.ConfigureByConvention();
             b.HasIndex(o => new { o.UserAddress, o.Symbol });
-            b.Ignore(o => o.ExtensionInfo);
-            b.Ignore(o => o.StatusChangedRecord);
-            b.Ignore(o => o.OtherChainTokenInfo);
-            // b.OwnsMany(o => o.ChainTokenInfo);
             //Define the relation
             b.HasMany(x => x.ChainTokenInfo)
                 .WithOne(x => x.Order)
                 .HasForeignKey(x => x.Id)
                 .IsRequired();
-            // b.HasMany(x => x.StatusChangedRecords)
-            //     .WithOne(x => x.Order)
-            //     .HasForeignKey(x => x.Id)
-            //     .IsRequired();
+            b.HasMany(x => x.StatusChangedRecords)
+                .WithOne(x => x.Order)
+                .HasForeignKey(x => x.Id)
+                .IsRequired();
         });
         
         builder.Entity<ChainTokenInfo>(b =>
@@ -236,18 +242,6 @@ public class CrossChainServerDbContext :
             b.HasIndex(o => new { o.Address });
             b.OwnsMany(e => e.TokenOwnerList);
             b.ConfigureByConvention();
-        });
-        
-        builder.Entity<CrossChainDailyLimit>(b =>
-        {
-            b.ToTable(CrossChainServerConsts.DbTablePrefix + "CrossChainDailyLimits", CrossChainServerConsts.DbSchema);
-            b.ConfigureByConvention(); 
-        });
-        
-        builder.Entity<CrossChainRateLimit>(b =>
-        {
-            b.ToTable(CrossChainServerConsts.DbTablePrefix + "CrossChainRateLimits", CrossChainServerConsts.DbSchema);
-            b.ConfigureByConvention(); 
         });
     }
 }

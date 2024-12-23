@@ -47,6 +47,17 @@ namespace AElf.CrossChainServer.Chains
             
             return await provider.GetBlockByHeightAsync(chainId, height,includeTransactions);
         }
+        
+        public async Task<long> GetChainHeightAsync(string chainId)
+        {
+            var provider = await _blockchainClientProviderFactory.GetBlockChainClientProviderAsync(chainId);
+            if(provider == null)
+            {
+                return 0;
+            }
+            
+            return await provider.GetChainHeightAsync(chainId);
+        }
 
         [ExceptionHandler(typeof(Exception),Message = "[Bridge chain] Get chain status failed.",
             ReturnDefault = ReturnDefault.New, LogTargets = new[] {"chainId"})]

@@ -7,8 +7,10 @@ using AElf.CrossChainServer.Contracts.CrossChain;
 using AElf.CrossChainServer.Contracts.Report;
 using AElf.CrossChainServer.Contracts.Token;
 using AElf.CrossChainServer.CrossChain;
+using AElf.CrossChainServer.HttpClient;
 using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.TokenAccess;
+using AElf.CrossChainServer.TokenPool;
 using AElf.CrossChainServer.Tokens;
 using AElf.ExceptionHandler.ABP;
 using Microsoft.Extensions.DependencyInjection;
@@ -39,11 +41,8 @@ public class CrossChainServerApplicationModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        Configure<AbpAutoMapperOptions>(options =>
-        {
-            options.AddMaps<CrossChainServerApplicationModule>();
-        });
-        
+        Configure<AbpAutoMapperOptions>(options => { options.AddMaps<CrossChainServerApplicationModule>(); });
+
         var configuration = context.Services.GetConfiguration();
         Configure<ChainApiOptions>(configuration.GetSection("ChainApi"));
         Configure<BridgeContractOptions>(configuration.GetSection("BridgeContract"));
@@ -61,18 +60,19 @@ public class CrossChainServerApplicationModule : AbpModule
         Configure<ReportQueryTimesOptions>(configuration.GetSection("ReportQueryTimes"));
         Configure<AutoReceiveConfigOptions>(configuration.GetSection("AutoReceiveConfig"));
         Configure<SyncStateServiceOption>(configuration.GetSection("SyncStateService"));
-        Configure<AetherLinkOption>(configuration.GetSection("AetherLink"));
-        Configure<ApiKeyOptions>(configuration.GetSection("ApiKey"));
-
         Configure<TokenPriceIdMappingOptions>(configuration.GetSection("TokenPriceIdMapping"));
         Configure<TokenAccessOptions>(configuration.GetSection("TokenAccess"));
+        Configure<PoolLiquiditySyncOptions>(configuration.GetSection("PoolLiquiditySync"));
+        Configure<AetherLinkOption>(configuration.GetSection("AetherLink"));
+        Configure<ApiKeyOptions>(configuration.GetSection("ApiKey"));
+        Configure<TokenWhitelistOptions>(configuration.GetSection("TokenWhitelist"));
+        Configure<LarkNotifyTemplateOptions>(configuration.GetSection("LarkNotifyTemplate"));
         
         context.Services.AddSingleton<IBlockchainClientFactory<AElfClient>, AElfClientFactory>();
         context.Services.AddSingleton<IBlockchainClientFactory<Nethereum.Web3.Web3>, EvmClientFactory>();
         context.Services.AddSingleton<IGraphQLClientFactory, GraphQLClientFactory>();
         context.Services.AddTransient<IBlockchainClientProvider, AElfClientProvider>();
         context.Services.AddTransient<IBlockchainClientProvider, EvmClientProvider>();
-
         context.Services.AddTransient<IBlockchainClientProvider, TonClientProvider>();
         
         context.Services.AddTransient<IBridgeContractProvider, EvmBridgeContractProvider>();
@@ -81,8 +81,10 @@ public class CrossChainServerApplicationModule : AbpModule
         context.Services.AddTransient<ICrossChainContractProvider, AElfCrossChainContractProvider>();
         context.Services.AddTransient<ITokenContractProvider, AElfTokenContractProvider>();
         context.Services.AddTransient<ICheckTransferProvider, CheckTransferProvider>();
+        context.Services.AddTransient<ITokenInvokeProvider, TokenInvokeProvider>();
         context.Services.AddTransient<IHttpProvider, HttpProvider>();
         context.Services.AddTransient<IAetherLinkProvider, AetherLinkProvider>();
-        context.Services.AddTransient<ITokenInvokeProvider, TokenInvokeProvider>();
+        context.Services.AddTransient<ILarkRobotNotifyProvider,LarkRobotNotifyProvider>();
+        
     }
 }

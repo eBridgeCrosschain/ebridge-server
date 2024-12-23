@@ -1,9 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
+using AElf.CrossChainServer.TokenAccess;
+using AElf.CrossChainServer.TokenPrice;
 using AElf.CrossChainServer.Tokens;
 using AElf.Indexing.Elasticsearch;
+using Microsoft.Extensions.Options;
 using Nest;
 using Serilog;
 using Volo.Abp;
@@ -17,15 +21,26 @@ public class UserLiquidityInfoAppService : CrossChainServerAppService, IUserLiqu
     private readonly INESTRepository<UserLiquidityInfoIndex, Guid> _userLiquidityInfoIndexRepository;
     private readonly ITokenRepository _tokenRepository;
     private readonly IChainAppService _chainAppService;
+    private readonly ITokenApplyOrderRepository _tokenApplyOrderRepository;
+    private readonly ITokenPriceProvider _tokenPriceProvider;
+    private readonly TokenPriceIdMappingOptions _tokenPriceIdMappingOptions;
+    private readonly TokenAccessOptions _tokenAccessOptions;
 
     public UserLiquidityInfoAppService(IUserLiquidityRepository userLiquidityRepository,
         INESTRepository<UserLiquidityInfoIndex, Guid> userLiquidityInfoIndexRepository,
-        ITokenRepository tokenRepository, IChainAppService chainAppService)
+        ITokenRepository tokenRepository, IChainAppService chainAppService,
+        ITokenApplyOrderRepository tokenApplyOrderRepository, ITokenPriceProvider tokenPriceProvider,
+        IOptionsSnapshot<TokenPriceIdMappingOptions> tokenPriceIdMappingOptions,
+        IOptionsSnapshot<TokenAccessOptions> tokenAccessOptions)
     {
         _userLiquidityRepository = userLiquidityRepository;
         _userLiquidityInfoIndexRepository = userLiquidityInfoIndexRepository;
         _tokenRepository = tokenRepository;
         _chainAppService = chainAppService;
+        _tokenApplyOrderRepository = tokenApplyOrderRepository;
+        _tokenPriceProvider = tokenPriceProvider;
+        _tokenPriceIdMappingOptions = tokenPriceIdMappingOptions.Value;
+        _tokenAccessOptions = tokenAccessOptions.Value;
     }
 
     public async Task<List<UserLiquidityIndexDto>> GetUserLiquidityInfosAsync(GetUserLiquidityInput input)
@@ -69,6 +84,8 @@ public class UserLiquidityInfoAppService : CrossChainServerAppService, IUserLiqu
                 .Debug("New user liquidity info, provider: {provider}", input.Provider);
             isLiquidityExist = false;
             liquidityInfo = ObjectMapper.Map<UserLiquidityInfoInput, UserLiquidityInfo>(input);
+            await DealUpdateOrderInfoAsync(liquidityInfo.Provider, liquidityInfo.ChainId, liquidityInfo.TokenId,
+                liquidityInfo.Liquidity);
         }
         else
         {
@@ -85,6 +102,42 @@ public class UserLiquidityInfoAppService : CrossChainServerAppService, IUserLiqu
         else
         {
             await _userLiquidityRepository.InsertAsync(liquidityInfo, autoSave: true);
+        }
+    }
+
+    private async Task DealUpdateOrderInfoAsync(string provider, string chainId, Guid tokenId, decimal amount)
+    {
+        var token = await _tokenRepository.GetAsync(tokenId);
+        var amountInUsd =
+            await _tokenPriceProvider.GetPriceAsync(_tokenPriceIdMappingOptions.CoinIdMapping[token.Symbol]);
+        if (amountInUsd < _tokenAccessOptions.DefaultConfig.MinLiquidityInUsd)
+        {
+            Log.Warning(
+                "Amount is less than min liquidity in usd in the first time, provider: {provider}, amount: {amount}",
+                provider, amount);
+            return;
+        }
+
+        var order = await _tokenApplyOrderRepository.FindAsync(o =>
+            o.UserAddress == provider && o.Symbol == token.Symbol);
+        if (order == null)
+        {
+            Log.ForContext("ChainId", chainId)
+                .ForContext("TokenId", tokenId)
+                .Warning("Token apply order not found, provider: {provider}", provider);
+        }
+        else
+        {
+            foreach (var chainTokenInfo in order.ChainTokenInfo.Where(chainTokenInfo => chainTokenInfo.ChainId == chainId &&
+                         chainTokenInfo.Status == TokenApplyOrderStatus.LiquidityAdded.ToString()))
+            {
+                chainTokenInfo.Status = TokenApplyOrderStatus.Complete.ToString();
+            }
+            if (order.ChainTokenInfo.All(o => o.Status == TokenApplyOrderStatus.Complete.ToString()))
+            {
+                order.Status = TokenApplyOrderStatus.Complete.ToString();
+            }
+            await _tokenApplyOrderRepository.UpdateAsync(order, autoSave: true);
         }
     }
 

@@ -10,11 +10,15 @@ using Volo.Abp.EventBus.RabbitMq;
 using Volo.Abp.Modularity;
 using Microsoft.Extensions.Configuration;
 using AElf.CrossChainServer.EntityHandler.Core;
+using AElf.CrossChainServer.TokenPool;
 using AElf.CrossChainServer.Worker;
 using AElf.ExceptionHandler.ABP;
+using Microsoft.Extensions.Options;
+using Volo.Abp;
 using Volo.Abp.Auditing;
 using Volo.Abp.BlobStoring;
 using Volo.Abp.BlobStoring.Aliyun;
+using Volo.Abp.Threading;
 
 namespace AElf.CrossChainServer.EntityHandler
 {
@@ -80,6 +84,16 @@ namespace AElf.CrossChainServer.EntityHandler
             {
                 options.IsEnabled = false;
             });
+        }
+        
+        public override void OnApplicationInitialization(ApplicationInitializationContext context)
+        {
+            // var liquiditySyncOption = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<PoolLiquiditySyncOptions>>();
+            // if (liquiditySyncOption.Value.IsSyncEnabled)
+            // {
+            //     var service = context.ServiceProvider.GetRequiredService<PoolLiquidityInfoAppService>();
+            //     AsyncHelper.RunSync(async()=> await service.SyncPoolLiquidityInfoFromChainAsync());
+            // }
         }
     }
 }

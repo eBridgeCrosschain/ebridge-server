@@ -17,6 +17,7 @@
     <PackageReference Include="GraphQL.Client.Serializer.Newtonsoft" Version="5.1.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.5" />
     <PackageReference Include="MySqlConnector" Version="2.0.0" />
+    <PackageReference Include="NBitcoin" Version="7.0.46" />
     <PackageReference Include="Nethereum.Web3" Version="4.7.0" />
     <PackageReference Include="Nethereum.KeyStore" Version="4.7.0" />
     <PackageReference Include="Nethereum.Util" Version="4.7.0" />
@@ -31,6 +32,16 @@
     <PackageReference Include="AElf.Client" Version="1.1.0" />
     <PackageReference Include="GraphQL.Client" Version="5.1.1" />
     <PackageReference Include="AElf.ExceptionHandler.ABP" Version="8.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="TokenAccess\ILarkManager.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="TokenAccess\ILiquidityDataProvider.cs" />
+    <Compile Remove="TokenAccess\ISymbolMarketProvider.cs" />
+    <Compile Remove="TokenAccess\IScanProvider.cs" />
   </ItemGroup>
 
 </Project>

@@ -6,10 +6,6 @@ namespace AElf.CrossChainServer.TokenAccess;
 
 public class TokenApplyOrderResultDto : TokenApplyOrderDto
 {
-    public long RejectedTime { get; set; }
-    public string RejectedReason { get; set; }
-    public long FailedTime { get; set; }
-    public string FailedReason { get; set; }
 }
 
 public class TokenApplyOrderDto
@@ -20,12 +16,12 @@ public class TokenApplyOrderDto
     public string Status { get; set; }
     public long CreateTime { get; set; }
     public long UpdateTime { get; set; }
-    public List<ChainTokenInfoDto> ChainTokenInfo { get; set; }
-    public ChainTokenInfoDto OtherChainTokenInfo { get; set; }
+    public List<ChainTokenInfoResultDto> ChainTokenInfo { get; set; }
+    public ChainTokenInfoResultDto OtherChainTokenInfoResult { get; set; }
     public Dictionary<string, string> StatusChangedRecord { get; set; }
 }
 
-public class ChainTokenInfoDto
+public class ChainTokenInfoResultDto
 {
     public string ChainId { get; set; }
     public string ChainName { get; set; }
@@ -37,7 +33,8 @@ public class ChainTokenInfoDto
     public string PoolAddress { get; set; }
     public string ContractAddress { get; set; }
     public string Status { get; set; }
-    public string BalanceAmount { get; set; }
+    public decimal DailyLimit { get; set; }
+    public decimal RateLimit { get; set; }
     public string MinAmount { get; set; }
 }
 

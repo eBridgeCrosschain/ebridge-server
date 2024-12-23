@@ -12,11 +12,11 @@ namespace AElf.CrossChainServer.TokenAccess;
 
 public interface ITokenInvokeProvider
 {
-    Task<TokenOwnerListDto> GetUserTokenOwnerList(string address);
+    Task<TokenOwnerListDto> GetUserTokenOwnerListAsync(string address);
     Task<List<TokenOwnerDto>> GetAsync(string address);
-    Task<bool> GetThirdTokenList(string address, string symbol);
-    Task<UserTokenBindingDto> PrepareBinding(UserTokenIssueDto dto);
-    Task<bool> Binding(UserTokenBindingDto dto);
+    Task<bool> GetThirdTokenListAndUpdateAsync(string address, string symbol);
+    Task<UserTokenBindingDto> PrepareBindingAsync(UserTokenIssueDto dto);
+    Task<bool> BindingAsync(UserTokenBindingDto dto);
 }
 
 public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
@@ -48,7 +48,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
         _invokeRepository = invokeRepository;
     }
 
-    public async Task<TokenOwnerListDto> GetUserTokenOwnerList(string address)
+    public async Task<TokenOwnerListDto> GetUserTokenOwnerListAsync(string address)
     {
         var skipCount = 0;
         var tokenOwnerList = new TokenOwnerListDto();
@@ -130,7 +130,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
         return result?.TokenOwnerList;
     }
 
-    public async Task<bool> GetThirdTokenList(string address, string symbol)
+    public async Task<bool> GetThirdTokenListAndUpdateAsync(string address, string symbol)
     {
         try
         {
@@ -143,8 +143,11 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
 
             foreach (var item in resultDto.Data)
             {
+                var aelfChainId = FindMatchChainId(item.AelfChain);
+                var thirdChainId = FindMatchChainId(item.ThirdChain);
+                if (string.IsNullOrWhiteSpace(aelfChainId) || string.IsNullOrWhiteSpace(thirdChainId)) break;
                 var res = await _userTokenIssueRepository.FindAsync(o =>
-                    o.Address == address && o.OtherChainId == item.ThirdChain);
+                    o.Address == address && o.Symbol == item.ThirdSymbol && o.OtherChainId == thirdChainId);
                 if (res != null)
                 {
                     res.Status = TokenApplyOrderStatus.Issued.ToString();
@@ -156,10 +159,10 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
                     {
                         Address = address,
                         Symbol = item.ThirdSymbol,
-                        ChainId = item.AelfChain,
+                        ChainId = aelfChainId,
                         TokenName = item.ThirdTokenName,
                         TokenImage = item.ThirdTokenImage,
-                        OtherChainId = item.ThirdChain,
+                        OtherChainId = thirdChainId,
                         ContractAddress = item.ThirdContractAddress,
                         TotalSupply = item.ThirdTotalSupply,
                         Status = TokenApplyOrderStatus.Issued.ToString()
@@ -176,7 +179,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
         }
     }
 
-    public async Task<UserTokenBindingDto> PrepareBinding(UserTokenIssueDto dto)
+    public async Task<UserTokenBindingDto> PrepareBindingAsync(UserTokenIssueDto dto)
     {
         var res = await _userTokenIssueRepository.FindAsync(o =>
             o.Address == dto.Address && o.Symbol == dto.Symbol && o.OtherChainId == dto.OtherChainId);
@@ -185,42 +188,55 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
 
         var url =
             $"{_tokenAccessOptions.SymbolMarketBaseUrl}{_tokenAccessOptions.SymbolMarketPrepareBindingUri}";
-        var resultDto = await _httpProvider.InvokeAsync<PrepareBindingResultDto>(HttpMethod.Post, url,
-            body: JsonConvert.SerializeObject(new PrepareBindingInput
+        var prepareBindingInput = new PrepareBindingInput
+        {
+            Address = dto.Address,
+            AelfToken = dto.Symbol,
+            AelfChain = dto.ChainId,
+            ThirdTokens = new ThirdTokenDto
             {
-                Address = dto.Address,
-                AelfToken = dto.Symbol,
-                AelfChain = dto.ChainId,
-                ThirdTokens = new ThirdTokenDto
-                {
-                    TokenName = dto.TokenName,
-                    Symbol = dto.Symbol,
-                    TokenImage = dto.TokenImage,
-                    TotalSupply = dto.TotalSupply,
-                    ThirdChain = dto.OtherChainId,
-                    Owner = dto.WalletAddress,
-                    ContractAddress = dto.ContractAddress
-                },
-                Signature = BuildRequestHash(string.Concat(dto.Address, dto.Symbol, dto.ChainId, dto.TokenName,
-                    dto.Symbol, dto.TokenImage, dto.TotalSupply, dto.WalletAddress, dto.OtherChainId,
-                    dto.ContractAddress))
-            }, HttpProvider.DefaultJsonSettings));
+                TokenName = dto.TokenName,
+                Symbol = dto.Symbol,
+                TokenImage = dto.TokenImage,
+                TotalSupply = dto.TotalSupply,
+                ThirdChain = dto.OtherChainId,
+                Owner = dto.WalletAddress,
+                ContractAddress = dto.ContractAddress
+            },
+            Signature = BuildRequestHash(string.Concat(dto.Address, dto.Symbol, dto.ChainId, dto.TokenName,
+                dto.Symbol, dto.TokenImage, dto.TotalSupply, dto.WalletAddress, dto.OtherChainId,
+                dto.ContractAddress))
+        };
+        var resultDto = await _httpProvider.InvokeAsync<PrepareBindingResultDto>(HttpMethod.Post, url,
+            body: JsonConvert.SerializeObject(prepareBindingInput, HttpProvider.DefaultJsonSettings));
         if (resultDto.Code != "20000") return new UserTokenBindingDto();
 
-        dto.BindingId = resultDto.Data?.BindingId;
-        dto.ThirdTokenId = resultDto.Data?.ThirdTokenId;
-        dto.Status = TokenApplyOrderStatus.Issuing.ToString();
-        await _userTokenIssueRepository.InsertAsync(dto);
+        if (res != null)
+        {
+            res.BindingId = resultDto.Data?.BindingId;
+            res.ThirdTokenId = resultDto.Data?.ThirdTokenId;
+            res.Status = TokenApplyOrderStatus.Issuing.ToString();
+            await _userTokenIssueRepository.UpdateAsync(res);
+        }
+        else
+        {
+            dto.BindingId = resultDto.Data?.BindingId;
+            dto.ThirdTokenId = resultDto.Data?.ThirdTokenId;
+            dto.Status = TokenApplyOrderStatus.Issuing.ToString();
+            await _userTokenIssueRepository.InsertAsync(dto);
+        }
+
         await _invokeRepository.InsertAsync(new()
         {
-            BindingId = dto.BindingId,
-            UserTokenIssueId = dto.Id,
-            ThirdTokenId = dto.ThirdTokenId
+            BindingId = resultDto.Data?.BindingId,
+            UserTokenIssueId = res.Id != Guid.Empty ? res.Id : dto.Id,
+            ThirdTokenId = resultDto.Data?.ThirdTokenId
         });
-        return new UserTokenBindingDto { BindingId = dto.BindingId, ThirdTokenId = dto.ThirdTokenId };
+        return new UserTokenBindingDto
+            { BindingId = resultDto.Data?.BindingId, ThirdTokenId = resultDto.Data?.ThirdTokenId };
     }
 
-    public async Task<bool> Binding(UserTokenBindingDto dto)
+    public async Task<bool> BindingAsync(UserTokenBindingDto dto)
     {
         var tokenInvoke = await _invokeRepository.FindAsync(o =>
             o.BindingId == dto.BindingId && o.ThirdTokenId == dto.ThirdTokenId);
@@ -264,5 +280,25 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
         var hashVerifyKey = _tokenAccessOptions.HashVerifyKey;
         var requestHash = HashHelper.ComputeFrom(string.Concat(request, hashVerifyKey));
         return requestHash.ToHex();
+    }
+
+    private string FindMatchChainId(string sourceChainId)
+    {
+        // 检查输入是否为key
+        if (_tokenAccessOptions.ChainIdMap.TryGetValue(sourceChainId, out string value))
+        {
+            return value;
+        }
+
+        // 检查输入是否为value
+        // foreach (var kvp in _tokenAccessOptions.ChainIdMap)
+        // {
+        //     if (kvp.Value == sourceChainId)
+        //     {
+        //         return kvp.Key;
+        //     }
+        // }
+
+        return string.Empty;
     }
 }
