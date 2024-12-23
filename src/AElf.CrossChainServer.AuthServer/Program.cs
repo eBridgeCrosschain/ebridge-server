@@ -32,6 +32,7 @@ public class Program
             var builder = WebApplication.CreateBuilder(args);
             builder.Host.AddAppSettingsSecretsJson()
                 .UseAutofac()
+                .UseApollo()
                 .UseSerilog();
             await builder.AddApplicationAsync<AElfCrossChainServerAuthServerModule>();
             var app = builder.Build();
