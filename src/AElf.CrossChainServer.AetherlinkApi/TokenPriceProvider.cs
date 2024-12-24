@@ -22,17 +22,23 @@ public class TokenPriceProvider : ITokenPriceProvider, ISingletonDependency
     [ExceptionHandler(typeof(Exception), Message = "GetPrice Error", LogOnly = true)]
     public async Task<decimal> GetPriceAsync(string pair)
     {
-        var result = (await _priceServerProvider.GetAggregatedTokenPriceAsync(new GetAggregatedTokenPriceRequestDto
+        var result = await _priceServerProvider.GetAggregatedTokenPriceAsync(new GetAggregatedTokenPriceRequestDto
         {
             TokenPair = pair,
             AggregateType = AggregateType.Latest
-        })).Data;
-
+        });
+        var data = result.Data;
+        if (data == null)
+        {
+            Log.Error(
+                "Get token price from Aetherlink price service failed.");
+            return 0;
+        }
         Log.Information(
             "Get token price from Aetherlink price service, pair: {pair}, price: {price}, decimal: {tokenDecimal}",
-            result.TokenPair, result.Price, result.Decimal);
+            data.TokenPair, data.Price, data.Decimal);
 
-        return (decimal)(result.Price / Math.Pow(10, (double)result.Decimal));
+        return (decimal)(data.Price / Math.Pow(10, (double)data.Decimal));
     }
 
     [ExceptionHandler(typeof(Exception), Message = "Get history price error", LogOnly = true)]
