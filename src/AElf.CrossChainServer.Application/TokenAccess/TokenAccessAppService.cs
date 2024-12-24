@@ -979,6 +979,11 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             throw new UserFriendlyException("Chain not found.");
         }
 
+        if (chainOrder.Status != TokenApplyOrderStatus.PoolInitialized.ToString())
+        {
+            throw new UserFriendlyException("Invalid order status.")
+        }
+        
         chainOrder.Status = TokenApplyOrderStatus.LiquidityAdded.ToString();
         await _tokenApplyOrderRepository.UpdateAsync(order);
         return new CommitAddLiquidityDto
