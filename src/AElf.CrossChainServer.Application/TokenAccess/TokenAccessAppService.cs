@@ -981,7 +981,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
 
         if (chainOrder.Status != TokenApplyOrderStatus.PoolInitialized.ToString())
         {
-            throw new UserFriendlyException("Invalid order status.")
+            throw new UserFriendlyException("Invalid order status.");
         }
         
         chainOrder.Status = TokenApplyOrderStatus.LiquidityAdded.ToString();
