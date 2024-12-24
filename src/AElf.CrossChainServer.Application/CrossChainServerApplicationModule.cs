@@ -11,6 +11,7 @@ using AElf.CrossChainServer.HttpClient;
 using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.TokenAccess;
 using AElf.CrossChainServer.TokenPool;
+using AElf.CrossChainServer.TokenPrice;
 using AElf.CrossChainServer.Tokens;
 using AElf.ExceptionHandler.ABP;
 using Microsoft.Extensions.DependencyInjection;
@@ -85,6 +86,6 @@ public class CrossChainServerApplicationModule : AbpModule
         context.Services.AddTransient<IHttpProvider, HttpProvider>();
         context.Services.AddTransient<IAetherLinkProvider, AetherLinkProvider>();
         context.Services.AddTransient<ILarkRobotNotifyProvider,LarkRobotNotifyProvider>();
-        
+        context.Services.AddTransient<ITokenPriceProvider, TokenPriceProvider>();
     }
 }

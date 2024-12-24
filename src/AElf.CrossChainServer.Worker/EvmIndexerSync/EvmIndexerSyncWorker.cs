@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Worker.IndexerSync;
-using AElf.CrossChainServer.Worker.TokenPoolSync;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Serilog;
@@ -24,7 +23,7 @@ public class EvmIndexerSyncWorker : AsyncPeriodicBackgroundWorkerBase
     {
         _evmSyncProviders = evmSyncProviders.ToList();
         _chainAppService = chainAppService;
-        Timer.Period = 1000 * 60;
+        Timer.Period = 1000 * 1;
     }
 
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)

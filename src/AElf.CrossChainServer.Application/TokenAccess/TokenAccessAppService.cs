@@ -1004,6 +1004,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         var tokenPrices = new Dictionary<string, decimal>();
         foreach (var symbol in allSymbols)
         {
+            Log.Debug("To get token price: {symbol}", symbol);
             if (_tokenPriceIdMappingOptions.CoinIdMapping.TryGetValue(symbol, out var coinId))
             {
                 var priceInUsd = await _tokenPriceProvider.GetPriceAsync(coinId);

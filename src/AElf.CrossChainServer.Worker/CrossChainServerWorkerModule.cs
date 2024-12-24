@@ -24,6 +24,7 @@ namespace AElf.CrossChainServer.Worker
                         
             context.Services.AddTransient<IBridgeContractSyncProvider, BridgeContractTransferSyncProvider>();
             context.Services.AddTransient<IBridgeContractSyncProvider, BridgeContractReceiveSyncProvider>();
+            context.Services.AddTransient<IEvmSyncProvider, EvmTokenPoolIndexerSyncProvider>();
         }
 
         public override void OnApplicationInitialization(ApplicationInitializationContext context)

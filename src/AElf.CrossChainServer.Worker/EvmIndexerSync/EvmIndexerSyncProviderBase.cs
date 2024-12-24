@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Settings;
-using AElf.CrossChainServer.Worker.TokenPoolSync;
 using Serilog;
 using Volo.Abp.DependencyInjection;
 
