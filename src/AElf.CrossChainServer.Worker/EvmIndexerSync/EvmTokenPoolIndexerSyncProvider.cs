@@ -48,13 +48,12 @@ public class EvmTokenPoolIndexerSyncProvider : EvmIndexerSyncProviderBase
             chainId, startHeight, endHeight);
         var tokenPoolContractAddress = _evmContractSyncOptions.ContractAddresses[chainId].TokenPoolContract;
         var logs = await GetContractLogsAsync(chainId, tokenPoolContractAddress, startHeight, endHeight);
+        if (logs == null || logs.Logs.Count == 0)
+        {
+            return endHeight;
+        }
         foreach (var log in logs.Logs)
         {
-            if (log.Type != CrossChainServerConsts.MinedEvmTransaction)
-            {
-                return log.BlockNumber;
-            }
-
             if (log.Removed)
             {
                 continue;

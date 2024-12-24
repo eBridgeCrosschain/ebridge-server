@@ -44,6 +44,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     private readonly TokenAccessOptions _tokenAccessOptions;
     private readonly TokenWhitelistOptions _tokenWhitelistOptions;
     private readonly TokenPriceIdMappingOptions _tokenPriceIdMappingOptions;
+    private readonly HeterogeneousTokenWhitelistOptions _heterogeneousTokenWhitelistOptions;
 
     private const int MaxMaxResultCount = 1000;
     private const int DefaultSkipCount = 0;
@@ -62,7 +63,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         IIndexerCrossChainLimitInfoService indexerCrossChainLimitInfoService, ITokenInvokeProvider tokenInvokeProvider,
         IOptionsSnapshot<TokenAccessOptions> tokenAccessOptions,
         IOptionsSnapshot<TokenWhitelistOptions> tokenWhitelistOptions,
-        IOptionsSnapshot<TokenPriceIdMappingOptions> tokenPriceIdMappingOptions)
+        IOptionsSnapshot<TokenPriceIdMappingOptions> tokenPriceIdMappingOptions,
+        IOptionsSnapshot<HeterogeneousTokenWhitelistOptions> heterogeneousTokenWhitelistOptions)
     {
         _tokenApplyOrderRepository = tokenApplyOrderRepository;
         _tokenApplyOrderIndexRepository = tokenApplyOrderIndexRepository;
@@ -82,6 +84,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         _tokenAccessOptions = tokenAccessOptions.Value;
         _tokenWhitelistOptions = tokenWhitelistOptions.Value;
         _tokenPriceIdMappingOptions = tokenPriceIdMappingOptions.Value;
+        _heterogeneousTokenWhitelistOptions = heterogeneousTokenWhitelistOptions.Value;
     }
 
     public async Task<AvailableTokensDto> GetAvailableTokensAsync()
@@ -798,36 +801,32 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         };
     }
 
-    public Task<TokenWhitelistDto> GetTokenWhitelistAsync()
+    public Task<Dictionary<string, Dictionary<string, TokenInfoDto>>> GetTokenWhitelistAsync()
     {
         var tokenWhitelist = _tokenWhitelistOptions.TokenWhitelist;
-        var result = new TokenWhitelistDto
-        {
-            Data = tokenWhitelist.ToDictionary(
-                tokenEntry => tokenEntry.Key,
-                tokenEntry => tokenEntry.Value.ToDictionary(
-                    chainEntry => chainEntry.Key,
-                    chainEntry => ObjectMapper.Map<TokenInfo, TokenInfoDto>(chainEntry.Value)
-                )
-            )
-        };
+        var result = tokenWhitelist.ToDictionary(
+            tokenEntry => tokenEntry.Key,
+            tokenEntry => tokenEntry.Value.ToDictionary(
+                chainEntry => chainEntry.Key,
+                chainEntry => ObjectMapper.Map<TokenInfo, TokenInfoDto>(chainEntry.Value)
+            ));
         return Task.FromResult(result);
     }
 
-    public async Task<PoolOverviewDto> GetPoolOverviewAsync(string address)
+    public async Task<PoolOverviewDto> GetPoolOverviewAsync(string addresses)
     {
-        var tokenCount = _tokenWhitelistOptions.TokenWhitelist.Count;
-        var poolCount = _tokenWhitelistOptions.TokenWhitelist.Values.Sum(i => i.Count);
+        var tokenCount = _heterogeneousTokenWhitelistOptions.Tokens.Count;
+        var poolCount = _heterogeneousTokenWhitelistOptions.Chains.Sum(c => c.Value.Count);
         var poolLiquidityInfoList = await _poolLiquidityInfoAppService.GetPoolLiquidityInfosAsync(
             new GetPoolLiquidityInfosInput
             {
                 MaxResultCount = MaxMaxResultCount,
                 SkipCount = DefaultSkipCount
             });
-        var userLiquidityInfoList = string.IsNullOrWhiteSpace(address)
+        var userLiquidityInfoList = string.IsNullOrWhiteSpace(addresses)
             ? new List<UserLiquidityIndexDto>()
             : await _userLiquidityInfoAppService.GetUserLiquidityInfosAsync(new GetUserLiquidityInput
-                { Provider = address });
+                { Providers = addresses.Split(',').ToList() });
         var tokenPrice = await GetTokenPricesAsync(poolLiquidityInfoList.Items.ToList());
         var totalLiquidityInUsd = CalculateTotalLiquidityInUsd(poolLiquidityInfoList.Items.ToList(), tokenPrice);
         var totalMyLiquidityInUsd = CalculateUserTotalLiquidityInUsd(userLiquidityInfoList, tokenPrice);
@@ -856,12 +855,6 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         foreach (var group in groupedPoolLiquidityInfoList)
         {
             var chainId = group.Key;
-            var chain = await _chainAppService.GetAsync(chainId);
-            var userLiquidityInfo = await _userLiquidityInfoAppService.GetUserLiquidityInfosAsync(
-                new GetUserLiquidityInput
-                {
-                    ChainId = chainId
-                });
             foreach (var poolLiquidity in group)
             {
                 var tokenPriceInUsd = tokenPrice[poolLiquidity.TokenInfo.Symbol];
@@ -870,12 +863,25 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
                     ChainId = poolLiquidity.ChainId,
                     Token = poolLiquidity.TokenInfo,
                     TotalTvlInUsd = poolLiquidity.Liquidity * tokenPriceInUsd,
-                    TokenPrice = tokenPriceInUsd
+                    TokenPrice = tokenPriceInUsd,
+                    MyTvlInUsd = 0
                 };
-                var userLiquidity = chain.Type == BlockchainType.AElf
-                    ? userLiquidityInfo.FirstOrDefault(u => u.TokenInfo.Symbol == poolLiquidity.TokenInfo.Symbol)
-                    : userLiquidityInfo.FirstOrDefault(u => u.TokenInfo.Address == poolLiquidity.TokenInfo.Address);
-                poolInfo.MyTvlInUsd = userLiquidity?.Liquidity * tokenPriceInUsd ?? 0;
+                if (!string.IsNullOrWhiteSpace(input.Addresses))
+                {
+                    var userLiquidityInfo = await _userLiquidityInfoAppService.GetUserLiquidityInfosAsync(
+                            new GetUserLiquidityInput
+                            {
+                                Providers = input.Addresses.Split(',').ToList(),
+                                ChainId = chainId,
+                                Symbol = poolLiquidity.TokenInfo.Symbol
+                            });
+                    if (userLiquidityInfo?.Count > 0)
+                    {
+                        var userLiquidityTotal = userLiquidityInfo.Sum(l => l.Liquidity);
+                        poolInfo.MyTvlInUsd = userLiquidityTotal * tokenPriceInUsd;
+                    }
+                }
+
                 result.Add(poolInfo);
             }
         }
@@ -924,9 +930,9 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         {
             var userLiq = await _userLiquidityInfoAppService.GetUserLiquidityInfosAsync(new GetUserLiquidityInput
             {
-                Provider = input.Address,
+                Providers = new List<string>() { input.Address },
                 ChainId = input.ChainId,
-                Token = input.Token
+                Symbol = tokenSymbol
             });
             myLiquidity = userLiq.FirstOrDefault()?.Liquidity ?? 0;
         }
@@ -983,7 +989,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         {
             throw new UserFriendlyException("Invalid order status.");
         }
-        
+
         chainOrder.Status = TokenApplyOrderStatus.LiquidityAdded.ToString();
         await _tokenApplyOrderRepository.UpdateAsync(order);
         return new CommitAddLiquidityDto

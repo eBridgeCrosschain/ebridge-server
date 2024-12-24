@@ -170,89 +170,119 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
     public async Task SyncPoolLiquidityInfoFromChainAsync()
     {
         Log.Information("Start to sync pool liquidity info from chain.");
-        var chainList = await _chainAppService.GetListAsync(new GetChainsInput
+        var chain = await _chainAppService.GetAsync("BaseSepolia");
+        // Step 1: Retrieve the current height of the EVM chain and insert a new EVM liquidity sync height.  
+        var currentChainHeight = await _blockchainAppService.GetChainHeightAsync(chain.Id);
+        await _settingManager.SetAsync(chain.Id,
+            GetSettingKey(CrossChainServerSettings.EvmPoolLiquidityIndexerSync, null),
+            currentChainHeight.ToString());
+        await _settingManager.SetAsync(chain.Id,
+            GetSettingKey(CrossChainServerSettings.EvmUserLiquidityIndexerSync, null),
+            currentChainHeight.ToString());
+        // Step 2: Query the EVM contract to sync the liquidity of configured tokens - getBalance.  
+        var tokenAddresses = _poolLiquiditySyncOptions.Token[chain.Id];
+        var tokenIdList = new List<Guid>();
+        foreach (var tokenAddress in tokenAddresses)
         {
-            Type = BlockchainType.AElf
-        });
-        foreach (var chain in chainList.Items)
-        {
-            Log.Debug("Sync pool liquidity info from chain {chainId}.", chain.Id);
-            // // Step 1: Retrieve the current height of the best chain on AElf and insert a new AElf liquidity sync height
-            var chainStatus = await _blockchainAppService.GetChainStatusAsync(chain.Id);
-            await _settingManager.SetAsync(chain.Id, GetSettingKey(CrossChainServerSettings.PoolLiquidityIndexerSync,null),
-                chainStatus.BlockHeight.ToString());
-            await _settingManager.SetAsync(chain.Id, GetSettingKey(CrossChainServerSettings.UserLiquidityIndexerSync,null),
-                chainStatus.BlockHeight.ToString());
-            await _settingManager.SetAsync(chain.Id, GetSettingKey(CrossChainServerSettings.PoolLiquidityIndexerSync,"Confirmed"),
-                chainStatus.ConfirmedBlockHeight.ToString());
-            await _settingManager.SetAsync(chain.Id, GetSettingKey(CrossChainServerSettings.UserLiquidityIndexerSync,"Confirmed"),
-                chainStatus.ConfirmedBlockHeight.ToString());
-            // Step 2: Query the AElf contract to sync the liquidity of configured tokens - getLiquidityInfo. 
-            var tokenSymbols = _poolLiquiditySyncOptions.Token[chain.Id];
-            var tokenIdList = new List<Guid>();
-            foreach (var symbol in tokenSymbols)
+            var token = await _tokenAppService.GetAsync(new GetTokenInput
             {
-                var token = await _tokenAppService.GetAsync(new GetTokenInput
-                {
-                    ChainId = chain.Id,
-                    Symbol = symbol
-                });
-                tokenIdList.Add(token.Id);
-            }
-
-            var poolLiquidityList = await _bridgeContractAppService.GetPoolLiquidityAsync(chain.Id,
-                _bridgeContractOptions.ContractAddresses[chain.Id].TokenPoolContract, tokenIdList);
-            // Step 3: Write the data into poolLiquidity.  
-            foreach (var poolLiquidity in poolLiquidityList)
-            {
-                await AddLiquidityAsync(ObjectMapper.Map<PoolLiquidityDto, PoolLiquidityInfoInput>(poolLiquidity));
-            }
+                ChainId = chain.Id,
+                Address = tokenAddress
+            });
+            tokenIdList.Add(token.Id);
         }
 
-        var evmChainList = await _chainAppService.GetListAsync(new GetChainsInput
+        var poolLiquidityList = await _bridgeContractAppService.GetPoolLiquidityAsync(chain.Id,
+            _bridgeContractOptions.ContractAddresses[chain.Id].TokenPoolContract, tokenIdList);
+        // Step 3: Write the data into poolLiquidity.  
+        foreach (var poolLiquidity in poolLiquidityList)
         {
-            Type = BlockchainType.Evm
-        });
-        foreach (var chain in evmChainList.Items)
-        {
-            Log.Debug("Sync pool liquidity info from chain {chainId}.", chain.Id);
-            // Step 1: Retrieve the current height of the EVM chain and insert a new EVM liquidity sync height.  
-            var currentChainHeight = await _blockchainAppService.GetChainHeightAsync(chain.Id);
-            await _settingManager.SetAsync(chain.Id, GetSettingKey(CrossChainServerSettings.EvmPoolLiquidityIndexerSync,null),
-                currentChainHeight.ToString());
-            await _settingManager.SetAsync(chain.Id, GetSettingKey(CrossChainServerSettings.EvmUserLiquidityIndexerSync,null),
-                currentChainHeight.ToString());
-            // Step 2: Query the EVM contract to sync the liquidity of configured tokens - getBalance.  
-            var tokenAddresses = _poolLiquiditySyncOptions.Token[chain.Id];
-            var tokenIdList = new List<Guid>();
-            foreach (var tokenAddress in tokenAddresses)
-            {
-                var token = await _tokenAppService.GetAsync(new GetTokenInput
-                {
-                    ChainId = chain.Id,
-                    Address = tokenAddress
-                });
-                tokenIdList.Add(token.Id);
-            }
-
-            var poolLiquidityList = await _bridgeContractAppService.GetPoolLiquidityAsync(chain.Id,
-                _bridgeContractOptions.ContractAddresses[chain.Id].TokenPoolContract, tokenIdList);
-            // Step 3: Write the data into poolLiquidity.  
-            foreach (var poolLiquidity in poolLiquidityList)
-            {
-                await AddLiquidityAsync(ObjectMapper.Map<PoolLiquidityDto, PoolLiquidityInfoInput>(poolLiquidity));
-            }
+            await AddLiquidityAsync(ObjectMapper.Map<PoolLiquidityDto, PoolLiquidityInfoInput>(poolLiquidity));
         }
-        Log.Information("Finish to sync pool liquidity info from chain.");
+        // Log.Information("Start to sync pool liquidity info from chain.");
+        // var chainList = await _chainAppService.GetListAsync(new GetChainsInput
+        // {
+        //     Type = BlockchainType.AElf
+        // });
+        // foreach (var chain in chainList.Items)
+        // {
+        //     Log.Debug("Sync pool liquidity info from chain {chainId}.", chain.Id);
+        //     // // Step 1: Retrieve the current height of the best chain on AElf and insert a new AElf liquidity sync height
+        //     var chainStatus = await _blockchainAppService.GetChainStatusAsync(chain.Id);
+        //     await _settingManager.SetAsync(chain.Id, GetSettingKey(CrossChainServerSettings.PoolLiquidityIndexerSync,null),
+        //         chainStatus.BlockHeight.ToString());
+        //     await _settingManager.SetAsync(chain.Id, GetSettingKey(CrossChainServerSettings.UserLiquidityIndexerSync,null),
+        //         chainStatus.BlockHeight.ToString());
+        //     await _settingManager.SetAsync(chain.Id, GetSettingKey(CrossChainServerSettings.PoolLiquidityIndexerSync,"Confirmed"),
+        //         chainStatus.ConfirmedBlockHeight.ToString());
+        //     await _settingManager.SetAsync(chain.Id, GetSettingKey(CrossChainServerSettings.UserLiquidityIndexerSync,"Confirmed"),
+        //         chainStatus.ConfirmedBlockHeight.ToString());
+        //     // Step 2: Query the AElf contract to sync the liquidity of configured tokens - getLiquidityInfo. 
+        //     var tokenSymbols = _poolLiquiditySyncOptions.Token[chain.Id];
+        //     var tokenIdList = new List<Guid>();
+        //     foreach (var symbol in tokenSymbols)
+        //     {
+        //         var token = await _tokenAppService.GetAsync(new GetTokenInput
+        //         {
+        //             ChainId = chain.Id,
+        //             Symbol = symbol
+        //         });
+        //         tokenIdList.Add(token.Id);
+        //     }
+        //
+        //     var poolLiquidityList = await _bridgeContractAppService.GetPoolLiquidityAsync(chain.Id,
+        //         _bridgeContractOptions.ContractAddresses[chain.Id].TokenPoolContract, tokenIdList);
+        //     // Step 3: Write the data into poolLiquidity.  
+        //     foreach (var poolLiquidity in poolLiquidityList)
+        //     {
+        //         await AddLiquidityAsync(ObjectMapper.Map<PoolLiquidityDto, PoolLiquidityInfoInput>(poolLiquidity));
+        //     }
+        // }
+        //
+        // var evmChainList = await _chainAppService.GetListAsync(new GetChainsInput
+        // {
+        //     Type = BlockchainType.Evm
+        // });
+        // foreach (var chain in evmChainList.Items)
+        // {
+        //     Log.Debug("Sync pool liquidity info from chain {chainId}.", chain.Id);
+        //     // Step 1: Retrieve the current height of the EVM chain and insert a new EVM liquidity sync height.  
+        //     var currentChainHeight = await _blockchainAppService.GetChainHeightAsync(chain.Id);
+        //     await _settingManager.SetAsync(chain.Id, GetSettingKey(CrossChainServerSettings.EvmPoolLiquidityIndexerSync,null),
+        //         currentChainHeight.ToString());
+        //     await _settingManager.SetAsync(chain.Id, GetSettingKey(CrossChainServerSettings.EvmUserLiquidityIndexerSync,null),
+        //         currentChainHeight.ToString());
+        //     // Step 2: Query the EVM contract to sync the liquidity of configured tokens - getBalance.  
+        //     var tokenAddresses = _poolLiquiditySyncOptions.Token[chain.Id];
+        //     var tokenIdList = new List<Guid>();
+        //     foreach (var tokenAddress in tokenAddresses)
+        //     {
+        //         var token = await _tokenAppService.GetAsync(new GetTokenInput
+        //         {
+        //             ChainId = chain.Id,
+        //             Address = tokenAddress
+        //         });
+        //         tokenIdList.Add(token.Id);
+        //     }
+        //
+        //     var poolLiquidityList = await _bridgeContractAppService.GetPoolLiquidityAsync(chain.Id,
+        //         _bridgeContractOptions.ContractAddresses[chain.Id].TokenPoolContract, tokenIdList);
+        //     // Step 3: Write the data into poolLiquidity.  
+        //     foreach (var poolLiquidity in poolLiquidityList)
+        //     {
+        //         await AddLiquidityAsync(ObjectMapper.Map<PoolLiquidityDto, PoolLiquidityInfoInput>(poolLiquidity));
+        //     }
+        // }
+        // Log.Information("Finish to sync pool liquidity info from chain.");
     }
 
     private async Task<PoolLiquidityInfo> FindPoolLiquidityInfoAsync(string chainId, Guid tokenId)
     {
         return await _poolLiquidityRepository.FindAsync(o => o.ChainId == chainId && o.TokenId == tokenId);
     }
-    
+
     private string GetSettingKey(string syncType, string typePrefix)
     {
-        return string.IsNullOrWhiteSpace(typePrefix)? syncType : $"{typePrefix}-{syncType}";
+        return string.IsNullOrWhiteSpace(typePrefix) ? syncType : $"{typePrefix}-{syncType}";
     }
 }

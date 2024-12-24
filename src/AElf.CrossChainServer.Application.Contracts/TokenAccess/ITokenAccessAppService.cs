@@ -27,9 +27,9 @@ public interface ITokenAccessAppService
     
     Task<TokenConfigDto> GetTokenConfigAsync(GetTokenConfigInput input);
     
-    Task<TokenWhitelistDto> GetTokenWhitelistAsync();
+    Task<Dictionary<string, Dictionary<string, TokenInfoDto>>> GetTokenWhitelistAsync();
     
-    Task<PoolOverviewDto> GetPoolOverviewAsync([CanBeNull] string address);
+    Task<PoolOverviewDto> GetPoolOverviewAsync([CanBeNull] string addresses);
     
     Task<PagedResultDto<PoolInfoDto>> GetPoolListAsync(GetPoolListInput input);
     Task<PoolInfoDto> GetPoolDetailAsync(GetPoolDetailInput input);

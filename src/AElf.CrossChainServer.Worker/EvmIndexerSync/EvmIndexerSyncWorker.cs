@@ -15,15 +15,17 @@ public class EvmIndexerSyncWorker : AsyncPeriodicBackgroundWorkerBase
 {
     private readonly IChainAppService _chainAppService;
     private readonly IEnumerable<IEvmSyncProvider> _evmSyncProviders;
+    private readonly EvmContractSyncOptions _evmContractSyncOptions;
     
     public EvmIndexerSyncWorker(AbpAsyncTimer timer, IServiceScopeFactory serviceScopeFactory,
-        IEnumerable<IEvmSyncProvider> evmSyncProviders, IChainAppService chainAppService) : base(
+        IEnumerable<IEvmSyncProvider> evmSyncProviders, IChainAppService chainAppService,IOptionsSnapshot<EvmContractSyncOptions> evmContractSyncOptions) : base(
         timer,
         serviceScopeFactory)
     {
         _evmSyncProviders = evmSyncProviders.ToList();
         _chainAppService = chainAppService;
-        Timer.Period = 1000 * 1;
+        _evmContractSyncOptions = evmContractSyncOptions.Value;
+        Timer.Period = _evmContractSyncOptions.SyncPeriod;
     }
 
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
@@ -34,10 +36,12 @@ public class EvmIndexerSyncWorker : AsyncPeriodicBackgroundWorkerBase
         });
 
         Log.Debug("Start to sync evm chain.");
-        var tasks = 
-            chains.Items.Select(o => o.Id).SelectMany(chainId =>
-                _evmSyncProviders.Select(async provider => await provider.ExecuteAsync(chainId)));
-        
-        await Task.WhenAll(tasks);
+        foreach (var chain in chains.Items)
+        {
+            foreach (var provider in _evmSyncProviders)
+            {
+                await provider.ExecuteAsync(chain.Id);
+            }
+        }
     }
 }

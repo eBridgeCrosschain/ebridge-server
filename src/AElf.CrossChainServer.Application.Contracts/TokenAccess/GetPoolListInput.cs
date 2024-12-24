@@ -5,5 +5,5 @@ namespace AElf.CrossChainServer.TokenAccess;
 
 public class GetPoolListInput : PagedAndSortedResultRequestDto
 {
-    [CanBeNull] public string Address { get; set; }
+    [CanBeNull] public string Addresses { get; set; }
 }

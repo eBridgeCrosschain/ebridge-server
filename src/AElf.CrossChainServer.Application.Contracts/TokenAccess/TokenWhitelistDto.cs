@@ -1,11 +1,5 @@
-using System.Collections.Generic;
 
 namespace AElf.CrossChainServer.TokenAccess;
-
-public class TokenWhitelistDto
-{
-    public Dictionary<string, Dictionary<string, TokenInfoDto>> Data { get; set; } = new();
-}
 
 public class TokenInfoDto
 {

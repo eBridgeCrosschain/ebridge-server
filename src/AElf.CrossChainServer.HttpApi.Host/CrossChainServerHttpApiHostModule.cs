@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using AElf.CrossChainServer.EntityFrameworkCore;
+using AElf.CrossChainServer.Filter;
 using AElf.CrossChainServer.HttpClient;
 using StackExchange.Redis;
 using Microsoft.OpenApi.Models;
@@ -26,7 +27,6 @@ using Volo.Abp.Localization;
 using Volo.Abp.Modularity;
 using Volo.Abp.Swashbuckle;
 using Volo.Abp.VirtualFileSystem;
-using AutoResponseWrapper;
 
 namespace AElf.CrossChainServer;
 
@@ -60,7 +60,7 @@ public class CrossChainServerHttpApiHostModule : AbpModule
         ConfigureDataProtection(context, configuration, hostingEnvironment);
         ConfigureCors(context, configuration);
         ConfigureSwaggerServices(context, configuration);
-        context.Services.AddAutoResponseWrapper();
+        context.Services.AddTransient<ResultFilter>();
     }
 
     private void ConfigureCache(IConfiguration configuration)

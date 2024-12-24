@@ -16,17 +16,22 @@ public class PoolLiquidityIndexerSyncProvider : IndexerSyncProviderBase
 {
     private readonly IPoolLiquidityInfoAppService _poolLiquidityInfoAppService;
     private readonly ITokenAppService _tokenAppService;
-    
-    public PoolLiquidityIndexerSyncProvider(IGraphQLClientFactory graphQlClientFactory, ISettingManager settingManager, IJsonSerializer jsonSerializer, IIndexerAppService indexerAppService, IChainAppService chainAppService, IPoolLiquidityInfoAppService poolLiquidityInfoAppService, ITokenAppService tokenAppService) : base(graphQlClientFactory, settingManager, jsonSerializer, indexerAppService, chainAppService)
+
+    public PoolLiquidityIndexerSyncProvider(IGraphQLClientFactory graphQlClientFactory, ISettingManager settingManager,
+        IJsonSerializer jsonSerializer, IIndexerAppService indexerAppService, IChainAppService chainAppService,
+        IPoolLiquidityInfoAppService poolLiquidityInfoAppService, ITokenAppService tokenAppService) : base(
+        graphQlClientFactory, settingManager, jsonSerializer, indexerAppService, chainAppService)
     {
         _poolLiquidityInfoAppService = poolLiquidityInfoAppService;
         _tokenAppService = tokenAppService;
     }
 
     protected override string SyncType { get; } = CrossChainServerSettings.PoolLiquidityIndexerSync;
+
     protected override async Task<long> HandleDataAsync(string aelfChainId, long startHeight, long endHeight)
     {
-        Log.ForContext("chainId", aelfChainId).Debug("Start to sync pool liquidity info {chainId} from {StartHeight} to {EndHeight}",
+        Log.ForContext("chainId", aelfChainId).Debug(
+            "Start to sync pool liquidity info {chainId} from {StartHeight} to {EndHeight}",
             aelfChainId, startHeight, endHeight);
         var data = await QueryDataAsync<PoolLiquidityRecordInfoDto>(GetRequest(aelfChainId, startHeight, endHeight));
         if (data == null || data.PoolLiquidityInfo.Count == 0)
@@ -48,7 +53,8 @@ public class PoolLiquidityIndexerSyncProvider : IndexerSyncProviderBase
 
     private async Task HandleDataAsync(PoolLiquidityInfo poolLiquidityRecord)
     {
-        var chain = await ChainAppService.GetByAElfChainIdAsync(ChainHelper.ConvertBase58ToChainId(poolLiquidityRecord.ChainId));
+        var chain = await ChainAppService.GetByAElfChainIdAsync(
+            ChainHelper.ConvertBase58ToChainId(poolLiquidityRecord.ChainId));
         var token = await _tokenAppService.GetAsync(new GetTokenInput
         {
             ChainId = chain.Id,
@@ -60,7 +66,7 @@ public class PoolLiquidityIndexerSyncProvider : IndexerSyncProviderBase
             Liquidity = poolLiquidityRecord.Liquidity / (decimal)Math.Pow(10, token.Decimals),
             TokenId = token.Id
         };
-        switch(poolLiquidityRecord.LiquidityType)
+        switch (poolLiquidityRecord.LiquidityType)
         {
             case LiquidityType.Add:
                 await _poolLiquidityInfoAppService.AddLiquidityAsync(input);

@@ -68,6 +68,7 @@ public class CrossChainServerApplicationModule : AbpModule
         Configure<ApiKeyOptions>(configuration.GetSection("ApiKey"));
         Configure<TokenWhitelistOptions>(configuration.GetSection("TokenWhitelist"));
         Configure<LarkNotifyTemplateOptions>(configuration.GetSection("LarkNotifyTemplate"));
+        Configure<HeterogeneousTokenWhitelistOptions>(configuration.GetSection("HeterogeneousTokenWhitelist"));
         
         context.Services.AddSingleton<IBlockchainClientFactory<AElfClient>, AElfClientFactory>();
         context.Services.AddSingleton<IBlockchainClientFactory<Nethereum.Web3.Web3>, EvmClientFactory>();

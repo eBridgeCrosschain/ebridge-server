@@ -45,27 +45,25 @@ public class UserLiquidityInfoAppService : CrossChainServerAppService, IUserLiqu
 
     public async Task<List<UserLiquidityIndexDto>> GetUserLiquidityInfosAsync(GetUserLiquidityInput input)
     {
-        var mustQuery = new List<Func<QueryContainerDescriptor<UserLiquidityInfoIndex>, QueryContainer>>
-            { q => q.Term(i => i.Field(f => f.Provider).Value(input.Provider)) };
+        var mustQuery =
+            new List<Func<QueryContainerDescriptor<UserLiquidityInfoIndex>, QueryContainer>>();
+        mustQuery.Add(q => q.Terms(t => t.Field(f => f.Provider).Terms(input.Providers)));
+
         if (!string.IsNullOrWhiteSpace(input.ChainId))
         {
             mustQuery.Add(q => q.Term(i => i.Field(f => f.ChainId).Value(input.ChainId)));
-            if (!string.IsNullOrWhiteSpace(input.Token))
-            {
-                var chain = await _chainAppService.GetAsync(input.ChainId);
-                switch (chain.Type)
-                {
-                    case BlockchainType.AElf:
-                        mustQuery.Add(q => q.Term(i => i.Field(f => f.TokenInfo.Symbol).Value(input.Token)));
-                        break;
-                    case BlockchainType.Evm:
-                        mustQuery.Add(q => q.Term(i => i.Field(f => f.TokenInfo.Address).Value(input.Token)));
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
         }
+
+        if (!string.IsNullOrWhiteSpace(input.Symbol))
+        {
+            mustQuery.Add(q => q.Term(i => i.Field(f => f.TokenInfo.Symbol).Value(input.Symbol)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(input.TokenAddress))
+        {
+            mustQuery.Add(q => q.Term(i => i.Field(f => f.TokenInfo.Address).Value(input.TokenAddress)));
+        }
+
 
         QueryContainer Filter(QueryContainerDescriptor<UserLiquidityInfoIndex> f) => f.Bool(b => b.Must(mustQuery));
         var list = await _userLiquidityInfoIndexRepository.GetListAsync(Filter, sortExp: o => o.Liquidity,
@@ -128,15 +126,18 @@ public class UserLiquidityInfoAppService : CrossChainServerAppService, IUserLiqu
         }
         else
         {
-            foreach (var chainTokenInfo in order.ChainTokenInfo.Where(chainTokenInfo => chainTokenInfo.ChainId == chainId &&
+            foreach (var chainTokenInfo in order.ChainTokenInfo.Where(chainTokenInfo =>
+                         chainTokenInfo.ChainId == chainId &&
                          chainTokenInfo.Status == TokenApplyOrderStatus.LiquidityAdded.ToString()))
             {
                 chainTokenInfo.Status = TokenApplyOrderStatus.Complete.ToString();
             }
+
             if (order.ChainTokenInfo.All(o => o.Status == TokenApplyOrderStatus.Complete.ToString()))
             {
                 order.Status = TokenApplyOrderStatus.Complete.ToString();
             }
+
             await _tokenApplyOrderRepository.UpdateAsync(order, autoSave: true);
         }
     }
