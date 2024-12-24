@@ -147,7 +147,7 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
             {
                 _logger.LogDebug("check user data consistency, userId:{userId}", user.Id.ToString());
                 var userInfo = await _crossChainUserRepository.FindAsync(o => o.UserId == user.Id);
-                if (userInfo.AddressInfos.IsNullOrEmpty() || userInfo.AddressInfos.Count == 1)
+                if (userInfo == null || userInfo.AddressInfos.IsNullOrEmpty() || userInfo.AddressInfos.Count == 1)
                 {
                     _logger.LogDebug("save user info into storage, userId:{userId}", user.Id.ToString());
                     var addressInfos = await GetAddressInfosAsync(caHash, version);
