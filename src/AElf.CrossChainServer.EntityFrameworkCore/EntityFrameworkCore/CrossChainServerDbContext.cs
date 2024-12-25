@@ -75,7 +75,7 @@ public class CrossChainServerDbContext :
     public DbSet<PoolLiquidityInfo> PoolLiquidityInfos { get; set; }
     public DbSet<UserLiquidityInfo> UserLiquidityInfos { get; set; }
     public DbSet<UserTokenAccessInfo> TokenAccessInfos { get; set; }
-    public DbSet<UserTokenOwnerDto> UserTokenOwners { get; set; }
+    public DbSet<UserTokenOwner> UserTokenOwners { get; set; }
     public DbSet<TokenApplyOrder> TokenApplyOrders { get; set; }
     public DbSet<ChainTokenInfo> ChainTokenInfos { get; set; }
     public DbSet<StatusChangedRecord> StatusChangedRecords { get; set; }
@@ -229,11 +229,11 @@ public class CrossChainServerDbContext :
             b.ConfigureByConvention();
         });
 
-        builder.Entity<UserTokenOwnerDto>(b =>
+        builder.Entity<UserTokenOwner>(b =>
         {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "UserTokenOwners", CrossChainServerConsts.DbSchema);
-            b.HasIndex(o => new { o.Address });
-            b.OwnsMany(e => e.TokenOwnerList);
+            b.HasIndex(o => new { o.Address,o.ChainId,o.Symbol });
+            // b.OwnsMany(e => e.TokenOwnerList);
             b.ConfigureByConvention();
         });
     }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.HttpClient;
@@ -13,7 +14,7 @@ namespace AElf.CrossChainServer.TokenAccess;
 public interface ITokenInvokeProvider
 {
     Task<TokenOwnerListDto> GetUserTokenOwnerListAndUpdateAsync(string address);
-    Task<List<TokenOwnerDto>> GetAsync(string address);
+    Task<List<UserTokenOwner>> GetAsync(string address);
     Task<bool> GetThirdTokenListAndUpdateAsync(string address, string symbol);
     Task<UserTokenBindingDto> PrepareBindingAsync(UserTokenIssueDto dto);
     Task<bool> BindingAsync(UserTokenBindingDto dto);
@@ -105,29 +106,69 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             if (resultDto.Data.Items.Count < PageSize) break;
         }
 
-        var entity = await _userTokenOwnerRepository.FindAsync(o => o.Address == address);
-        if (entity != null)
+        var userOwnerTokens = await _userTokenOwnerRepository.GetListAsync(o => o.Address == address);
+        var createPendingUserOwnerTokens = new List<UserTokenOwner>();
+        var updatePendingUserOwnerTokens = new List<UserTokenOwner>();
+        foreach (var token in tokenOwnerList.TokenOwnerList)
         {
-            entity.TokenOwnerList = tokenOwnerList.TokenOwnerList;
-            await _userTokenOwnerRepository.UpdateAsync(entity);
-        }
-        else
-        {
-            var userTokenOwner = new UserTokenOwnerDto
+            var symbolExistOwnerTokens = userOwnerTokens.FindAll(u => u.Symbol == token.Symbol);
+            if (symbolExistOwnerTokens.Count == 0)
             {
-                TokenOwnerList = tokenOwnerList.TokenOwnerList,
-                Address = address
-            };
-            await _userTokenOwnerRepository.InsertAsync(userTokenOwner, autoSave: true);
+                var owners = token.ChainIds.Select(t => new UserTokenOwner
+                {
+                    TokenName = token.TokenName,
+                    Symbol = token.Symbol,
+                    Decimals = token.Decimals,
+                    Icon = token.Icon,
+                    Owner = token.Owner,
+                    ChainId = t,
+                    TotalSupply = token.TotalSupply,
+                    LiquidityInUsd = token.LiquidityInUsd,
+                    Holders = token.Holders,
+                    ContractAddress = token.ContractAddress,
+                    Status = TokenApplyOrderStatus.Issued.ToString(),
+                    Address = address
+                });
+                createPendingUserOwnerTokens.AddRange(owners);
+            }
+            else
+            {
+                var tokenOwnerChainIds = new HashSet<string>(symbolExistOwnerTokens.Select(owner => owner.ChainId));
+                var missingChainIdToken = token.ChainIds.Where(chainId => !tokenOwnerChainIds.Contains(chainId)).Select(
+                    c => new UserTokenOwner
+                    {
+                        TokenName = token.TokenName,
+                        Symbol = token.Symbol,
+                        Decimals = token.Decimals,
+                        Icon = token.Icon,
+                        Owner = token.Owner,
+                        ChainId = c,
+                        TotalSupply = token.TotalSupply,
+                        LiquidityInUsd = token.LiquidityInUsd,
+                        Holders = token.Holders,
+                        ContractAddress = token.ContractAddress,
+                        Status = TokenApplyOrderStatus.Issued.ToString(),
+                        Address = address
+                    });
+
+                var chainIdsSet = new HashSet<string>(token.ChainIds);
+                var matchingTokenOwners =
+                    symbolExistOwnerTokens.Where(owner => chainIdsSet.Contains(owner.ChainId)).ToList();
+                matchingTokenOwners.ForEach(t => t.Status = TokenApplyOrderStatus.Issued.ToString());
+                updatePendingUserOwnerTokens.AddRange(matchingTokenOwners);
+                createPendingUserOwnerTokens.AddRange(missingChainIdToken);
+            }
         }
 
+        await _userTokenOwnerRepository.InsertManyAsync(createPendingUserOwnerTokens);
+        await _userTokenOwnerRepository.UpdateManyAsync(updatePendingUserOwnerTokens);
         return tokenOwnerList;
     }
 
-    public async Task<List<TokenOwnerDto>> GetAsync(string address)
+    public async Task<List<UserTokenOwner>> GetAsync(string address)
     {
-        var result = await _userTokenOwnerRepository.FindAsync(o => o.Address == address);
-        return result?.TokenOwnerList;
+        var result = await _userTokenOwnerRepository.GetListAsync(o => o.Address == address);
+        return result;
     }
 
     public async Task<bool> GetThirdTokenListAndUpdateAsync(string address, string symbol)
@@ -285,7 +326,8 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             return false;
         }
 
-        _logger.LogDebug($"request symbol market success, update user token issue {tokenInvoke.UserTokenIssueId} status to issued");
+        _logger.LogDebug(
+            $"request symbol market success, update user token issue {tokenInvoke.UserTokenIssueId} status to issued");
         var tokenIssueFindByIssueId =
             await _userTokenIssueRepository.FindAsync(o => o.Id == tokenInvoke.UserTokenIssueId);
         tokenIssueFindByIssueId.BindingId = dto.BindingId;
