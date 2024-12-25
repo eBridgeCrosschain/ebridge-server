@@ -1,56 +1,58 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.HttpClient;
-using Microsoft.Extensions.Logging;
+using AElf.CrossChainServer.TokenAccess.ThirdUserTokenIssue;
+using AElf.ExceptionHandler;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Serilog;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.ObjectMapping;
 
 namespace AElf.CrossChainServer.TokenAccess;
 
 public interface ITokenInvokeProvider
 {
-    Task<TokenOwnerListDto> GetUserTokenOwnerListAndUpdateAsync(string address);
-    Task<List<UserTokenOwner>> GetAsync(string address);
+    Task<List<UserTokenOwnerInfoDto>> GetUserTokenOwnerListAndUpdateAsync(string address);
+    Task<List<UserTokenOwnerInfoDto>> GetAsync(string address);
     Task<bool> GetThirdTokenListAndUpdateAsync(string address, string symbol);
-    Task<UserTokenBindingDto> PrepareBindingAsync(UserTokenIssueDto dto);
+    Task<UserTokenBindingDto> PrepareBindingAsync(ThirdUserTokenIssueInfoDto dto);
     Task<bool> BindingAsync(UserTokenBindingDto dto);
 }
 
 public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
 {
     private readonly IHttpProvider _httpProvider;
-    private readonly ILogger<TokenInvokeProvider> _logger;
     private readonly TokenAccessOptions _tokenAccessOptions;
-    private readonly IUserTokenOwnerRepository _userTokenOwnerRepository;
-    private readonly IUserTokenIssueRepository _userTokenIssueRepository;
+    private readonly IUserTokenOwnerProvider _userTokenOwnerProvider;
+    private readonly IThirdUserTokenIssueRepository _thirdUserTokenIssueRepository;
+    private readonly IObjectMapper _objectMapper;
 
     private const int PageSize = 50;
-    private ApiInfo _scanTokenDetailUri => new(HttpMethod.Get, _tokenAccessOptions.ScanTokenDetailUri);
-    private ApiInfo _tokenLiquidityUri => new(HttpMethod.Get, _tokenAccessOptions.AwakenGetTokenLiquidityUri);
+    private ApiInfo ScanTokenDetailUri => new(HttpMethod.Get, _tokenAccessOptions.ScanTokenDetailUri);
+    private ApiInfo TokenLiquidityUri => new(HttpMethod.Get, _tokenAccessOptions.AwakenGetTokenLiquidityUri);
 
-    private ApiInfo _userThirdTokenListUri =>
+    private ApiInfo UserThirdTokenListUri =>
         new(HttpMethod.Get, _tokenAccessOptions.SymbolMarketUserThirdTokenListUri);
 
 
     public TokenInvokeProvider(IHttpProvider httpProvider, IOptionsSnapshot<TokenAccessOptions> tokenAccessOptions,
-        ILogger<TokenInvokeProvider> logger, IUserTokenOwnerRepository userTokenOwnerRepository,
-        IUserTokenIssueRepository userTokenIssueRepository)
+        IThirdUserTokenIssueRepository thirdUserTokenIssueRepository, IObjectMapper objectMapper,
+        IUserTokenOwnerProvider userTokenOwnerProvider)
     {
-        _logger = logger;
         _httpProvider = httpProvider;
         _tokenAccessOptions = tokenAccessOptions.Value;
-        _userTokenOwnerRepository = userTokenOwnerRepository;
-        _userTokenIssueRepository = userTokenIssueRepository;
+        _thirdUserTokenIssueRepository = thirdUserTokenIssueRepository;
+        _objectMapper = objectMapper;
+        _userTokenOwnerProvider = userTokenOwnerProvider;
     }
 
-    public async Task<TokenOwnerListDto> GetUserTokenOwnerListAndUpdateAsync(string address)
+    public async Task<List<UserTokenOwnerInfoDto>> GetUserTokenOwnerListAndUpdateAsync(string address)
     {
         var skipCount = 0;
-        var tokenOwnerList = new TokenOwnerListDto();
+        var tokenOwnerList = new List<UserTokenOwnerInfoDto>();
 
         var userTokenListUri =
             $"{_tokenAccessOptions.SymbolMarketUserTokenListUri}?addressList={string.Join(CommonConstant.Underline, TokenSymbol.ELF, address, ChainId.AELF)}" +
@@ -70,7 +72,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "get user tokens error.");
+                Log.Error("get user tokens error {user}.", address);
             }
 
             if (resultDto == null || resultDto.Code != "20000" || resultDto.Data == null ||
@@ -83,162 +85,98 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             foreach (var item in resultDto.Data.Items)
             {
                 var detailDto = await _httpProvider.InvokeAsync<TokenDetailResultDto>(
-                    _tokenAccessOptions.ScanBaseUrl, _scanTokenDetailUri,
+                    _tokenAccessOptions.ScanBaseUrl, ScanTokenDetailUri,
                     param: new Dictionary<string, string> { ["symbol"] = item.Symbol });
-                tokenOwnerList.TokenOwnerList.Add(new TokenOwnerDto
+                foreach (var chainId in _tokenAccessOptions.ChainIdList)
                 {
-                    TokenName = item.TokenName,
-                    Symbol = item.Symbol,
-                    Decimals = item.Decimals,
-                    Icon = item.TokenImage,
-                    Owner = item.Owner,
-                    ChainIds = detailDto?.Data?.ChainIds ?? new List<string> { item.OriginIssueChain },
-                    TotalSupply = item.TotalSupply,
-                    LiquidityInUsd = await GetLiquidityInUsd(item.Symbol),
-                    Holders = detailDto?.Data?.Holders ?? 0,
-                    ContractAddress = detailDto?.Data?.TokenContractAddress,
-                    Status = TokenApplyOrderStatus.Issued.ToString()
-                });
+                    var userTokenOwnerInfo = _objectMapper.Map<UserTokenItemDto, UserTokenOwnerInfoDto>(item);
+                    userTokenOwnerInfo.Address = address;
+                    userTokenOwnerInfo.ChainId = chainId;
+                    userTokenOwnerInfo.ContractAddress = detailDto?.Data?.TokenContractAddress;
+                    userTokenOwnerInfo.Holders = detailDto?.Data?.Holders ?? 0;
+                    userTokenOwnerInfo.Status = TokenApplyOrderStatus.Issued.ToString();
+                    userTokenOwnerInfo.LiquidityInUsd = await GetLiquidityInUsd(item.Symbol);
+                    tokenOwnerList.Add(userTokenOwnerInfo);
+                }
             }
 
             if (resultDto.Data.Items.Count < PageSize) break;
         }
 
-        var userOwnerTokens = await _userTokenOwnerRepository.GetListAsync(o => o.Address == address);
-        var createPendingUserOwnerTokens = new List<UserTokenOwner>();
-        var updatePendingUserOwnerTokens = new List<UserTokenOwner>();
-        foreach (var token in tokenOwnerList.TokenOwnerList)
-        {
-            var symbolExistOwnerTokens = userOwnerTokens.FindAll(u => u.Symbol == token.Symbol);
-            if (symbolExistOwnerTokens.Count == 0)
-            {
-                var owners = token.ChainIds.Select(t => new UserTokenOwner
-                {
-                    TokenName = token.TokenName,
-                    Symbol = token.Symbol,
-                    Decimals = token.Decimals,
-                    Icon = token.Icon,
-                    Owner = token.Owner,
-                    ChainId = t,
-                    TotalSupply = token.TotalSupply,
-                    LiquidityInUsd = token.LiquidityInUsd,
-                    Holders = token.Holders,
-                    ContractAddress = token.ContractAddress,
-                    Status = TokenApplyOrderStatus.Issued.ToString(),
-                    Address = address
-                });
-                createPendingUserOwnerTokens.AddRange(owners);
-            }
-            else
-            {
-                var tokenOwnerChainIds = new HashSet<string>(symbolExistOwnerTokens.Select(owner => owner.ChainId));
-                var missingChainIdToken = token.ChainIds.Where(chainId => !tokenOwnerChainIds.Contains(chainId)).Select(
-                    c => new UserTokenOwner
-                    {
-                        TokenName = token.TokenName,
-                        Symbol = token.Symbol,
-                        Decimals = token.Decimals,
-                        Icon = token.Icon,
-                        Owner = token.Owner,
-                        ChainId = c,
-                        TotalSupply = token.TotalSupply,
-                        LiquidityInUsd = token.LiquidityInUsd,
-                        Holders = token.Holders,
-                        ContractAddress = token.ContractAddress,
-                        Status = TokenApplyOrderStatus.Issued.ToString(),
-                        Address = address
-                    });
+        await _userTokenOwnerProvider.AddUserTokenOwnerListAsync(address, tokenOwnerList);
 
-                var chainIdsSet = new HashSet<string>(token.ChainIds);
-                var matchingTokenOwners =
-                    symbolExistOwnerTokens.Where(owner => chainIdsSet.Contains(owner.ChainId)).ToList();
-                matchingTokenOwners.ForEach(t => t.Status = TokenApplyOrderStatus.Issued.ToString());
-                updatePendingUserOwnerTokens.AddRange(matchingTokenOwners);
-                createPendingUserOwnerTokens.AddRange(missingChainIdToken);
-            }
-        }
-
-        await _userTokenOwnerRepository.InsertManyAsync(createPendingUserOwnerTokens);
-        await _userTokenOwnerRepository.UpdateManyAsync(updatePendingUserOwnerTokens);
         return tokenOwnerList;
     }
 
-    public async Task<List<UserTokenOwner>> GetAsync(string address)
+    public async Task<List<UserTokenOwnerInfoDto>> GetAsync(string address)
     {
-        var result = await _userTokenOwnerRepository.GetListAsync(o => o.Address == address);
-        return result;
+        return await _userTokenOwnerProvider.GetUserTokenOwnerListAsync(address);
     }
 
+    [ExceptionHandler(typeof(Exception),
+        Message = "[GetThirdTokenListAndUpdateAsync] Get third token from symbolMarket failed.",
+        ReturnDefault = ReturnDefault.Default, LogTargets = new[] { "address", "symbol" })]
     public async Task<bool> GetThirdTokenListAndUpdateAsync(string address, string symbol)
     {
-        try
+        var tokenParams = new Dictionary<string, string>();
+        tokenParams["address"] = address;
+        tokenParams["aelfToken"] = symbol;
+        var resultDto = await _httpProvider.InvokeAsync<ThirdTokenResultDto>(
+            _tokenAccessOptions.SymbolMarketBaseUrl, UserThirdTokenListUri, param: tokenParams);
+        if (resultDto.Code != "20000" || resultDto.Data == null)
         {
-            var tokenParams = new Dictionary<string, string>();
-            tokenParams["address"] = address;
-            tokenParams["aelfToken"] = symbol;
-            var resultDto = await _httpProvider.InvokeAsync<ThirdTokenResultDto>(
-                _tokenAccessOptions.SymbolMarketBaseUrl, _userThirdTokenListUri, param: tokenParams);
-            if (resultDto.Code != "20000" || resultDto.Data == null)
-            {
-                _logger.LogWarning($"get {address} {symbol} failed, message: {resultDto.Message}");
-                return false;
-            }
-
-            foreach (var item in resultDto.Data)
-            {
-                var aelfChainId = FindMatchChainId(item.AelfChain);
-                var thirdChainId = FindMatchChainId(item.ThirdChain);
-                if (string.IsNullOrWhiteSpace(aelfChainId) || string.IsNullOrWhiteSpace(thirdChainId))
-                {
-                    _logger.LogWarning(
-                        $"skip not supported chainId, aelf chain: {aelfChainId} third chain: {thirdChainId}");
-                    break;
-                }
-
-                var res = await _userTokenIssueRepository.FindAsync(o =>
-                    o.Address == address && o.Symbol == item.ThirdSymbol && o.OtherChainId == thirdChainId);
-                if (res != null)
-                {
-                    _logger.LogDebug(
-                        $"Update address: {address}, Symbol: {item.ThirdSymbol}, OtherChainId: {thirdChainId} TokenIssue");
-                    res.Status = TokenApplyOrderStatus.Issued.ToString();
-                    await _userTokenIssueRepository.UpdateAsync(res);
-                }
-                else
-                {
-                    _logger.LogDebug(
-                        $"Create address: {address}, Symbol: {item.ThirdSymbol}, OtherChainId: {thirdChainId} TokenIssue");
-                    await _userTokenIssueRepository.InsertAsync(new UserTokenIssueDto
-                    {
-                        Address = address,
-                        Symbol = item.ThirdSymbol,
-                        ChainId = aelfChainId,
-                        TokenName = item.ThirdTokenName,
-                        TokenImage = item.ThirdTokenImage,
-                        OtherChainId = thirdChainId,
-                        ContractAddress = item.ThirdContractAddress,
-                        TotalSupply = item.ThirdTotalSupply,
-                        Status = TokenApplyOrderStatus.Issued.ToString()
-                    });
-                }
-            }
-
+            Log.Warning("Get {address} {symbol} failed, message: {message}", address, symbol, resultDto.Message);
             return false;
         }
-        catch (Exception e)
+
+        foreach (var item in resultDto.Data)
         {
-            _logger.LogError(e, "Get SymbolMarket failed");
-            return false;
+            var aelfChainId = FindMatchChainId(item.AelfChain);
+            var thirdChainId = FindMatchChainId(item.ThirdChain);
+            if (string.IsNullOrWhiteSpace(aelfChainId) || string.IsNullOrWhiteSpace(thirdChainId))
+            {
+                Log.Warning(
+                    "skip not supported chainId, aelf chain: {aelfChainId} third chain: {thirdChainId}", aelfChainId,
+                    thirdChainId);
+                continue;
+            }
+
+            var res = await _thirdUserTokenIssueRepository.FindAsync(o =>
+                o.Address == address && o.Symbol == item.AelfToken && o.OtherChainId == thirdChainId);
+            if (res != null)
+            {
+                Log.Debug(
+                    "Update third token, user: {address}, Symbol: {symbol}, OtherChainId: {thirdChainId} TokenIssue", address,
+                    item.AelfToken, thirdChainId);
+                res.Status = TokenApplyOrderStatus.Issued.ToString();
+                await _thirdUserTokenIssueRepository.UpdateAsync(res);
+            }
+            else
+            {
+                Log.Debug(
+                    "Add third token, user: {address}, Symbol: {symbol}, OtherChainId: {thirdChainId} TokenIssue", address,
+                    item.ThirdSymbol, thirdChainId);
+                var info = _objectMapper.Map<ThirdTokenItemDto, ThirdUserTokenIssueInfo>(item);
+                // todo:third symbol is null
+                info.Address = address;
+                info.Symbol = item.AelfToken;
+                info.ChainId = aelfChainId;
+                info.OtherChainId = thirdChainId;
+                info.Status = TokenApplyOrderStatus.Issued.ToString();
+                await _thirdUserTokenIssueRepository.InsertAsync(info,autoSave:true);
+            }
         }
+
+        return false;
     }
 
-    public async Task<UserTokenBindingDto> PrepareBindingAsync(UserTokenIssueDto dto)
+    public async Task<UserTokenBindingDto> PrepareBindingAsync(ThirdUserTokenIssueInfoDto dto)
     {
-        var res = await _userTokenIssueRepository.FindAsync(o =>
+        var res = await _thirdUserTokenIssueRepository.FindAsync(o =>
             o.Address == dto.Address && o.Symbol == dto.Symbol && o.OtherChainId == dto.OtherChainId);
         if (res != null && !res.BindingId.IsNullOrEmpty() && !res.ThirdTokenId.IsNullOrEmpty())
         {
-            _logger.LogDebug("Get existing TokenIssue, no need request symbol market again.");
+            Log.Debug("Get existing TokenIssue, no need request symbol market again.");
             return new UserTokenBindingDto { BindingId = res.BindingId, ThirdTokenId = res.ThirdTokenId };
         }
 
@@ -265,47 +203,50 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
         };
         var resultDto = await _httpProvider.InvokeAsync<PrepareBindingResultDto>(HttpMethod.Post, url,
             body: JsonConvert.SerializeObject(prepareBindingInput, HttpProvider.DefaultJsonSettings));
-        if (resultDto.Code != "20000") return new UserTokenBindingDto();
-
+        if (resultDto.Code != "20000")
+        {
+            return new UserTokenBindingDto();
+        }
 
         var bindingId = resultDto.Data?.BindingId;
         var thirdTokenId = resultDto.Data?.ThirdTokenId;
         var status = TokenApplyOrderStatus.Issuing.ToString();
         if (res != null)
         {
-            _logger.LogDebug(
-                $"get exist TokenIssue, will update BindingId, ThirdTokenId and status {res.Status} to issuing");
+            Log.Debug(
+                "get exist TokenIssue, will update BindingId, ThirdTokenId and status {status} to issuing", res.Status);
             res.BindingId = bindingId;
             res.ThirdTokenId = thirdTokenId;
             res.Status = status;
-            await _userTokenIssueRepository.UpdateAsync(res);
+            await _thirdUserTokenIssueRepository.UpdateAsync(res);
         }
         else
         {
-            _logger.LogDebug($"create TokenIssue, will update {dto.Id} status to issuing");
-            dto.BindingId = bindingId;
-            dto.ThirdTokenId = thirdTokenId;
-            dto.Status = status;
-            await _userTokenIssueRepository.InsertAsync(dto);
+            Log.Debug("create TokenIssue, will update {symbol},{chainId},{otherChainId} status to issuing",
+                dto.Symbol, dto.ChainId, dto.OtherChainId);
+            var info = _objectMapper.Map<ThirdUserTokenIssueInfoDto, ThirdUserTokenIssueInfo>(dto);
+            info.BindingId = bindingId;
+            info.ThirdTokenId = thirdTokenId;
+            info.Status = status;
+            await _thirdUserTokenIssueRepository.InsertAsync(info);
         }
 
-        _logger.LogDebug("Insert token invoke");
         return new UserTokenBindingDto { BindingId = bindingId, ThirdTokenId = thirdTokenId };
     }
 
     public async Task<bool> BindingAsync(UserTokenBindingDto dto)
     {
-        var userTokenIssue = await _userTokenIssueRepository.FindAsync(o =>
+        var userTokenIssue = await _thirdUserTokenIssueRepository.FindAsync(o =>
             o.BindingId == dto.BindingId && o.ThirdTokenId == dto.ThirdTokenId);
         if (userTokenIssue == null)
         {
-            _logger.LogDebug($"Token {dto.BindingId} {dto.ThirdTokenId} not exist.");
+            Log.Debug($"Token {dto.BindingId} {dto.ThirdTokenId} not exist.");
             return false;
         }
 
         if (userTokenIssue.Status == TokenApplyOrderStatus.Issued.ToString())
         {
-            _logger.LogDebug($"Skip, Token {dto.BindingId} {dto.ThirdTokenId} had issued");
+            Log.Debug($"Skip, Token {dto.BindingId} {dto.ThirdTokenId} had issued");
             return true;
         }
 
@@ -319,14 +260,14 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             }, HttpProvider.DefaultJsonSettings));
         if (resultDto.Code != "20000")
         {
-            _logger.LogWarning($"request symbol market fail, {resultDto.Message}");
+            Log.Warning($"request symbol market fail, {resultDto.Message}");
             return false;
         }
 
         userTokenIssue.BindingId = dto.BindingId;
         userTokenIssue.ThirdTokenId = dto.ThirdTokenId;
         userTokenIssue.Status = TokenApplyOrderStatus.Issued.ToString();
-        await _userTokenIssueRepository.UpdateAsync(userTokenIssue);
+        await _thirdUserTokenIssueRepository.UpdateAsync(userTokenIssue);
         return true;
     }
 
@@ -335,7 +276,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
         var tokenParams = new Dictionary<string, string>();
         tokenParams["symbol"] = symbol;
         var resultDto = await _httpProvider.InvokeAsync<CommonResponseDto<string>>(_tokenAccessOptions.AwakenBaseUrl,
-            _tokenLiquidityUri, param: tokenParams);
+            TokenLiquidityUri, param: tokenParams);
         return resultDto.Code == "20000" ? resultDto.Value : "0";
     }
 

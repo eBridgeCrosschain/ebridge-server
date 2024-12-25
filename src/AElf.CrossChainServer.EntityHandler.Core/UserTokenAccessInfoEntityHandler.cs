@@ -9,8 +9,7 @@ namespace AElf.CrossChainServer.EntityHandler.Core;
 
 public class UserTokenAccessInfoEntityHandler : ITransientDependency,
     IDistributedEventHandler<EntityCreatedEto<UserTokenAccessInfoEto>>,
-    IDistributedEventHandler<EntityUpdatedEto<UserTokenAccessInfoEto>>,
-    IDistributedEventHandler<EntityDeletedEto<UserTokenAccessInfoEto>>
+    IDistributedEventHandler<EntityUpdatedEto<UserTokenAccessInfoEto>>
 {
     private readonly IObjectMapper _objectMapper;
     private readonly ITokenAccessAppService _tokenAccessAppService;
@@ -25,12 +24,6 @@ public class UserTokenAccessInfoEntityHandler : ITransientDependency,
     {
         var input = _objectMapper.Map<UserTokenAccessInfoEto, AddUserTokenAccessInfoIndexInput>(eventData.Entity);
         await _tokenAccessAppService.AddUserTokenAccessInfoIndexAsync(input);
-    }
-
-    public async Task HandleEventAsync(EntityDeletedEto<UserTokenAccessInfoEto> eventData)
-    {
-        var input = _objectMapper.Map<UserTokenAccessInfoEto, DeleteUserTokenAccessInfoIndexInput>(eventData.Entity);
-        await _tokenAccessAppService.DeleteUserTokenAccessInfoIndexAsync(input);
     }
 
     public async Task HandleEventAsync(EntityUpdatedEto<UserTokenAccessInfoEto> eventData)

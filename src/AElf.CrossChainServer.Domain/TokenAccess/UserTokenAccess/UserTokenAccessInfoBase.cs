@@ -2,7 +2,7 @@ using System;
 using AElf.CrossChainServer.Entities;
 using Nest;
 
-namespace AElf.CrossChainServer.TokenAccess;
+namespace AElf.CrossChainServer.TokenAccess.UserTokenAccess;
 
 public class UserTokenAccessInfoBase : CrossChainServerEntity<Guid>
 {
@@ -14,7 +14,4 @@ public class UserTokenAccessInfoBase : CrossChainServerEntity<Guid>
     [Keyword] public string PersonName { get; set; }
     [Keyword] public string TelegramHandler { get; set; }
     [Keyword] public string Email { get; set; }
-
-    [Keyword] public string ChainIds { get; set; } = "[]";
-    [Keyword] public string OtherChainIds { get; set; } = "[]";
 }

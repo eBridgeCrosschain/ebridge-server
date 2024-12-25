@@ -88,5 +88,7 @@ public class CrossChainServerApplicationModule : AbpModule
         context.Services.AddTransient<IAetherLinkProvider, AetherLinkProvider>();
         context.Services.AddTransient<ILarkRobotNotifyProvider,LarkRobotNotifyProvider>();
         context.Services.AddTransient<ITokenPriceProvider, TokenPriceProvider>();
+        context.Services.AddTransient<IUserTokenOwnerProvider, UserTokenOwnerProvider>();
+
     }
 }

@@ -7,10 +7,13 @@ using AElf.CrossChainServer.Contracts;
 using AElf.CrossChainServer.CrossChain;
 using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.Notify;
+using AElf.CrossChainServer.TokenAccess.ThirdUserTokenIssue;
+using AElf.CrossChainServer.TokenAccess.UserTokenAccess;
 using AElf.CrossChainServer.TokenPool;
 using AElf.CrossChainServer.TokenPrice;
 using AElf.CrossChainServer.Tokens;
 using AElf.Indexing.Elasticsearch;
+using JetBrains.Annotations;
 using Microsoft.Extensions.Options;
 using Nest;
 using Serilog;
@@ -25,10 +28,11 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
 {
     private readonly ITokenApplyOrderRepository _tokenApplyOrderRepository;
     private readonly IUserAccessTokenInfoRepository _userAccessTokenInfoRepository;
-    private readonly IUserTokenIssueRepository _userTokenIssueRepository;
+    private readonly IThirdUserTokenIssueRepository _thirdUserTokenIssueRepository;
     private readonly ICrossChainUserRepository _crossChainUserRepository;
     private readonly INESTRepository<TokenApplyOrderIndex, Guid> _tokenApplyOrderIndexRepository;
     private readonly INESTRepository<UserTokenAccessInfoIndex, Guid> _userAccessTokenInfoIndexRepository;
+    private readonly INESTRepository<ThirdUserTokenIssueIndex, Guid> _thirdUserTokenIssueIndexRepository;
 
     private readonly IPoolLiquidityInfoAppService _poolLiquidityInfoAppService;
     private readonly IUserLiquidityInfoAppService _userLiquidityInfoAppService;
@@ -54,7 +58,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         ITokenApplyOrderRepository tokenApplyOrderRepository,
         INESTRepository<TokenApplyOrderIndex, Guid> tokenApplyOrderIndexRepository,
         IUserAccessTokenInfoRepository userAccessTokenInfoRepository,
-        IUserTokenIssueRepository userTokenIssueRepository,
+        IThirdUserTokenIssueRepository thirdUserTokenIssueRepository,
         INESTRepository<UserTokenAccessInfoIndex, Guid> userAccessTokenInfoIndexRepository,
         ILarkRobotNotifyProvider larkRobotNotifyProvider, IPoolLiquidityInfoAppService poolLiquidityInfoAppService,
         IUserLiquidityInfoAppService userLiquidityInfoAppService, ITokenPriceProvider tokenPriceProvider,
@@ -64,12 +68,13 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         IOptionsSnapshot<TokenAccessOptions> tokenAccessOptions,
         IOptionsSnapshot<TokenWhitelistOptions> tokenWhitelistOptions,
         IOptionsSnapshot<TokenPriceIdMappingOptions> tokenPriceIdMappingOptions,
-        IOptionsSnapshot<HeterogeneousTokenWhitelistOptions> heterogeneousTokenWhitelistOptions)
+        IOptionsSnapshot<HeterogeneousTokenWhitelistOptions> heterogeneousTokenWhitelistOptions,
+        INESTRepository<ThirdUserTokenIssueIndex, Guid> thirdUserTokenIssueIndexRepository)
     {
         _tokenApplyOrderRepository = tokenApplyOrderRepository;
         _tokenApplyOrderIndexRepository = tokenApplyOrderIndexRepository;
         _userAccessTokenInfoRepository = userAccessTokenInfoRepository;
-        _userTokenIssueRepository = userTokenIssueRepository;
+        _thirdUserTokenIssueRepository = thirdUserTokenIssueRepository;
         _userAccessTokenInfoIndexRepository = userAccessTokenInfoIndexRepository;
         _larkRobotNotifyProvider = larkRobotNotifyProvider;
         _poolLiquidityInfoAppService = poolLiquidityInfoAppService;
@@ -81,6 +86,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         _bridgeContractAppService = bridgeContractAppService;
         _indexerCrossChainLimitInfoService = indexerCrossChainLimitInfoService;
         _tokenInvokeProvider = tokenInvokeProvider;
+        _thirdUserTokenIssueIndexRepository = thirdUserTokenIssueIndexRepository;
         _tokenAccessOptions = tokenAccessOptions.Value;
         _tokenWhitelistOptions = tokenWhitelistOptions.Value;
         _tokenPriceIdMappingOptions = tokenPriceIdMappingOptions.Value;
@@ -93,25 +99,15 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         var address = await GetUserAddressAsync();
         if (address.IsNullOrEmpty()) return result;
         var listDto = await _tokenInvokeProvider.GetUserTokenOwnerListAndUpdateAsync(address);
-        if (listDto == null || listDto.TokenOwnerList.IsNullOrEmpty())
+        if (listDto.Count == 0)
         {
             Log.Debug($"{address} has no own tokens.");
             return result;
         }
 
-        Log.Debug($"{address} has {listDto.TokenOwnerList.Count} tokens.");
-        foreach (var token in listDto.TokenOwnerList)
-        {
-            result.TokenList.Add(new()
-            {
-                TokenName = token.TokenName,
-                Symbol = token.Symbol,
-                TokenImage = token.Icon,
-                Holders = token.Holders,
-                LiquidityInUsd = token.LiquidityInUsd
-            });
-        }
-
+        Log.Debug("{address} has {count} tokens.", address, listDto.Count);
+        var tokenList = ObjectMapper.Map<List<UserTokenOwnerInfoDto>, List<AvailableTokenDto>>(listDto);
+        result.TokenList = tokenList.DistinctBy(r => r.Symbol).ToList();
         return result;
     }
 
@@ -122,25 +118,32 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         AssertHelper.IsTrue(input.Email.Contains(CommonConstant.At), "Please enter a valid email address");
 
         var listDto = await _tokenInvokeProvider.GetAsync(address);
-        AssertHelper.IsTrue(listDto != null && listDto.Exists(t => t.Symbol == input.Symbol) &&
+        AssertHelper.IsTrue(listDto != null && listDto.Count > 0 && listDto.Exists(t => t.Symbol == input.Symbol) &&
                             CheckLiquidityAndHolderAvailable(listDto, input.Symbol), "Symbol invalid.");
 
         var dto = ObjectMapper.Map<UserTokenAccessInfoInput, UserTokenAccessInfo>(input);
         dto.Address = address;
-        var existDto = await _userAccessTokenInfoRepository.FindAsync(o => o.Address == address);
-        if (existDto != null)
+        var existAccessInfo = await _userAccessTokenInfoRepository.FindAsync(o=>o.Address == address && o.Symbol == input.Symbol);
+        if (existAccessInfo == null)
         {
-            Log.Debug($"update {address} accessTokenInfo");
-            await _userAccessTokenInfoRepository.UpdateAsync(dto);
+            Log.Debug("{user} create new token access info. {symbol}", address, input.Symbol);
+            await _userAccessTokenInfoRepository.InsertAsync(dto);
         }
         else
         {
-            Log.Debug($"create {address} accessTokenInfo");
-            await _userAccessTokenInfoRepository.InsertAsync(dto);
+            Log.Debug("{user} has already applied for {symbol} token access, update record.", address, input.Symbol);
+            existAccessInfo.Email = dto.Email;
+            existAccessInfo.OfficialWebsite = dto.OfficialWebsite;
+            existAccessInfo.PersonName = dto.PersonName;
+            existAccessInfo.Title = dto.Title;
+            existAccessInfo.TelegramHandler = dto.TelegramHandler;
+            existAccessInfo.OfficialTwitter = dto.OfficialTwitter;
+            await _userAccessTokenInfoRepository.UpdateAsync(existAccessInfo);
         }
 
         return true;
     }
+
 
     public async Task<UserTokenAccessInfoDto> GetUserTokenAccessInfoAsync(UserTokenAccessInfoBaseInput input)
     {
@@ -151,9 +154,10 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
                             listDto.Exists(t => t.Symbol == input.Symbol) &&
                             CheckLiquidityAndHolderAvailable(listDto, input.Symbol), "Symbol invalid.");
 
-        return ObjectMapper.Map<UserTokenAccessInfoIndex, UserTokenAccessInfoDto>(
-            await GetUserTokenAccessInfoIndexAsync(input.Symbol, address));
+        var info = await GetUserTokenAccessInfoAsync(address, input.Symbol);
+        return info.FirstOrDefault();
     }
+
 
     #region CheckChainAccessStatus
 
@@ -212,7 +216,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     // Processes the chain list to determine the status of each chain
     private async Task ProcessChainListAsync(
         List<ChainAccessInfo> chainList,
-        List<UserTokenOwner> listDto,
+        List<UserTokenOwnerInfoDto> listDto,
         List<TokenApplyOrderIndex> applyOrderList,
         string symbol,
         string address)
@@ -231,7 +235,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
                                                                      c.ChainId == item.ChainId))?
                 .ChainTokenInfo?.FirstOrDefault(c => c.ChainId == item.ChainId)?.Status;
             // Retrieve user token issue details
-            var res = await _userTokenIssueRepository.FindAsync(o =>
+            var res = await _thirdUserTokenIssueRepository.FindAsync(o =>
                 o.Address == address && o.ChainId == item.ChainId && o.Symbol == item.Symbol);
 
             item.TotalSupply = tokenOwner?.TotalSupply ?? 0;
@@ -258,7 +262,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     // Processes the chain list to determine the status of each chain
     private async Task ProcessOtherChainListAsync(
         List<ChainAccessInfo> otherChainList,
-        List<UserTokenOwner> listDto,
+        List<UserTokenOwnerInfoDto> listDto,
         List<TokenApplyOrderIndex> applyOrderList,
         string symbol,
         string address)
@@ -276,7 +280,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
                                                                 t.OtherChainTokenInfo.ChainId == item.ChainId);
             var applyStatus = applyOrder?.OtherChainTokenInfo?.Status;
             // Retrieve user token issue details
-            var res = await _userTokenIssueRepository.FindAsync(o =>
+            var res = await _thirdUserTokenIssueRepository.FindAsync(o =>
                 o.Address == address && o.OtherChainId == item.ChainId && o.Symbol == item.Symbol);
 
             item.TotalSupply = res?.TotalSupply.SafeToDecimal() ?? 0M;
@@ -286,7 +290,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             item.Icon = res?.TokenImage ?? tokenOwner?.Icon;
 
             // Determine the status
-            item.Status = DetermineStatus(isCompleted, applyStatus, res, tokenOwner);
+            item.Status = DetermineStatus(isCompleted, applyStatus, res, null);
 
             // Determine if the token is selected
             item.Checked = DetermineCheckedStatus(isCompleted, applyOrderList, item.ChainId);
@@ -301,8 +305,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     }
 
     // Determines the status of the token
-    private static string DetermineStatus(bool isCompleted, string applyStatus, UserTokenIssueDto res,
-        UserTokenOwner tokenOwner)
+    private static string DetermineStatus(bool isCompleted, string applyStatus, ThirdUserTokenIssueInfo res,
+        UserTokenOwnerInfoDto tokenOwner)
     {
         if (isCompleted)
         {
@@ -598,9 +602,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
 
         var address = await GetUserAddressAsync();
 
-        var dto = new UserTokenIssueDto
+        var dto = new ThirdUserTokenIssueInfoDto
         {
-            Id = GuidHelper.UniqGuid(input.Symbol, address, input.OtherChainId),
             Address = address,
             WalletAddress = input.Address,
             Symbol = input.Symbol,
@@ -728,10 +731,16 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         await _userAccessTokenInfoIndexRepository.UpdateAsync(index);
     }
 
-    public async Task DeleteUserTokenAccessInfoIndexAsync(DeleteUserTokenAccessInfoIndexInput input)
+    public async Task AddThirdUserTokenIssueInfoIndexAsync(AddThirdUserTokenIssueInfoIndexInput input)
     {
-        var index = ObjectMapper.Map<DeleteUserTokenAccessInfoIndexInput, UserTokenAccessInfoIndex>(input);
-        await _userAccessTokenInfoIndexRepository.DeleteAsync(index);
+        var index = ObjectMapper.Map<AddThirdUserTokenIssueInfoIndexInput, ThirdUserTokenIssueIndex>(input);
+        await _thirdUserTokenIssueIndexRepository.AddAsync(index);
+    }
+
+    public async Task UpdateThirdUserTokenIssueInfoIndexAsync(UpdateThirdUserTokenIssueInfoIndexInput input)
+    {
+        var index = ObjectMapper.Map<UpdateThirdUserTokenIssueInfoIndexInput, ThirdUserTokenIssueIndex>(input);
+        await _thirdUserTokenIssueIndexRepository.UpdateAsync(index);
     }
 
     public async Task AddTokenApplyOrderIndexAsync(AddTokenApplyOrderIndexInput input)
@@ -1072,9 +1081,9 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         return userDto?.AddressInfos?.FirstOrDefault()?.Address;
     }
 
-    private bool CheckLiquidityAndHolderAvailable(List<UserTokenOwner> TokenOwnerList, string symbol)
+    private bool CheckLiquidityAndHolderAvailable(List<UserTokenOwnerInfoDto> tokenOwnerList, string symbol)
     {
-        var tokenOwnerDto = TokenOwnerList.FirstOrDefault(t => t.Symbol == symbol);
+        var tokenOwnerDto = tokenOwnerList.FirstOrDefault(t => t.Symbol == symbol);
         var liquidityInUsd = !_tokenAccessOptions.TokenConfig.ContainsKey(symbol)
             ? _tokenAccessOptions.DefaultConfig.Liquidity
             : _tokenAccessOptions.TokenConfig[symbol].Liquidity;
@@ -1085,13 +1094,19 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
                && tokenOwnerDto.Holders > holders;
     }
 
-    private async Task<UserTokenAccessInfoIndex> GetUserTokenAccessInfoIndexAsync(string symbol, string address)
+    private async Task<List<UserTokenAccessInfoDto>> GetUserTokenAccessInfoAsync(string address,
+        [CanBeNull] string symbol)
     {
         var mustQuery = new List<Func<QueryContainerDescriptor<UserTokenAccessInfoIndex>, QueryContainer>>();
-        mustQuery.Add(q => q.Term(i => i.Field(f => f.Symbol).Value(symbol)));
         mustQuery.Add(q => q.Term(i => i.Field(f => f.Address).Value(address)));
+        if (symbol != null)
+        {
+            mustQuery.Add(q => q.Term(i => i.Field(f => f.Symbol).Value(symbol)));
+        }
+
         QueryContainer Filter(QueryContainerDescriptor<UserTokenAccessInfoIndex> f) => f.Bool(b => b.Must(mustQuery));
-        return await _userAccessTokenInfoIndexRepository.GetAsync(Filter);
+        var list = await _userAccessTokenInfoIndexRepository.GetListAsync(Filter);
+        return ObjectMapper.Map<List<UserTokenAccessInfoIndex>, List<UserTokenAccessInfoDto>>(list.Item2);
     }
 
     private async Task<List<TokenApplyOrderIndex>> GetTokenApplyOrderIndexListAsync(string address, string symbol,

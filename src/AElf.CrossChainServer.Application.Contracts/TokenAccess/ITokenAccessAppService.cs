@@ -20,7 +20,8 @@ public interface ITokenAccessAppService
     
     Task AddUserTokenAccessInfoIndexAsync(AddUserTokenAccessInfoIndexInput input);
     Task UpdateUserTokenAccessInfoIndexAsync(UpdateUserTokenAccessInfoIndexInput input);
-    Task DeleteUserTokenAccessInfoIndexAsync(DeleteUserTokenAccessInfoIndexInput input);
+    Task AddThirdUserTokenIssueInfoIndexAsync(AddThirdUserTokenIssueInfoIndexInput input);
+    Task UpdateThirdUserTokenIssueInfoIndexAsync(UpdateThirdUserTokenIssueInfoIndexInput input);
 
     Task AddTokenApplyOrderIndexAsync(AddTokenApplyOrderIndexInput input);
     Task UpdateTokenApplyOrderIndexAsync(UpdateTokenApplyOrderIndexInput input);

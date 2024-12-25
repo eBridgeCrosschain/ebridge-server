@@ -1,10 +1,10 @@
 using System;
-using AElf.CrossChainServer.Entities;
 
 namespace AElf.CrossChainServer.TokenAccess;
 
-public class UserTokenIssueDto : CrossChainServerEntity<Guid>
+public class ThirdUserTokenIssueInfoEto
 {
+    public Guid Id { get; set; }
     public string Address { get; set; }
     public string WalletAddress { get; set; }
     public string Symbol { get; set; }

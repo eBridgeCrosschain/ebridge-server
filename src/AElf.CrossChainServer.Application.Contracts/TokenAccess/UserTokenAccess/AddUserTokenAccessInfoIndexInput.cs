@@ -2,7 +2,7 @@ using System;
 
 namespace AElf.CrossChainServer.TokenAccess;
 
-public class UserTokenAccessInfoBaseDto
+public class AddUserTokenAccessInfoIndexInput
 {
     public Guid Id { get; set; }
     public string Symbol { get; set; }

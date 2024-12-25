@@ -2,6 +2,9 @@
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.CrossChain;
 using AElf.CrossChainServer.TokenAccess;
+using AElf.CrossChainServer.TokenAccess.ThirdUserTokenIssue;
+using AElf.CrossChainServer.TokenAccess.UserTokenAccess;
+using AElf.CrossChainServer.TokenAccess.UserTokenOwner;
 using AElf.CrossChainServer.TokenPool;
 using AElf.CrossChainServer.Tokens;
 using Microsoft.EntityFrameworkCore;
@@ -74,13 +77,11 @@ public class CrossChainServerDbContext :
     public DbSet<CrossChainRateLimit> CrossChainRateLimits { get; set; }
     public DbSet<PoolLiquidityInfo> PoolLiquidityInfos { get; set; }
     public DbSet<UserLiquidityInfo> UserLiquidityInfos { get; set; }
-    public DbSet<UserTokenAccessInfo> TokenAccessInfos { get; set; }
-    public DbSet<UserTokenOwner> UserTokenOwners { get; set; }
     public DbSet<TokenApplyOrder> TokenApplyOrders { get; set; }
     public DbSet<ChainTokenInfo> ChainTokenInfos { get; set; }
     public DbSet<StatusChangedRecord> StatusChangedRecords { get; set; }
     public DbSet<UserTokenAccessInfo> UserTokenAccessInfos { get; set; }
-    public DbSet<UserTokenIssueDto> UserTokenIssues { get; set; }
+    public DbSet<ThirdUserTokenIssueInfo> ThirdUserTokenIssuesInfos { get; set; }
 
     public CrossChainServerDbContext(DbContextOptions<CrossChainServerDbContext> options)
         : base(options)
@@ -171,19 +172,18 @@ public class CrossChainServerDbContext :
         builder.Entity<CrossChainDailyLimit>(b =>
         {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "CrossChainDailyLimits", CrossChainServerConsts.DbSchema);
-            b.ConfigureByConvention(); 
+            b.ConfigureByConvention();
         });
-        
+
         builder.Entity<CrossChainRateLimit>(b =>
         {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "CrossChainRateLimits", CrossChainServerConsts.DbSchema);
-            b.ConfigureByConvention(); 
+            b.ConfigureByConvention();
         });
         builder.Entity<UserTokenAccessInfo>(b =>
         {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "UserTokenAccessInfo", CrossChainServerConsts.DbSchema);
-            b.HasIndex(o => new { o.Symbol }).IsUnique();
-            b.HasIndex(o => new { o.Address });
+            b.HasIndex(o => new { o.Address,o.Symbol }).IsUnique();
             b.ConfigureByConvention();
         });
 
@@ -202,16 +202,18 @@ public class CrossChainServerDbContext :
                 .HasForeignKey(x => x.OrderId)
                 .IsRequired();
         });
-        
+
         builder.Entity<ChainTokenInfo>(b =>
         {
-            b.ToTable(CrossChainServerConsts.DbTablePrefix + "ApplyOrderChainTokenInfo", CrossChainServerConsts.DbSchema);
+            b.ToTable(CrossChainServerConsts.DbTablePrefix + "ApplyOrderChainTokenInfo",
+                CrossChainServerConsts.DbSchema);
             b.ConfigureByConvention();
         });
-        
+
         builder.Entity<StatusChangedRecord>(b =>
         {
-            b.ToTable(CrossChainServerConsts.DbTablePrefix + "ApplyOrderStatusChangedRecord", CrossChainServerConsts.DbSchema);
+            b.ToTable(CrossChainServerConsts.DbTablePrefix + "ApplyOrderStatusChangedRecord",
+                CrossChainServerConsts.DbSchema);
             b.ConfigureByConvention();
         });
 
@@ -229,11 +231,10 @@ public class CrossChainServerDbContext :
             b.ConfigureByConvention();
         });
 
-        builder.Entity<UserTokenOwner>(b =>
+        builder.Entity<ThirdUserTokenIssueInfo>(b =>
         {
-            b.ToTable(CrossChainServerConsts.DbTablePrefix + "UserTokenOwners", CrossChainServerConsts.DbSchema);
-            b.HasIndex(o => new { o.Address,o.ChainId,o.Symbol });
-            // b.OwnsMany(e => e.TokenOwnerList);
+            b.ToTable(CrossChainServerConsts.DbTablePrefix + "ThirdUserTokenIssueInfo", CrossChainServerConsts.DbSchema);
+            b.HasIndex(o => new { o.Address, o.Symbol, o.OtherChainId }).IsUnique();
             b.ConfigureByConvention();
         });
     }

@@ -427,7 +427,6 @@ namespace AElf.CrossChainServer.Migrations
             modelBuilder.Entity("AElf.CrossChainServer.TokenAccess.StatusChangedRecord", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
                     b.Property<Guid>("OrderId")
@@ -444,6 +443,61 @@ namespace AElf.CrossChainServer.Migrations
                     b.HasIndex("OrderId");
 
                     b.ToTable("AppApplyOrderStatusChangedRecord", (string)null);
+                });
+
+            modelBuilder.Entity("AElf.CrossChainServer.TokenAccess.ThirdUserTokenIssue.ThirdUserTokenIssueInfo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Address")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("BindingId")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ChainId")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ContractAddress")
+                        .HasColumnType("longtext");
+
+                    b.Property<long>("CreateTime")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("OtherChainId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Symbol")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("ThirdTokenId")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("TokenImage")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("TokenName")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("TotalSupply")
+                        .HasColumnType("longtext");
+
+                    b.Property<long>("UpdateTime")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("WalletAddress")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Address", "Symbol", "OtherChainId")
+                        .IsUnique();
+
+                    b.ToTable("AppThirdUserTokenIssueInfo", (string)null);
                 });
 
             modelBuilder.Entity("AElf.CrossChainServer.TokenAccess.TokenApplyOrder", b =>
@@ -473,16 +527,13 @@ namespace AElf.CrossChainServer.Migrations
                     b.ToTable("AppTokenApplyOrder", (string)null);
                 });
 
-            modelBuilder.Entity("AElf.CrossChainServer.TokenAccess.UserTokenAccessInfo", b =>
+            modelBuilder.Entity("AElf.CrossChainServer.TokenAccess.UserTokenAccess.UserTokenAccessInfo", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("char(36)");
 
                     b.Property<string>("Address")
                         .HasColumnType("varchar(255)");
-
-                    b.Property<string>("ChainIds")
-                        .HasColumnType("longtext");
 
                     b.Property<string>("Email")
                         .HasColumnType("longtext");
@@ -491,9 +542,6 @@ namespace AElf.CrossChainServer.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("OfficialWebsite")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("OtherChainIds")
                         .HasColumnType("longtext");
 
                     b.Property<string>("PersonName")
@@ -510,79 +558,10 @@ namespace AElf.CrossChainServer.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Address");
-
-                    b.HasIndex("Symbol")
+                    b.HasIndex("Address", "Symbol")
                         .IsUnique();
 
                     b.ToTable("AppUserTokenAccessInfo", (string)null);
-                });
-
-            modelBuilder.Entity("AElf.CrossChainServer.TokenAccess.UserTokenIssueDto", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("Address")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("BindingId")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("ChainId")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("ContractAddress")
-                        .HasColumnType("longtext");
-
-                    b.Property<long>("CreateTime")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("OtherChainId")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Status")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Symbol")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("ThirdTokenId")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("TokenImage")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("TokenName")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("TotalSupply")
-                        .HasColumnType("longtext");
-
-                    b.Property<long>("UpdateTime")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("WalletAddress")
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("UserTokenIssues");
-                });
-
-            modelBuilder.Entity("AElf.CrossChainServer.TokenAccess.UserTokenOwnerDto", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("Address")
-                        .HasColumnType("varchar(255)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Address");
-
-                    b.ToTable("AppUserTokenOwners", (string)null);
                 });
 
             modelBuilder.Entity("AElf.CrossChainServer.TokenPool.PoolLiquidityInfo", b =>
@@ -2496,66 +2475,6 @@ namespace AElf.CrossChainServer.Migrations
                         .IsRequired();
 
                     b.Navigation("Order");
-                });
-
-            modelBuilder.Entity("AElf.CrossChainServer.TokenAccess.UserTokenOwnerDto", b =>
-                {
-                    b.OwnsMany("AElf.CrossChainServer.TokenAccess.TokenOwnerDto", "TokenOwnerList", b1 =>
-                        {
-                            b1.Property<Guid>("UserTokenOwnerDtoId")
-                                .HasColumnType("char(36)");
-
-                            b1.Property<int>("Id")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("int");
-
-                            MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b1.Property<int>("Id"));
-
-                            b1.Property<string>("ChainIds")
-                                .HasColumnType("longtext");
-
-                            b1.Property<string>("ContractAddress")
-                                .HasColumnType("longtext");
-
-                            b1.Property<int>("Decimals")
-                                .HasColumnType("int");
-
-                            b1.Property<int>("Holders")
-                                .HasColumnType("int");
-
-                            b1.Property<string>("Icon")
-                                .HasColumnType("longtext");
-
-                            b1.Property<string>("LiquidityInUsd")
-                                .HasColumnType("longtext");
-
-                            b1.Property<string>("Owner")
-                                .HasColumnType("longtext");
-
-                            b1.Property<string>("PoolAddress")
-                                .HasColumnType("longtext");
-
-                            b1.Property<string>("Status")
-                                .HasColumnType("longtext");
-
-                            b1.Property<string>("Symbol")
-                                .HasColumnType("longtext");
-
-                            b1.Property<string>("TokenName")
-                                .HasColumnType("longtext");
-
-                            b1.Property<decimal>("TotalSupply")
-                                .HasColumnType("decimal(65,30)");
-
-                            b1.HasKey("UserTokenOwnerDtoId", "Id");
-
-                            b1.ToTable("TokenOwnerDto");
-
-                            b1.WithOwner()
-                                .HasForeignKey("UserTokenOwnerDtoId");
-                        });
-
-                    b.Navigation("TokenOwnerList");
                 });
 
             modelBuilder.Entity("Volo.Abp.AuditLogging.AuditLogAction", b =>

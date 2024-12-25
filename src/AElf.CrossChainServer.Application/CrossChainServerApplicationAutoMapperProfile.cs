@@ -4,6 +4,9 @@ using AElf.CrossChainServer.Chains.Ton;
 using AElf.CrossChainServer.Contracts;
 using AElf.CrossChainServer.CrossChain;
 using AElf.CrossChainServer.TokenAccess;
+using AElf.CrossChainServer.TokenAccess.ThirdUserTokenIssue;
+using AElf.CrossChainServer.TokenAccess.UserTokenAccess;
+using AElf.CrossChainServer.TokenAccess.UserTokenOwner;
 using AElf.CrossChainServer.TokenPool;
 using AElf.CrossChainServer.Tokens;
 using AutoMapper;
@@ -120,5 +123,21 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<UserLiquidityDto, UserLiquidityInfoInput>();
 
         CreateMap<TokenInfo, TokenInfoDto>();
+
+        CreateMap<UserTokenItemDto, UserTokenOwnerInfoDto>().ForMember(i=>i.Icon,opt=>opt.MapFrom(i=>i.TokenImage));
+        CreateMap<UserTokenOwnerInfo, UserTokenOwnerInfoDto>();
+        CreateMap<UserTokenOwnerInfoDto, UserTokenOwnerInfo>();
+        CreateMap<UserTokenOwnerInfoDto,AvailableTokenDto>().ForMember(i=>i.TokenImage,opt=>opt.MapFrom(i=>i.Icon));
+        CreateMap<UserTokenAccessInfoIndex, UserTokenAccessInfoDto>();
+        CreateMap<ThirdTokenItemDto, ThirdUserTokenIssueInfo>()
+            .ForMember(i => i.TokenName, opt => opt.MapFrom(i => i.ThirdTokenName))
+            .ForMember(i => i.TokenImage, opt => opt.MapFrom(i => i.ThirdTokenImage))
+            .ForMember(i => i.ContractAddress, opt => opt.MapFrom(i => i.ThirdContractAddress))
+            .ForMember(i => i.TotalSupply, opt => opt.MapFrom(i => i.ThirdTotalSupply));
+        CreateMap<ThirdUserTokenIssueInfoEto, AddThirdUserTokenIssueInfoIndexInput>();
+        CreateMap<ThirdUserTokenIssueInfoEto, UpdateThirdUserTokenIssueInfoIndexInput>();
+        CreateMap<AddThirdUserTokenIssueInfoIndexInput, ThirdUserTokenIssueIndex>();
+        CreateMap<UpdateThirdUserTokenIssueInfoIndexInput, ThirdUserTokenIssueIndex>();
+        CreateMap<ThirdUserTokenIssueInfoDto, ThirdUserTokenIssueInfo>();
     }
 }

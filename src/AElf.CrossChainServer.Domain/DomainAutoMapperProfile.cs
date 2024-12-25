@@ -1,5 +1,7 @@
 using AElf.CrossChainServer.CrossChain;
 using AElf.CrossChainServer.TokenAccess;
+using AElf.CrossChainServer.TokenAccess.ThirdUserTokenIssue;
+using AElf.CrossChainServer.TokenAccess.UserTokenAccess;
 using AElf.CrossChainServer.TokenPool;
 using AutoMapper;
 
@@ -21,6 +23,8 @@ namespace AElf.CrossChainServer
             CreateMap<TokenApplyOrder, TokenApplyOrderEto>();
             CreateMap<ChainTokenInfo, ChainTokenInfoDto>();
             CreateMap<StatusChangedRecord, StatusChangedRecordDto>();
+            CreateMap<ThirdUserTokenIssueInfo, ThirdUserTokenIssueInfoEto>();
+
         }
     }
 }

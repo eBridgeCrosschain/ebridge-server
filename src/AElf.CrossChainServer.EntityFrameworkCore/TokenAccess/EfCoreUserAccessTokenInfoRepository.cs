@@ -1,5 +1,6 @@
 using System;
 using AElf.CrossChainServer.EntityFrameworkCore;
+using AElf.CrossChainServer.TokenAccess.UserTokenAccess;
 using Volo.Abp.Domain.Repositories.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore;
 

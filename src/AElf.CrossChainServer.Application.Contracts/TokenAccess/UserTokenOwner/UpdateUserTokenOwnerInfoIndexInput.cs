@@ -1,10 +1,10 @@
 using System;
-using AElf.CrossChainServer.Entities;
 
 namespace AElf.CrossChainServer.TokenAccess;
 
-public class UserTokenOwner : CrossChainServerEntity<Guid>
+public class UpdateUserTokenOwnerInfoIndexInput
 {
+    public Guid Id { get; set; }
     public string Address { get; set; }
     public string TokenName { get; set; }
     public string Symbol { get; set; }
@@ -13,9 +13,13 @@ public class UserTokenOwner : CrossChainServerEntity<Guid>
     public string Owner { get; set; }
     public string ChainId { get; set; }
     public decimal TotalSupply { get; set; }
+    // liquidity from awaken
     public string LiquidityInUsd { get; set; }
+    // holders from scan
     public int Holders { get; set; }
     public string PoolAddress { get; set; }
+    // multiToken contract address
     public string ContractAddress { get; set; }
+    // can find - issued (include main chain and dapp chain)
     public string Status { get; set; }
 }
