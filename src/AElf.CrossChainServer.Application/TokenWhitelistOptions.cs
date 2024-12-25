@@ -17,4 +17,5 @@ public class TokenInfo
     public long Decimals { get; set; }
     public string Address { get; set; }
     public string IssueChainId { get; set; }
+    public bool IsNativeToken { get; set; }
 }
