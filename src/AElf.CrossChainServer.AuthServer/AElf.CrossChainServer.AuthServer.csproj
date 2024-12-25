@@ -41,7 +41,6 @@
     <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="8.0.6" />
     <PackageReference Include="DistributedLock.Redis" Version="1.0.2" />
-<!--    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.0-preview1" />-->
     <PackageReference Include="NBitcoin" Version="7.0.46" />
     <PackageReference Include="Nethereum.Util" Version="4.20.0" />
     <PackageReference Include="Nethereum.Web3" Version="4.20.0" />
