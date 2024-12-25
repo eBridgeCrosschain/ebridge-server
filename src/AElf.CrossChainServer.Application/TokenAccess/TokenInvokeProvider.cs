@@ -25,7 +25,6 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
     private readonly IHttpProvider _httpProvider;
     private readonly ILogger<TokenInvokeProvider> _logger;
     private readonly TokenAccessOptions _tokenAccessOptions;
-    private readonly ITokenInvokeRepository _invokeRepository;
     private readonly IUserTokenOwnerRepository _userTokenOwnerRepository;
     private readonly IUserTokenIssueRepository _userTokenIssueRepository;
 
@@ -39,14 +38,13 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
 
     public TokenInvokeProvider(IHttpProvider httpProvider, IOptionsSnapshot<TokenAccessOptions> tokenAccessOptions,
         ILogger<TokenInvokeProvider> logger, IUserTokenOwnerRepository userTokenOwnerRepository,
-        IUserTokenIssueRepository userTokenIssueRepository, ITokenInvokeRepository invokeRepository)
+        IUserTokenIssueRepository userTokenIssueRepository)
     {
         _logger = logger;
         _httpProvider = httpProvider;
         _tokenAccessOptions = tokenAccessOptions.Value;
         _userTokenOwnerRepository = userTokenOwnerRepository;
         _userTokenIssueRepository = userTokenIssueRepository;
-        _invokeRepository = invokeRepository;
     }
 
     public async Task<TokenOwnerListDto> GetUserTokenOwnerListAndUpdateAsync(string address)
@@ -269,47 +267,46 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             body: JsonConvert.SerializeObject(prepareBindingInput, HttpProvider.DefaultJsonSettings));
         if (resultDto.Code != "20000") return new UserTokenBindingDto();
 
+
+        var bindingId = resultDto.Data?.BindingId;
+        var thirdTokenId = resultDto.Data?.ThirdTokenId;
+        var status = TokenApplyOrderStatus.Issuing.ToString();
         if (res != null)
         {
             _logger.LogDebug(
                 $"get exist TokenIssue, will update BindingId, ThirdTokenId and status {res.Status} to issuing");
-            res.BindingId = resultDto.Data?.BindingId;
-            res.ThirdTokenId = resultDto.Data?.ThirdTokenId;
-            res.Status = TokenApplyOrderStatus.Issuing.ToString();
+            res.BindingId = bindingId;
+            res.ThirdTokenId = thirdTokenId;
+            res.Status = status;
             await _userTokenIssueRepository.UpdateAsync(res);
         }
         else
         {
             _logger.LogDebug($"create TokenIssue, will update {dto.Id} status to issuing");
-            dto.BindingId = resultDto.Data?.BindingId;
-            dto.ThirdTokenId = resultDto.Data?.ThirdTokenId;
-            dto.Status = TokenApplyOrderStatus.Issuing.ToString();
+            dto.BindingId = bindingId;
+            dto.ThirdTokenId = thirdTokenId;
+            dto.Status = status;
             await _userTokenIssueRepository.InsertAsync(dto);
         }
 
         _logger.LogDebug("Insert token invoke");
-        await _invokeRepository.InsertAsync(new()
-        {
-            BindingId = resultDto.Data?.BindingId,
-            UserTokenIssueId = res.Id != Guid.Empty ? res.Id : dto.Id,
-            ThirdTokenId = resultDto.Data?.ThirdTokenId
-        });
-        return new UserTokenBindingDto
-            { BindingId = resultDto.Data?.BindingId, ThirdTokenId = resultDto.Data?.ThirdTokenId };
+        return new UserTokenBindingDto { BindingId = bindingId, ThirdTokenId = thirdTokenId };
     }
 
     public async Task<bool> BindingAsync(UserTokenBindingDto dto)
     {
-        var tokenInvoke = await _invokeRepository.FindAsync(o =>
+        var userTokenIssue = await _userTokenIssueRepository.FindAsync(o =>
             o.BindingId == dto.BindingId && o.ThirdTokenId == dto.ThirdTokenId);
-        if (tokenInvoke != null && tokenInvoke.UserTokenIssueId != Guid.Empty)
+        if (userTokenIssue == null)
         {
-            var res = await _userTokenIssueRepository.FindAsync(o => o.Id == tokenInvoke.UserTokenIssueId);
-            if (res != null && res.Status == TokenApplyOrderStatus.Issued.ToString())
-            {
-                _logger.LogDebug($"Skip, Token {dto.BindingId} {dto.ThirdTokenId} had issued");
-                return true;
-            }
+            _logger.LogDebug($"Token {dto.BindingId} {dto.ThirdTokenId} not exist.");
+            return false;
+        }
+
+        if (userTokenIssue.Status == TokenApplyOrderStatus.Issued.ToString())
+        {
+            _logger.LogDebug($"Skip, Token {dto.BindingId} {dto.ThirdTokenId} had issued");
+            return true;
         }
 
         var url = $"{_tokenAccessOptions.SymbolMarketBaseUrl}{_tokenAccessOptions.SymbolMarketBindingUri}";
@@ -320,20 +317,16 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
                 ThirdTokenId = dto.ThirdTokenId,
                 Signature = BuildRequestHash(string.Concat(dto.BindingId, dto.ThirdTokenId))
             }, HttpProvider.DefaultJsonSettings));
-        if (resultDto.Code != "20000" || tokenInvoke == null || tokenInvoke.UserTokenIssueId == Guid.Empty)
+        if (resultDto.Code != "20000")
         {
             _logger.LogWarning($"request symbol market fail, {resultDto.Message}");
             return false;
         }
 
-        _logger.LogDebug(
-            $"request symbol market success, update user token issue {tokenInvoke.UserTokenIssueId} status to issued");
-        var tokenIssueFindByIssueId =
-            await _userTokenIssueRepository.FindAsync(o => o.Id == tokenInvoke.UserTokenIssueId);
-        tokenIssueFindByIssueId.BindingId = dto.BindingId;
-        tokenIssueFindByIssueId.ThirdTokenId = dto.ThirdTokenId;
-        tokenIssueFindByIssueId.Status = TokenApplyOrderStatus.Issued.ToString();
-        await _userTokenIssueRepository.UpdateAsync(tokenIssueFindByIssueId);
+        userTokenIssue.BindingId = dto.BindingId;
+        userTokenIssue.ThirdTokenId = dto.ThirdTokenId;
+        userTokenIssue.Status = TokenApplyOrderStatus.Issued.ToString();
+        await _userTokenIssueRepository.UpdateAsync(userTokenIssue);
         return true;
     }
 
