@@ -47,7 +47,28 @@ public class UserLiquidityInfoAppService : CrossChainServerAppService, IUserLiqu
     {
         var mustQuery =
             new List<Func<QueryContainerDescriptor<UserLiquidityInfoIndex>, QueryContainer>>();
-        mustQuery.Add(q => q.Terms(t => t.Field(f => f.Provider).Terms(input.Providers)));
+        var providers = new List<string>();
+        foreach (var provider in input.Providers.Distinct())
+        {
+            if (!Base58CheckEncoding.Verify(provider))
+            {
+                if (Nethereum.Util.AddressExtensions.IsValidEthereumAddressHexFormat(provider))
+                {
+                    providers.Add(provider.ToLower());
+                    continue; 
+                }
+            }
+
+            if (TonAddressHelper.IsTonFriendlyAddress(provider))
+            {
+                providers.Add(TonAddressHelper.GetTonRawAddress(provider));
+                continue; 
+            }
+            
+            providers.Add(provider);
+        }
+
+        mustQuery.Add(q => q.Terms(t => t.Field(f => f.Provider).Terms(providers)));
 
         if (!string.IsNullOrWhiteSpace(input.ChainId))
         {
