@@ -104,7 +104,7 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<ChainTokenInfoDto, ChainTokenInfoIndex>();
         CreateMap<TokenApplyOrder, TokenApplyOrderIndex>();
         CreateMap<ChainAccessInfo, ChainTokenInfo>();
-        CreateMap<TokenApplyOrderIndex, TokenApplyOrderResultDto>();
+        CreateMap<TokenApplyOrderIndex, TokenApplyOrderDto>();
         CreateMap<ChainTokenInfoIndex, ChainTokenInfoResultDto>();
 
         CreateMap<PoolLiquidityInfoInput, PoolLiquidityInfo>();

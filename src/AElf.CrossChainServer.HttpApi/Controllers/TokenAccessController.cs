@@ -98,7 +98,7 @@ public class TokenAccessController : CrossChainServerController
     [Authorize]
     [HttpGet("list")]
     [ServiceFilter(typeof(ResultFilter))]
-    public async Task<PagedResultDto<TokenApplyOrderResultDto>> GetTokenApplyOrderListAsync(
+    public async Task<PagedResultDto<TokenApplyOrderDto>> GetTokenApplyOrderListAsync(
         GetTokenApplyOrderListInput input)
     {
         return await _tokenAccessAppService.GetTokenApplyOrderListAsync(input);
@@ -107,7 +107,7 @@ public class TokenAccessController : CrossChainServerController
     [Authorize]
     [HttpGet("detail")]
     [ServiceFilter(typeof(ResultFilter))]
-    public async Task<List<TokenApplyOrderResultDto>> GetTokenApplyOrderDetailAsync(GetTokenApplyOrderInput input)
+    public async Task<List<TokenApplyOrderDto>> GetTokenApplyOrderDetailAsync(GetTokenApplyOrderInput input)
     {
         return await _tokenAccessAppService.GetTokenApplyOrderDetailAsync(input);
     }

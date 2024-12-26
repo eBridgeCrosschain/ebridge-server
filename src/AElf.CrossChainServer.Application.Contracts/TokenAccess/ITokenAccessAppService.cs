@@ -15,8 +15,8 @@ public interface ITokenAccessAppService
     Task<UserTokenBindingDto> PrepareBindingIssueAsync(PrepareBindIssueInput input);
     Task<bool> GetBindingIssueAsync(UserTokenBindingDto input);
     
-    Task<PagedResultDto<TokenApplyOrderResultDto>> GetTokenApplyOrderListAsync(GetTokenApplyOrderListInput input);
-    Task<List<TokenApplyOrderResultDto>> GetTokenApplyOrderDetailAsync(GetTokenApplyOrderInput input);
+    Task<PagedResultDto<TokenApplyOrderDto>> GetTokenApplyOrderListAsync(GetTokenApplyOrderListInput input);
+    Task<List<TokenApplyOrderDto>> GetTokenApplyOrderDetailAsync(GetTokenApplyOrderInput input);
     
     Task AddUserTokenAccessInfoIndexAsync(AddUserTokenAccessInfoIndexInput input);
     Task UpdateUserTokenAccessInfoIndexAsync(UpdateUserTokenAccessInfoIndexInput input);
@@ -38,4 +38,6 @@ public interface ITokenAccessAppService
     Task<TokenPriceDto> GetTokenPriceAsync(GetTokenPriceInput input);
 
     Task<CommitAddLiquidityDto> CommitAddLiquidityAsync(CommitAddLiquidityInput input);
+    
+    Task TriggerOrderStatusChangeAsync(TriggerOrderStatusChangeInput input);
 }

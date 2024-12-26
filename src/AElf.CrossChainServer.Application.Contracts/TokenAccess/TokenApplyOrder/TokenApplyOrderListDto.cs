@@ -4,10 +4,6 @@ using Volo.Abp.Application.Dtos;
 
 namespace AElf.CrossChainServer.TokenAccess;
 
-public class TokenApplyOrderResultDto : TokenApplyOrderDto
-{
-}
-
 public class TokenApplyOrderDto
 {
     public Guid Id { get; set; }
@@ -17,7 +13,7 @@ public class TokenApplyOrderDto
     public long CreateTime { get; set; }
     public long UpdateTime { get; set; }
     public List<ChainTokenInfoResultDto> ChainTokenInfo { get; set; }
-    public ChainTokenInfoResultDto OtherChainTokenInfoResult { get; set; }
+    public ChainTokenInfoResultDto OtherChainTokenInfo { get; set; }
     public Dictionary<string, string> StatusChangedRecord { get; set; }
 }
 

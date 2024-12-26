@@ -491,13 +491,13 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             Id = orderId.ToString(),
             ChainId = otherChainId
         });
-        await SendLarkNotifyAsync(new TokenAccessNotifyDto
-        {
-            Token = tokenApplyOrder.Symbol,
-            Chain = otherChainId,
-            TokenContract = chain.ContractAddress,
-            Website = officialWebsite
-        });
+        // await SendLarkNotifyAsync(new TokenAccessNotifyDto
+        // {
+        //     Token = tokenApplyOrder.Symbol,
+        //     Chain = otherChainId,
+        //     TokenContract = chain.ContractAddress,
+        //     Website = officialWebsite
+        // });
     }
 
     private async Task ProcessChainAsync(string chainId, string symbol, string address,
@@ -627,59 +627,59 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         return await _tokenInvokeProvider.BindingAsync(input);
     }
 
-    public async Task<PagedResultDto<TokenApplyOrderResultDto>> GetTokenApplyOrderListAsync(
+    public async Task<PagedResultDto<TokenApplyOrderDto>> GetTokenApplyOrderListAsync(
         GetTokenApplyOrderListInput input)
     {
         var address = await GetUserAddressAsync();
-        if (address.IsNullOrEmpty()) return new PagedResultDto<TokenApplyOrderResultDto>();
+        if (address.IsNullOrEmpty()) return new PagedResultDto<TokenApplyOrderDto>();
         var mustQuery = new List<Func<QueryContainerDescriptor<TokenApplyOrderIndex>, QueryContainer>>();
         mustQuery.Add(q => q.Term(i => i.Field(f => f.UserAddress).Value(address)));
         QueryContainer Filter(QueryContainerDescriptor<TokenApplyOrderIndex> f) => f.Bool(b => b.Must(mustQuery));
         var (count, result) = await _tokenApplyOrderIndexRepository.GetListAsync(Filter, sortExp: o => o.UpdateTime,
             sortType: SortOrder.Descending, skip: input.SkipCount, limit: input.MaxResultCount);
-        return new PagedResultDto<TokenApplyOrderResultDto>
+        return new PagedResultDto<TokenApplyOrderDto>
         {
             Items = await LoopCollectionItemsAsync(
-                ObjectMapper.Map<List<TokenApplyOrderIndex>, List<TokenApplyOrderResultDto>>(result)),
+                ObjectMapper.Map<List<TokenApplyOrderIndex>, List<TokenApplyOrderDto>>(result)),
             TotalCount = count
         };
     }
 
-    public async Task<List<TokenApplyOrderResultDto>> GetTokenApplyOrderDetailAsync(GetTokenApplyOrderInput input)
+    public async Task<List<TokenApplyOrderDto>> GetTokenApplyOrderDetailAsync(GetTokenApplyOrderInput input)
     {
         var address = await GetUserAddressAsync();
 
-        if (address.IsNullOrEmpty()) return new List<TokenApplyOrderResultDto>();
+        if (address.IsNullOrEmpty()) return new List<TokenApplyOrderDto>();
         var list = await GetTokenApplyOrderIndexListAsync(address, input.Symbol, input.Id, input.ChainId);
         return await LoopCollectionItemsAsync(
-            ObjectMapper.Map<List<TokenApplyOrderIndex>, List<TokenApplyOrderResultDto>>(list));
+            ObjectMapper.Map<List<TokenApplyOrderIndex>, List<TokenApplyOrderDto>>(list));
     }
 
-    private async Task<List<TokenApplyOrderResultDto>> LoopCollectionItemsAsync(List<TokenApplyOrderResultDto> itemList)
+    private async Task<List<TokenApplyOrderDto>> LoopCollectionItemsAsync(List<TokenApplyOrderDto> itemList)
     {
         foreach (var item in itemList)
         {
-            if (item.OtherChainTokenInfoResult != null &&
-                (item.OtherChainTokenInfoResult.Status == TokenApplyOrderStatus.PoolInitialized.ToString() ||
-                 item.OtherChainTokenInfoResult.Status == TokenApplyOrderStatus.LiquidityAdded.ToString() ||
-                 item.OtherChainTokenInfoResult.Status == TokenApplyOrderStatus.Complete.ToString()))
+            if (item.OtherChainTokenInfo != null &&
+                (item.OtherChainTokenInfo.Status == TokenApplyOrderStatus.PoolInitialized.ToString() ||
+                 item.OtherChainTokenInfo.Status == TokenApplyOrderStatus.LiquidityAdded.ToString() ||
+                 item.OtherChainTokenInfo.Status == TokenApplyOrderStatus.Complete.ToString()))
             {
-                var chainId = item.OtherChainTokenInfoResult.ChainId;
+                var chainId = item.OtherChainTokenInfo.ChainId;
                 var token = await _tokenAppService.GetAsync(new GetTokenInput
                 {
                     ChainId = chainId,
-                    Address = item.OtherChainTokenInfoResult.ContractAddress
+                    Address = item.OtherChainTokenInfo.ContractAddress
                 });
                 var dailyLimit =
                     await _bridgeContractAppService.GetDailyLimitAsync(
                         chainId, token.Id, CrossChainServerConsts.AElfMainChainId);
-                item.OtherChainTokenInfoResult.DailyLimit = dailyLimit.DefaultDailyLimit;
+                item.OtherChainTokenInfo.DailyLimit = dailyLimit.DefaultDailyLimit;
                 var targetChainIds = new List<string> { CrossChainServerConsts.AElfMainChainId };
                 var rateLimit =
                     (await _bridgeContractAppService.GetCurrentReceiptTokenBucketStatesAsync(
                         chainId, new List<Guid> { token.Id }, targetChainIds)).FirstOrDefault();
-                item.OtherChainTokenInfoResult.RateLimit = rateLimit?.RefillRate ?? 0;
-                item.OtherChainTokenInfoResult.MinAmount =
+                item.OtherChainTokenInfo.RateLimit = rateLimit?.RefillRate ?? 0;
+                item.OtherChainTokenInfo.MinAmount =
                     _tokenAccessOptions.DefaultConfig.MinLiquidityInUsd.ToString();
                 if (item.ChainTokenInfo != null && item.ChainTokenInfo.Count > 0)
                 {
@@ -1007,6 +1007,11 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             ChainId = input.ChainId,
             Success = true
         };
+    }
+
+    public Task TriggerOrderStatusChangeAsync(TriggerOrderStatusChangeInput input)
+    {
+        throw new NotImplementedException();
     }
 
     private async Task<Dictionary<string, decimal>> GetTokenPricesAsync(
