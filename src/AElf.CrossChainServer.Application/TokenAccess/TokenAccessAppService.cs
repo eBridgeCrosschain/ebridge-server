@@ -234,9 +234,9 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
                                                                  t.ChainTokenInfo.Exists(c =>
                                                                      c.ChainId == item.ChainId))?
                 .ChainTokenInfo?.FirstOrDefault(c => c.ChainId == item.ChainId)?.Status;
-            // Retrieve user token issue details
-            var res = await _thirdUserTokenIssueRepository.FindAsync(o =>
-                o.Address == address && o.ChainId == item.ChainId && o.Symbol == item.Symbol);
+            // // Retrieve user token issue details
+            // var res = await _thirdUserTokenIssueRepository.FindAsync(o =>
+            //     o.Address == address && o.ChainId == item.ChainId && o.Symbol == item.Symbol);
 
             item.TotalSupply = tokenOwner?.TotalSupply ?? 0;
             item.Decimals = tokenOwner?.Decimals ?? 0;
@@ -245,17 +245,17 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             item.Icon = tokenOwner?.Icon;
 
             // Determine the status
-            item.Status = DetermineStatus(isCompleted, applyStatus, res, tokenOwner);
+            item.Status = DetermineStatus(isCompleted, applyStatus, null, tokenOwner);
 
             // Determine if the token is selected
             item.Checked = DetermineCheckedStatus(isCompleted, applyOrderList, item.ChainId);
 
             // Add binding and third token IDs if available
-            if (res != null && !res.BindingId.IsNullOrEmpty() && !res.ThirdTokenId.IsNullOrEmpty())
-            {
-                item.BindingId = res.BindingId;
-                item.ThirdTokenId = res.ThirdTokenId;
-            }
+            // if (res != null && !res.BindingId.IsNullOrEmpty() && !res.ThirdTokenId.IsNullOrEmpty())
+            // {
+            //     item.BindingId = res.BindingId;
+            //     item.ThirdTokenId = res.ThirdTokenId;
+            // }
         }
     }
 
