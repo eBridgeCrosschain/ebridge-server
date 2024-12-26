@@ -8,6 +8,7 @@ using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Serilog;
+using Volo.Abp.DependencyInjection;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace AElf.CrossChainServer.TokenAccess;
@@ -17,7 +18,7 @@ public interface ILarkRobotNotifyProvider
     Task<bool> SendMessageAsync(NotifyRequest notifyRequest);
 }
 
-public class LarkRobotNotifyProvider : ILarkRobotNotifyProvider
+public class LarkRobotNotifyProvider : ILarkRobotNotifyProvider,ITransientDependency
 {
     private readonly LarkNotifyTemplateOptions _larkNotifyTemplateOptions;
     private readonly IHttpProvider _httpProvider;

@@ -39,5 +39,5 @@ public interface ITokenAccessAppService
 
     Task<CommitAddLiquidityDto> CommitAddLiquidityAsync(CommitAddLiquidityInput input);
     
-    Task TriggerOrderStatusChangeAsync(TriggerOrderStatusChangeInput input);
+    Task<bool> TriggerOrderStatusChangeAsync(TriggerOrderStatusChangeInput input);
 }
