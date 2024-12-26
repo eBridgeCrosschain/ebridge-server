@@ -491,13 +491,13 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             Id = orderId.ToString(),
             ChainId = otherChainId
         });
-        // await SendLarkNotifyAsync(new TokenAccessNotifyDto
-        // {
-        //     Token = tokenApplyOrder.Symbol,
-        //     Chain = otherChainId,
-        //     TokenContract = chain.ContractAddress,
-        //     Website = officialWebsite
-        // });
+        await SendLarkNotifyAsync(new TokenAccessNotifyDto
+        {
+            Token = tokenApplyOrder.Symbol,
+            Chain = otherChainId,
+            TokenContract = chain.ContractAddress,
+            Website = officialWebsite
+        });
     }
 
     private async Task ProcessChainAsync(string chainId, string symbol, string address,
