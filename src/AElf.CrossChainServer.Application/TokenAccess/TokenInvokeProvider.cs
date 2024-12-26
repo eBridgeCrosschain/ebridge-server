@@ -171,7 +171,9 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
         var userTokenOwnerInfo = _objectMapper.Map<UserTokenItemDto, UserTokenOwnerInfoDto>(item);
         userTokenOwnerInfo.Address = address;
         userTokenOwnerInfo.ChainId = chainId;
-        userTokenOwnerInfo.ContractAddress = detailDto?.Data?.TokenContractAddress;
+        userTokenOwnerInfo.ContractAddress = chainId == CrossChainServerConsts.AElfMainChainId
+            ? detailDto?.Data?.TokenContractAddress
+            : _tokenAccessOptions.DAppChainTokenContractAddress;
         userTokenOwnerInfo.Holders = detailDto?.Data?.Holders ?? 0;
         userTokenOwnerInfo.Status = TokenApplyOrderStatus.Issued.ToString();
         return userTokenOwnerInfo;

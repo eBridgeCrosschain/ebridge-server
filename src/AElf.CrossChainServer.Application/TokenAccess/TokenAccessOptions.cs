@@ -22,6 +22,7 @@ public class TokenAccessOptions
     public string LarkWebhook { get; set; }
     public Dictionary<string, string> ChainIdMap { get; set; }
     public Dictionary<string,string> SymbolMap { get; set; }
+    public string DAppChainTokenContractAddress { get; set; }
 }
 public class AvailableTokenConfigDto
 {
