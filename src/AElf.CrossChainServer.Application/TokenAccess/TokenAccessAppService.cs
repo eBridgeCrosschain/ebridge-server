@@ -596,9 +596,9 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             "Param invalid.");
         var chainStatus = await CheckChainAccessStatusAsync(new CheckChainAccessStatusInput { Symbol = input.Symbol });
         AssertHelper.IsTrue(input.ChainId.IsNullOrEmpty() || chainStatus.ChainList.Exists(
-            c => c.ChainId == input.ChainId), "Param invalid.");
+            c => c.ChainId == input.ChainId), $"Invalid aelf chainId {input.ChainId}.");
         AssertHelper.IsTrue(input.OtherChainId.IsNullOrEmpty() || chainStatus.OtherChainList.Exists(
-            c => c.ChainId == input.OtherChainId), "Param invalid.");
+            c => c.ChainId == input.OtherChainId), $"Invalid third chainId {input.OtherChainId}.");
 
         var address = await GetUserAddressAsync();
 
