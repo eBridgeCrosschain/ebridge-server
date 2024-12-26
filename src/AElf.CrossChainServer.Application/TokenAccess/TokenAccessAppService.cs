@@ -958,24 +958,31 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
 
     public async Task<TokenPriceDto> GetTokenPriceAsync(GetTokenPriceInput input)
     {
-        var tokenCoinId = _tokenPriceIdMappingOptions.CoinIdMapping[input.Symbol];
-        if (tokenCoinId.IsNullOrEmpty())
+        var result = new TokenPriceDto
+        {
+            Symbol = input.Symbol
+        };
+        if (_tokenPriceIdMappingOptions.CoinIdMapping.TryGetValue(input.Symbol, out var coinId))
+        {
+            if (!coinId.IsNullOrEmpty())
+            {
+                var priceInUsd = await _tokenPriceProvider.GetPriceAsync(coinId);
+                var amountInUsd = input.Amount * priceInUsd;
+                result.TokenAmountInUsd = amountInUsd;
+            }
+            else
+            {
+                Log.Error("Token coin id is null. {symbol}", input.Symbol);
+                result.TokenAmountInUsd = 0;
+            }
+        }
+        else
         {
             Log.Error("Token coin id not found. {symbol}", input.Symbol);
-            return new TokenPriceDto
-            {
-                Symbol = input.Symbol,
-                TokenAmountInUsd = 0
-            };
+            result.TokenAmountInUsd = 0;
         }
 
-        var priceInUsd = await _tokenPriceProvider.GetPriceAsync(tokenCoinId);
-        var amountInUsd = input.Amount * priceInUsd;
-        return new TokenPriceDto
-        {
-            Symbol = input.Symbol,
-            TokenAmountInUsd = amountInUsd
-        };
+        return result;
     }
 
     public async Task<CommitAddLiquidityDto> CommitAddLiquidityAsync(CommitAddLiquidityInput input)
