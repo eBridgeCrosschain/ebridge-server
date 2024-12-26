@@ -20,6 +20,7 @@ public class TokenAccessOptions
     public Dictionary<string, AvailableTokenConfigDto> TokenConfig { get; set; } = new();
     public string LarkWebhook { get; set; }
     public Dictionary<string, string> ChainIdMap { get; set; }
+    public string DAppChainTokenContractAddress { get; set; }
 }
 
 public class AvailablePoolConfigDto
