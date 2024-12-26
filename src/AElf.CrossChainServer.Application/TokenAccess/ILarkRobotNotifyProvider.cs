@@ -8,6 +8,7 @@ using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Serilog;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace AElf.CrossChainServer.TokenAccess;
 
@@ -25,6 +26,8 @@ public class LarkRobotNotifyProvider : ILarkRobotNotifyProvider
         IHttpProvider httpProvider)
     {
         _larkNotifyTemplateOptions = larkNotifyTemplateOptions.Value;
+        Log.Information("LarkNotifyTemplateOptions: {LarkNotifyTemplateOptions}",
+            JsonSerializer.Serialize(_larkNotifyTemplateOptions));
         _httpProvider = httpProvider;
     }
 
