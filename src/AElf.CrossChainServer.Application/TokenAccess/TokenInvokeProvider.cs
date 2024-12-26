@@ -214,27 +214,33 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             return new UserTokenBindingDto { BindingId = res.BindingId, ThirdTokenId = res.ThirdTokenId };
         }
 
-        var url =
-            $"{_tokenAccessOptions.SymbolMarketBaseUrl}{_tokenAccessOptions.SymbolMarketPrepareBindingUri}";
+        var aelfChainId = ConvertToTargetChainId(dto.ChainId);
+        var thirdChainId = ConvertToTargetChainId(dto.OtherChainId);
+        if (string.IsNullOrEmpty(aelfChainId) || string.IsNullOrEmpty(thirdChainId))
+        {
+            Log.Warning("Failed to convert to target chainId:{0} OtherChainId:{1}", dto.ChainId, dto.OtherChainId);
+            return new UserTokenBindingDto();
+        }
+
         var prepareBindingInput = new PrepareBindingInput
         {
             Address = dto.Address,
             AelfToken = dto.Symbol,
-            AelfChain = dto.ChainId,
+            AelfChain = aelfChainId,
             ThirdTokens = new ThirdTokenDto
             {
                 TokenName = dto.TokenName,
                 Symbol = dto.Symbol,
                 TokenImage = dto.TokenImage,
                 TotalSupply = dto.TotalSupply,
-                ThirdChain = dto.OtherChainId,
+                ThirdChain = thirdChainId,
                 Owner = dto.WalletAddress,
                 ContractAddress = dto.ContractAddress
             },
-            Signature = BuildRequestHash(string.Concat(dto.Address, dto.Symbol, dto.ChainId, dto.TokenName,
-                dto.Symbol, dto.TokenImage, dto.TotalSupply, dto.WalletAddress, dto.OtherChainId,
-                dto.ContractAddress))
+            Signature = BuildRequestHash(string.Concat(dto.Address, dto.Symbol, aelfChainId, dto.TokenName, dto.Symbol,
+                dto.TokenImage, dto.TotalSupply, dto.WalletAddress, thirdChainId, dto.ContractAddress))
         };
+        var url = $"{_tokenAccessOptions.SymbolMarketBaseUrl}{_tokenAccessOptions.SymbolMarketPrepareBindingUri}";
         var resultDto = await _httpProvider.InvokeAsync<PrepareBindingResultDto>(HttpMethod.Post, url,
             body: JsonConvert.SerializeObject(prepareBindingInput, HttpProvider.DefaultJsonSettings));
         if (resultDto.Code != "20000")
@@ -323,4 +329,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
 
     private string FindMatchChainId(string sourceChainId)
         => _tokenAccessOptions.ChainIdMap.TryGetValue(sourceChainId, out var value) ? value : string.Empty;
+
+    private string ConvertToTargetChainId(string sourceChainId)
+        => _tokenAccessOptions.ChainIdMap.FirstOrDefault(kvp => kvp.Value == sourceChainId).Key ?? string.Empty;
 }
