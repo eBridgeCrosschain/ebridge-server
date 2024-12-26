@@ -5,6 +5,7 @@ namespace AElf.CrossChainServer.TokenAccess;
 public class LarkNotifyTemplateOptions
 {
     public Dictionary<string, NotifyTemplate> Templates { get; set; }
+    
 }
 
 public class NotifyTemplate
