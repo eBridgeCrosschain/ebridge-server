@@ -123,7 +123,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
 
         var dto = ObjectMapper.Map<UserTokenAccessInfoInput, UserTokenAccessInfo>(input);
         dto.Address = address;
-        var existAccessInfo = await _userAccessTokenInfoRepository.FindAsync(o=>o.Address == address && o.Symbol == input.Symbol);
+        var existAccessInfo =
+            await _userAccessTokenInfoRepository.FindAsync(o => o.Address == address && o.Symbol == input.Symbol);
         if (existAccessInfo == null)
         {
             Log.Debug("{user} create new token access info. {symbol}", address, input.Symbol);
@@ -144,15 +145,14 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         return true;
     }
 
-
     public async Task<UserTokenAccessInfoDto> GetUserTokenAccessInfoAsync(UserTokenAccessInfoBaseInput input)
     {
         var address = await GetUserAddressAsync();
         AssertHelper.IsTrue(!address.IsNullOrEmpty(), "No permission.");
         var listDto = await _tokenInvokeProvider.GetAsync(address);
-        AssertHelper.IsTrue(listDto != null && !listDto.IsNullOrEmpty() &&
-                            listDto.Exists(t => t.Symbol == input.Symbol) &&
-                            CheckLiquidityAndHolderAvailable(listDto, input.Symbol), "Symbol invalid.");
+        AssertHelper.IsTrue(listDto != null && !listDto.IsNullOrEmpty(), "User don't have access token.");
+        AssertHelper.IsTrue(listDto.Exists(t => t.Symbol == input.Symbol), "Symbol invalid.");
+        AssertHelper.IsTrue(CheckLiquidityAndHolderAvailable(listDto, input.Symbol), "Symbol not avaliable.");
 
         var info = await GetUserTokenAccessInfoAsync(address, input.Symbol);
         return info.FirstOrDefault();
