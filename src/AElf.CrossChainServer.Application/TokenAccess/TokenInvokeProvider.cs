@@ -245,6 +245,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             body: JsonConvert.SerializeObject(prepareBindingInput, HttpProvider.DefaultJsonSettings));
         if (resultDto.Code != "20000")
         {
+            Log.Warning("Request forest prepare binding failed, {ERR}", resultDto.Message);
             return new UserTokenBindingDto();
         }
 
