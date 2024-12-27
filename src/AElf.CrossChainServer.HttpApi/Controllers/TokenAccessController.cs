@@ -148,6 +148,7 @@ public class TokenAccessController : CrossChainServerController
         return await _tokenAccessAppService.CommitAddLiquidityAsync(input);
     }
     
+    [Authorize(Roles = "admin")]
     [HttpPost("trigger-order-status-change")]
     [ServiceFilter(typeof(ResultFilter))]
     public async Task<bool> TriggerOrderStatusChangeAsync(TriggerOrderStatusChangeInput input)

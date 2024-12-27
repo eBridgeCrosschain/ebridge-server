@@ -712,8 +712,10 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
 
     private async Task ProcessChainTokenInfoAsync(ChainTokenInfoResultDto chainTokenInfo, string otherChainId)
     {
+        var chain = await _chainAppService.GetAsync(chainTokenInfo.ChainId);
+        var aelfChainName = ChainHelper.ConvertChainIdToBase58(chain.AElfChainId);
         var aelfDailyLimit = (await _indexerCrossChainLimitInfoService.GetCrossChainLimitInfoIndexAsync(
-            chainTokenInfo.ChainId, otherChainId, chainTokenInfo.Symbol)).FirstOrDefault();
+            aelfChainName, otherChainId, chainTokenInfo.Symbol)).FirstOrDefault();
 
         if (aelfDailyLimit != null)
         {
