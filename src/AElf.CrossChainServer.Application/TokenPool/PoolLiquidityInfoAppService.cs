@@ -109,18 +109,16 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
         var isLiquidityExist = true;
         if (liquidityInfo == null)
         {
-            Log.ForContext("ChainId", input.ChainId)
-                .ForContext("TokenId", input.TokenId)
-                .Debug("New pool liquidity info");
+            Log.Debug("New pool liquidity info. {chainId}-{tokenId}-{amount}", input.ChainId, input.TokenId,
+                input.Liquidity);
             isLiquidityExist = false;
             liquidityInfo = ObjectMapper.Map<PoolLiquidityInfoInput, PoolLiquidityInfo>(input);
             await DealUpdateOrderInfoAsync(input.ChainId, input.TokenId, liquidityInfo.Liquidity);
         }
         else
         {
-            Log.ForContext("ChainId", input.ChainId)
-                .ForContext("TokenId", input.TokenId)
-                .Debug("Update pool liquidity info");
+            Log.Debug("Update pool liquidity info.{chainId}-{tokenId}-{amount}", input.ChainId, input.TokenId,
+                input.Liquidity);
             liquidityInfo.Liquidity += input.Liquidity;
             await DealUpdateOrderInfoAsync(input.ChainId, input.TokenId, liquidityInfo.Liquidity);
         }
@@ -140,12 +138,12 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
         var liquidityInfo = await FindPoolLiquidityInfoAsync(input.ChainId, input.TokenId);
         if (liquidityInfo == null)
         {
-            Log.ForContext("ChainId", input.ChainId)
-                .ForContext("TokenId", input.TokenId)
-                .Error("Pool liquidity info not found");
+            Log.Error("Pool liquidity info not found. {chainId}-{tokenId}", input.ChainId, input.TokenId);
         }
         else
         {
+            Log.Debug("Remove pool liquidity info.{chainId}-{tokenId}-{amount}", input.ChainId, input.TokenId,
+                input.Liquidity);
             liquidityInfo.Liquidity -= input.Liquidity;
             await _poolLiquidityRepository.UpdateAsync(liquidityInfo, autoSave: true);
         }
@@ -289,7 +287,9 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
             return;
         }
 
-        var order = await _tokenApplyOrderRepository.FindAsync(Guid.Parse(orderLiquidityCache.OrderId));
+        var queryable = await _tokenApplyOrderRepository.WithDetailsAsync(x => x.ChainTokenInfo,y=>y.StatusChangedRecords);
+        var query = queryable.Where(x => x.Id == Guid.Parse(orderLiquidityCache.OrderId));
+        var order = await AsyncExecuter.FirstOrDefaultAsync(query);
         if (order == null)
         {
             Log.ForContext("ChainId", chainId)
@@ -304,19 +304,27 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
         }
 
         foreach (var chainTokenInfo in order.ChainTokenInfo.Where(chainTokenInfo => chainTokenInfo.ChainId == chainId &&
-                     chainTokenInfo.Status == TokenApplyOrderStatus.LiquidityAdded.ToString()))
+                     chainTokenInfo.Status == TokenApplyOrderStatus.LiquidityAdded.ToString() ||
+                     chainTokenInfo.Status == TokenApplyOrderStatus.PoolInitializing.ToString()))
         {
+            Log.Debug("Update chain token info status to complete, chainId: {chainId}, tokenId: {tokenId}");
             chainTokenInfo.Status = TokenApplyOrderStatus.Complete.ToString();
         }
 
 
         if (order.ChainTokenInfo.All(o => o.Status == TokenApplyOrderStatus.Complete.ToString()))
         {
+            Log.Debug("Update token apply order status to complete, orderId: {orderId}", order.Id);
             order.Status = TokenApplyOrderStatus.Complete.ToString();
+            order.StatusChangedRecords.Add(new StatusChangedRecord
+            {
+                Status = TokenApplyOrderStatus.Complete.ToString(),
+                Time = DateTime.UtcNow
+            });
         }
+        // todo : send lark notify to add whitelist
+        // todo : if liquidity less than threshold, send notify to lark
 
         await _tokenApplyOrderRepository.UpdateAsync(order, autoSave: true);
     }
-
-
 }
