@@ -25,7 +25,7 @@ public class PoolLiquidityIndexerSyncProvider : IndexerSyncProviderBase
         _poolLiquidityInfoAppService = poolLiquidityInfoAppService;
         _tokenAppService = tokenAppService;
     }
-
+    public override bool IsConfirmEnabled { get; set; } = false;
     protected override string SyncType { get; } = CrossChainServerSettings.PoolLiquidityIndexerSync;
 
     protected override async Task<long> HandleDataAsync(string aelfChainId, long startHeight, long endHeight)

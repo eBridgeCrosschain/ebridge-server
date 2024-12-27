@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
-using AElf.CrossChainServer.Worker.IndexerSync;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Serilog;
@@ -15,8 +14,7 @@ public class EvmIndexerSyncWorker : AsyncPeriodicBackgroundWorkerBase
 {
     private readonly IChainAppService _chainAppService;
     private readonly IEnumerable<IEvmSyncProvider> _evmSyncProviders;
-    private readonly EvmContractSyncOptions _evmContractSyncOptions;
-    
+
     public EvmIndexerSyncWorker(AbpAsyncTimer timer, IServiceScopeFactory serviceScopeFactory,
         IEnumerable<IEvmSyncProvider> evmSyncProviders, IChainAppService chainAppService,IOptionsSnapshot<EvmContractSyncOptions> evmContractSyncOptions) : base(
         timer,
@@ -24,8 +22,8 @@ public class EvmIndexerSyncWorker : AsyncPeriodicBackgroundWorkerBase
     {
         _evmSyncProviders = evmSyncProviders.ToList();
         _chainAppService = chainAppService;
-        _evmContractSyncOptions = evmContractSyncOptions.Value;
-        Timer.Period = _evmContractSyncOptions.SyncPeriod;
+        var options = evmContractSyncOptions.Value;
+        Timer.Period = options.SyncPeriod;
     }
 
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)

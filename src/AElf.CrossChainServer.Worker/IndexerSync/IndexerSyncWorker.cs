@@ -16,7 +16,7 @@ public class IndexerSyncWorker : AsyncPeriodicBackgroundWorkerBase
     private readonly IChainAppService _chainAppService;
     private readonly IEnumerable<IIndexerSyncProvider> _indexerSyncProviders;
     private readonly BridgeContractSyncOptions _bridgeContractSyncOptions;
-    
+
     public IndexerSyncWorker(AbpAsyncTimer timer, IServiceScopeFactory serviceScopeFactory,
         IEnumerable<IIndexerSyncProvider> indexerSyncProviders, IChainAppService chainAppService,
         IOptionsSnapshot<BridgeContractSyncOptions> bridgeContractSyncOptions) : base(timer,
@@ -43,9 +43,11 @@ public class IndexerSyncWorker : AsyncPeriodicBackgroundWorkerBase
         await Task.WhenAll(tasks);
 
         var confirmTasks = chains.Items.Select(o => o.Id).SelectMany(chainId =>
-            _indexerSyncProviders.Select(async provider => await provider.ExecuteAsync(chainId,
-                _bridgeContractSyncOptions.ConfirmedSyncDelayHeight,
-                _bridgeContractSyncOptions.ConfirmedSyncKeyPrefix)));
+            _indexerSyncProviders
+                .Where(provider => provider.IsConfirmEnabled)
+                .Select(async provider => await provider.ExecuteAsync(chainId,
+                    _bridgeContractSyncOptions.ConfirmedSyncDelayHeight,
+                    _bridgeContractSyncOptions.ConfirmedSyncKeyPrefix)));
 
         await Task.WhenAll(confirmTasks);
     }

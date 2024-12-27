@@ -12,5 +12,7 @@ namespace AElf.CrossChainServer.Tokens
         [NotNull] [Keyword] public virtual string Symbol { get; set; }
 
         public virtual int Decimals { get; set; }
+        public virtual int IssueChainId { get; set; }
+
     }
 }

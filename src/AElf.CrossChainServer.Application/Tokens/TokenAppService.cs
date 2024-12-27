@@ -52,7 +52,8 @@ namespace AElf.CrossChainServer.Tokens
                     Address = tokenDto.Address,
                     Decimals = tokenDto.Decimals,
                     Symbol = tokenDto.Symbol,
-                    ChainId = input.ChainId
+                    ChainId = input.ChainId,
+                    IssueChainId = tokenDto.IssueChainId
                 }, autoSave: true);
             }
 

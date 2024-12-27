@@ -69,6 +69,7 @@ public class CrossChainServerApplicationModule : AbpModule
         Configure<TokenWhitelistOptions>(configuration.GetSection("TokenWhitelist"));
         Configure<LarkNotifyTemplateOptions>(configuration.GetSection("LarkNotifyTemplate"));
         Configure<HeterogeneousTokenWhitelistOptions>(configuration.GetSection("HeterogeneousTokenWhitelist"));
+        Configure<ChainIdMapOptions>(configuration.GetSection("ChaInIdMap"));
         
         context.Services.AddSingleton<IBlockchainClientFactory<AElfClient>, AElfClientFactory>();
         context.Services.AddSingleton<IBlockchainClientFactory<Nethereum.Web3.Web3>, EvmClientFactory>();
@@ -91,5 +92,7 @@ public class CrossChainServerApplicationModule : AbpModule
         context.Services.AddTransient<IUserTokenOwnerProvider, UserTokenOwnerProvider>();
         context.Services.AddTransient<ITokenLiquidityCacheProvider, TokenLiquidityCacheProvider>();
         context.Services.AddTransient<IAggregatePriceProvider, AggregatePriceProvider>();
+        context.Services.AddTransient<ITokenImageProvider, TokenImageProvider>();
+        context.Services.AddTransient<ITokenLiquidityMonitorProvider, TokenLiquidityMonitorProvider>();
     }
 }

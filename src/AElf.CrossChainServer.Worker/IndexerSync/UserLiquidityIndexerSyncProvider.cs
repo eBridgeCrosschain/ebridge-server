@@ -26,6 +26,7 @@ public class UserLiquidityIndexerSyncProvider : IndexerSyncProviderBase
         _tokenAppService = tokenAppService;
     }
 
+    public override bool IsConfirmEnabled { get; set; } = false;
     protected override string SyncType { get; } = CrossChainServerSettings.UserLiquidityIndexerSync;
 
     protected override async Task<long> HandleDataAsync(string aelfChainId, long startHeight, long endHeight)

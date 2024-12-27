@@ -9,4 +9,5 @@ public class PoolInfoDto
     public decimal? MyTvlInUsd { get; set; }
     public decimal TotalTvlInUsd { get; set; }
     public decimal TokenPrice { get; set; }
+    
 }

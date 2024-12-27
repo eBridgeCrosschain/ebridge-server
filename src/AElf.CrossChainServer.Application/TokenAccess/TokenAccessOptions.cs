@@ -19,7 +19,6 @@ public class TokenAccessOptions
     public string HashVerifyKey { get; set; }
     public AvailableTokenConfigDto DefaultConfig { get; set; } = new();
     public Dictionary<string, AvailableTokenConfigDto> TokenConfig { get; set; } = new();
-    public string LarkWebhook { get; set; }
     public Dictionary<string, string> ChainIdMap { get; set; }
     public Dictionary<string,string> SymbolMap { get; set; }
     public string DAppChainTokenContractAddress { get; set; }
@@ -29,4 +28,5 @@ public class AvailableTokenConfigDto
     public string Liquidity { get; set; } = "1000";
     public int Holders { get; set; } = 1000;
     public long MinLiquidityInUsd { get; set; } = 5000;
+    public long MinLiquidityInUsdForAlarm { get; set; }
 }

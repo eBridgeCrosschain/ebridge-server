@@ -9,5 +9,6 @@ public class TokenInfoDto
     public string Address { get; set; }
     public string IssueChainId { get; set; }
     public bool IsNativeToken { get; set; }
+    public string Icon { get; set; }
 
 }

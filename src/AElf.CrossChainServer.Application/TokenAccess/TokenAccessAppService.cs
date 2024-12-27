@@ -44,11 +44,13 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     private readonly IIndexerCrossChainLimitInfoService _indexerCrossChainLimitInfoService;
     private readonly ITokenInvokeProvider _tokenInvokeProvider;
     private readonly ITokenLiquidityCacheProvider _tokenLiquidityCacheProvider;
+    private readonly ITokenImageProvider _tokenImageProvider;
 
     private readonly TokenAccessOptions _tokenAccessOptions;
     private readonly TokenWhitelistOptions _tokenWhitelistOptions;
     private readonly TokenPriceIdMappingOptions _tokenPriceIdMappingOptions;
     private readonly HeterogeneousTokenWhitelistOptions _heterogeneousTokenWhitelistOptions;
+    private readonly ChainIdMapOptions _chainIdMapOptions;
 
     private const int MaxMaxResultCount = 1000;
     private const int DefaultSkipCount = 0;
@@ -70,7 +72,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         IOptionsSnapshot<TokenPriceIdMappingOptions> tokenPriceIdMappingOptions,
         IOptionsSnapshot<HeterogeneousTokenWhitelistOptions> heterogeneousTokenWhitelistOptions,
         INESTRepository<ThirdUserTokenIssueIndex, Guid> thirdUserTokenIssueIndexRepository,
-        ITokenLiquidityCacheProvider tokenLiquidityCacheProvider, IAggregatePriceProvider aggregatePriceProvider)
+        ITokenLiquidityCacheProvider tokenLiquidityCacheProvider, IAggregatePriceProvider aggregatePriceProvider,
+        IOptionsSnapshot<ChainIdMapOptions> chainIdMapOptions, ITokenImageProvider tokenImageProvider)
     {
         _tokenApplyOrderRepository = tokenApplyOrderRepository;
         _tokenApplyOrderIndexRepository = tokenApplyOrderIndexRepository;
@@ -89,10 +92,12 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         _thirdUserTokenIssueIndexRepository = thirdUserTokenIssueIndexRepository;
         _tokenLiquidityCacheProvider = tokenLiquidityCacheProvider;
         _aggregatePriceProvider = aggregatePriceProvider;
+        _tokenImageProvider = tokenImageProvider;
         _tokenAccessOptions = tokenAccessOptions.Value;
         _tokenWhitelistOptions = tokenWhitelistOptions.Value;
         _tokenPriceIdMappingOptions = tokenPriceIdMappingOptions.Value;
         _heterogeneousTokenWhitelistOptions = heterogeneousTokenWhitelistOptions.Value;
+        _chainIdMapOptions = chainIdMapOptions.Value;
     }
 
     public async Task<AvailableTokensDto> GetAvailableTokensAsync()
@@ -827,7 +832,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         };
     }
 
-    public Task<Dictionary<string, Dictionary<string, TokenInfoDto>>> GetTokenWhitelistAsync()
+    public async Task<Dictionary<string, Dictionary<string, TokenInfoDto>>> GetTokenWhitelistAsync()
     {
         var tokenWhitelist = _tokenWhitelistOptions.TokenWhitelist;
         var result = tokenWhitelist.ToDictionary(
@@ -836,19 +841,80 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
                 chainEntry => chainEntry.Key,
                 chainEntry => ObjectMapper.Map<TokenInfo, TokenInfoDto>(chainEntry.Value)
             ));
-        return Task.FromResult(result);
+        var orderList = await GetTokenApplyOrderIndexListAsync(null,null,null,null,TokenApplyOrderStatus.Complete.ToString());
+        foreach (var order in orderList)
+        {
+            if (order.OtherChainTokenInfo != null)
+            {
+                if (!result.TryGetValue(order.Symbol, out var value))
+                {
+                    value = new Dictionary<string, TokenInfoDto>();
+                    result[order.Symbol] = value;
+                }
+
+                if (_chainIdMapOptions.Chain.TryGetValue(order.OtherChainTokenInfo.ChainId, out var chainId))
+                {
+                    value.TryAdd(chainId, new TokenInfoDto
+                    {
+                        Symbol = order.Symbol,
+                        Name = order.OtherChainTokenInfo.TokenName,
+                        Address = order.OtherChainTokenInfo.ContractAddress,
+                        Icon = order.OtherChainTokenInfo.Icon,
+                        Decimals = order.OtherChainTokenInfo.Decimals,
+                        IsNativeToken = false
+                    });
+                }
+            }
+
+            if (order.ChainTokenInfo != null)
+            {
+                foreach (var chainTokenInfo in order.ChainTokenInfo)
+                {
+                    if (!result.TryGetValue(order.Symbol, out var value))
+                    {
+                        value = new Dictionary<string, TokenInfoDto>();
+                        result[order.Symbol] = value;
+                    }
+
+                    var aelfChain = await _chainAppService.GetAsync(chainTokenInfo.ChainId);
+                    var chainId = ChainHelper.ConvertChainIdToBase58(aelfChain.AElfChainId);
+                    var token = await _tokenAppService.GetAsync(new GetTokenInput
+                    {
+                        ChainId = chainTokenInfo.ChainId,
+                        Symbol = order.Symbol
+                    });
+                    value.TryAdd(chainId, new TokenInfoDto
+                    {
+                        Symbol = order.Symbol,
+                        Name = chainTokenInfo.TokenName,
+                        Address = chainTokenInfo.ContractAddress,
+                        Icon = chainTokenInfo.Icon,
+                        Decimals = chainTokenInfo.Decimals,
+                        IsNativeToken = false,
+                        IssueChainId = token.IssueChainId.ToString()
+                    });
+                }
+            }
+        }
+
+        return result;
     }
 
     public async Task<PoolOverviewDto> GetPoolOverviewAsync(string addresses)
     {
-        var tokenCount = _heterogeneousTokenWhitelistOptions.Tokens.Count;
-        var poolCount = _heterogeneousTokenWhitelistOptions.Chains.Sum(c => c.Value.Count);
         var poolLiquidityInfoList = await _poolLiquidityInfoAppService.GetPoolLiquidityInfosAsync(
             new GetPoolLiquidityInfosInput
             {
                 MaxResultCount = MaxMaxResultCount,
                 SkipCount = DefaultSkipCount
             });
+        var poolCount = poolLiquidityInfoList.TotalCount;
+        var symbolList = poolLiquidityInfoList.Items
+            .Select(p => p.TokenInfo.Symbol)
+            .Select(symbol => _tokenAccessOptions.SymbolMap.TryGetValue(symbol, out var aelfSymbol) ? aelfSymbol : symbol)
+            .Distinct()
+            .ToList();
+        var tokenCount = symbolList.Count;
         var userLiquidityInfoList = string.IsNullOrWhiteSpace(addresses)
             ? new List<UserLiquidityIndexDto>()
             : await _userLiquidityInfoAppService.GetUserLiquidityInfosAsync(new GetUserLiquidityInput
@@ -884,6 +950,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             foreach (var poolLiquidity in group)
             {
                 var tokenPriceInUsd = tokenPrice[poolLiquidity.TokenInfo.Symbol];
+                poolLiquidity.TokenInfo.Icon = await _tokenImageProvider.GetTokenImageAsync(poolLiquidity.TokenInfo.Symbol);
                 var poolInfo = new PoolInfoDto
                 {
                     ChainId = poolLiquidity.ChainId,
@@ -961,7 +1028,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             });
             myLiquidity = userLiq.FirstOrDefault()?.Liquidity ?? 0;
         }
-
+        poolLiquidity.TokenInfo.Icon = await _tokenImageProvider.GetTokenImageAsync(poolLiquidity.TokenInfo.Symbol);
         return new PoolInfoDto
         {
             ChainId = poolLiquidity.ChainId,
@@ -993,7 +1060,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         }
 
         // Validate the token apply order
-        var queryable = await _tokenApplyOrderRepository.WithDetailsAsync(x => x.ChainTokenInfo,y=>y.StatusChangedRecords);
+        var queryable =
+            await _tokenApplyOrderRepository.WithDetailsAsync(x => x.ChainTokenInfo, y => y.StatusChangedRecords);
         var query = queryable.Where(x => x.Id == Guid.Parse(input.OrderId));
         var order = await AsyncExecuter.FirstOrDefaultAsync(query);
         if (order == null)
@@ -1054,7 +1122,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
 
     public async Task<bool> TriggerOrderStatusChangeAsync(TriggerOrderStatusChangeInput input)
     {
-        var queryable = await _tokenApplyOrderRepository.WithDetailsAsync(x => x.ChainTokenInfo,y=>y.StatusChangedRecords);
+        var queryable =
+            await _tokenApplyOrderRepository.WithDetailsAsync(x => x.ChainTokenInfo, y => y.StatusChangedRecords);
         var query = queryable.Where(x => x.Id == Guid.Parse(input.OrderId));
         var order = await AsyncExecuter.FirstOrDefaultAsync(query);
         if (order == null || order.Status != TokenApplyOrderStatus.PoolInitializing.ToString() ||
@@ -1178,7 +1247,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             tokenOwnerDto.LiquidityInUsd.SafeToDecimal(), liquidityInUsd.SafeToDecimal());
         var holdersEnough = tokenOwnerDto.Holders > holders;
         Log.Debug("Check Holders available, owner: {owner} and option: {option}", tokenOwnerDto.Holders, holders);
-       
+
         return decimalEnough && holdersEnough;
     }
 
@@ -1198,14 +1267,26 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     }
 
     private async Task<List<TokenApplyOrderIndex>> GetTokenApplyOrderIndexListAsync(string address, string symbol,
-        string id = null, string chainId = null)
+        string id = null, string chainId = null,string status = null)
     {
         var mustQuery = new List<Func<QueryContainerDescriptor<TokenApplyOrderIndex>, QueryContainer>>();
-        mustQuery.Add(q => q.Term(i => i.Field(f => f.UserAddress).Value(address)));
-        mustQuery.Add(q => q.Term(i => i.Field(f => f.Symbol).Value(symbol)));
+        if (!address.IsNullOrEmpty())
+        {
+            mustQuery.Add(q => q.Term(i => i.Field(f => f.UserAddress).Value(address)));
+        }
+
+        if (!symbol.IsNullOrEmpty())
+        {
+            mustQuery.Add(q => q.Term(i => i.Field(f => f.Symbol).Value(symbol)));
+        }
+
         if (!id.IsNullOrEmpty())
         {
             mustQuery.Add(q => q.Term(i => i.Field(f => f.Id).Value(id)));
+        }
+        if (!status.IsNullOrEmpty())
+        {
+            mustQuery.Add(q => q.Term(i => i.Field(f => f.Status).Value(status)));
         }
 
         if (!chainId.IsNullOrEmpty())

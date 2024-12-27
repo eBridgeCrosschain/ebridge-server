@@ -6,8 +6,6 @@ using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.Settings;
 using GraphQL;
 using GraphQL.Client.Abstractions;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Serilog;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Json;
@@ -33,7 +31,8 @@ public abstract class IndexerSyncProviderBase : IIndexerSyncProvider, ITransient
         IndexerAppService = indexerAppService;
         ChainAppService = chainAppService;
     }
-
+    public virtual bool IsConfirmEnabled { get; set; } = true;
+    
     public async Task ExecuteAsync(string chainId, int syncDelayHeight = 0, string typePrefix = null)
     {
         var syncHeight = await GetSyncHeightAsync(chainId, typePrefix);
