@@ -1176,6 +1176,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             tokenOwnerDto.LiquidityInUsd.SafeToDecimal(), liquidityInUsd.SafeToDecimal());
         var holdersEnough = tokenOwnerDto.Holders > holders;
         Log.Debug("Check Holders available, owner: {owner} and option: {option}", tokenOwnerDto.Holders, holders);
+       
         return decimalEnough && holdersEnough;
     }
 
