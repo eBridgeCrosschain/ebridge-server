@@ -1102,8 +1102,13 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         var holders = !_tokenAccessOptions.TokenConfig.ContainsKey(symbol)
             ? _tokenAccessOptions.DefaultConfig.Holders
             : _tokenAccessOptions.TokenConfig[symbol].Holders;
-        return tokenOwnerDto.LiquidityInUsd.SafeToDecimal() > liquidityInUsd.SafeToDecimal()
-               && tokenOwnerDto.Holders > holders;
+
+        var decimalEnough = tokenOwnerDto.LiquidityInUsd.SafeToDecimal() > liquidityInUsd.SafeToDecimal();
+        Log.Debug("Check Liquidity available, owner: {owner} and option: {option}",
+            tokenOwnerDto.LiquidityInUsd.SafeToDecimal(), liquidityInUsd.SafeToDecimal());
+        var holdersEnough = tokenOwnerDto.Holders > holders;
+        Log.Debug("Check Holders available, owner: {owner} and option: {option}", tokenOwnerDto.Holders, holders);
+        return decimalEnough && holdersEnough;
     }
 
     private async Task<List<UserTokenAccessInfoDto>> GetUserTokenAccessInfoAsync(string address,
