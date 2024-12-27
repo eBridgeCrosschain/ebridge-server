@@ -15,19 +15,15 @@ public class TokenAccessOptions
     public string SymbolMarketBindingUri { get; set; }
     public string AwakenBaseUrl { get; set; }
     public string AwakenGetTokenLiquidityUri { get; set; }
+    public string AwakenGetPriceUri { get; set; }
     public string HashVerifyKey { get; set; }
     public AvailableTokenConfigDto DefaultConfig { get; set; } = new();
     public Dictionary<string, AvailableTokenConfigDto> TokenConfig { get; set; } = new();
     public string LarkWebhook { get; set; }
     public Dictionary<string, string> ChainIdMap { get; set; }
+    public Dictionary<string,string> SymbolMap { get; set; }
     public string DAppChainTokenContractAddress { get; set; }
 }
-
-public class AvailablePoolConfigDto
-{
-    public string Liquidity { get; set; } = "1000";
-}
-
 public class AvailableTokenConfigDto
 {
     public string Liquidity { get; set; } = "1000";

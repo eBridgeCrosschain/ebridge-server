@@ -10,7 +10,6 @@ using AElf.CrossChainServer.Notify;
 using AElf.CrossChainServer.TokenAccess.ThirdUserTokenIssue;
 using AElf.CrossChainServer.TokenAccess.UserTokenAccess;
 using AElf.CrossChainServer.TokenPool;
-using AElf.CrossChainServer.TokenPrice;
 using AElf.CrossChainServer.Tokens;
 using AElf.Indexing.Elasticsearch;
 using JetBrains.Annotations;
@@ -41,9 +40,10 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     private readonly IBridgeContractAppService _bridgeContractAppService;
 
     private readonly ILarkRobotNotifyProvider _larkRobotNotifyProvider;
-    private readonly ITokenPriceProvider _tokenPriceProvider;
+    private readonly IAggregatePriceProvider _aggregatePriceProvider;
     private readonly IIndexerCrossChainLimitInfoService _indexerCrossChainLimitInfoService;
     private readonly ITokenInvokeProvider _tokenInvokeProvider;
+    private readonly ITokenLiquidityCacheProvider _tokenLiquidityCacheProvider;
 
     private readonly TokenAccessOptions _tokenAccessOptions;
     private readonly TokenWhitelistOptions _tokenWhitelistOptions;
@@ -61,7 +61,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         IThirdUserTokenIssueRepository thirdUserTokenIssueRepository,
         INESTRepository<UserTokenAccessInfoIndex, Guid> userAccessTokenInfoIndexRepository,
         ILarkRobotNotifyProvider larkRobotNotifyProvider, IPoolLiquidityInfoAppService poolLiquidityInfoAppService,
-        IUserLiquidityInfoAppService userLiquidityInfoAppService, ITokenPriceProvider tokenPriceProvider,
+        IUserLiquidityInfoAppService userLiquidityInfoAppService,
         IChainAppService chainAppService, ITokenAppService tokenAppService,
         ICrossChainUserRepository crossChainUserRepository, IBridgeContractAppService bridgeContractAppService,
         IIndexerCrossChainLimitInfoService indexerCrossChainLimitInfoService, ITokenInvokeProvider tokenInvokeProvider,
@@ -69,7 +69,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         IOptionsSnapshot<TokenWhitelistOptions> tokenWhitelistOptions,
         IOptionsSnapshot<TokenPriceIdMappingOptions> tokenPriceIdMappingOptions,
         IOptionsSnapshot<HeterogeneousTokenWhitelistOptions> heterogeneousTokenWhitelistOptions,
-        INESTRepository<ThirdUserTokenIssueIndex, Guid> thirdUserTokenIssueIndexRepository)
+        INESTRepository<ThirdUserTokenIssueIndex, Guid> thirdUserTokenIssueIndexRepository,
+        ITokenLiquidityCacheProvider tokenLiquidityCacheProvider, IAggregatePriceProvider aggregatePriceProvider)
     {
         _tokenApplyOrderRepository = tokenApplyOrderRepository;
         _tokenApplyOrderIndexRepository = tokenApplyOrderIndexRepository;
@@ -79,7 +80,6 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         _larkRobotNotifyProvider = larkRobotNotifyProvider;
         _poolLiquidityInfoAppService = poolLiquidityInfoAppService;
         _userLiquidityInfoAppService = userLiquidityInfoAppService;
-        _tokenPriceProvider = tokenPriceProvider;
         _chainAppService = chainAppService;
         _tokenAppService = tokenAppService;
         _crossChainUserRepository = crossChainUserRepository;
@@ -87,6 +87,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         _indexerCrossChainLimitInfoService = indexerCrossChainLimitInfoService;
         _tokenInvokeProvider = tokenInvokeProvider;
         _thirdUserTokenIssueIndexRepository = thirdUserTokenIssueIndexRepository;
+        _tokenLiquidityCacheProvider = tokenLiquidityCacheProvider;
+        _aggregatePriceProvider = aggregatePriceProvider;
         _tokenAccessOptions = tokenAccessOptions.Value;
         _tokenWhitelistOptions = tokenWhitelistOptions.Value;
         _tokenPriceIdMappingOptions = tokenPriceIdMappingOptions.Value;
@@ -659,54 +661,67 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     {
         foreach (var item in itemList)
         {
-            if (item.OtherChainTokenInfo != null &&
-                (item.OtherChainTokenInfo.Status == TokenApplyOrderStatus.PoolInitialized.ToString() ||
-                 item.OtherChainTokenInfo.Status == TokenApplyOrderStatus.LiquidityAdded.ToString() ||
-                 item.OtherChainTokenInfo.Status == TokenApplyOrderStatus.Complete.ToString()))
+            if (item.OtherChainTokenInfo != null && IsStatusValid(item.OtherChainTokenInfo.Status))
             {
-                var chainId = item.OtherChainTokenInfo.ChainId;
-                var token = await _tokenAppService.GetAsync(new GetTokenInput
+                await ProcessOtherChainTokenInfoAsync(item.OtherChainTokenInfo);
+            }
+
+            if (item.ChainTokenInfo != null)
+            {
+                foreach (var chainTokenInfo in item.ChainTokenInfo)
                 {
-                    ChainId = chainId,
-                    Address = item.OtherChainTokenInfo.ContractAddress
-                });
-                var dailyLimit =
-                    await _bridgeContractAppService.GetDailyLimitAsync(
-                        chainId, token.Id, CrossChainServerConsts.AElfMainChainId);
-                item.OtherChainTokenInfo.DailyLimit = dailyLimit.DefaultDailyLimit;
-                var targetChainIds = new List<string> { CrossChainServerConsts.AElfMainChainId };
-                var rateLimit =
-                    (await _bridgeContractAppService.GetCurrentReceiptTokenBucketStatesAsync(
-                        chainId, new List<Guid> { token.Id }, targetChainIds)).FirstOrDefault();
-                item.OtherChainTokenInfo.RateLimit = rateLimit?.RefillRate ?? 0;
-                item.OtherChainTokenInfo.MinAmount =
-                    _tokenAccessOptions.DefaultConfig.MinLiquidityInUsd.ToString();
-                if (item.ChainTokenInfo != null && item.ChainTokenInfo.Count > 0)
-                {
-                    foreach (var chainTokenInfo in item.ChainTokenInfo)
+                    if (IsStatusValid(chainTokenInfo.Status))
                     {
-                        if (chainTokenInfo.Status == TokenApplyOrderStatus.PoolInitialized.ToString() ||
-                            chainTokenInfo.Status ==
-                            TokenApplyOrderStatus.LiquidityAdded.ToString() ||
-                            chainTokenInfo.Status == TokenApplyOrderStatus.Complete.ToString())
-                        {
-                            var aelfDailyLimit =
-                                (await _indexerCrossChainLimitInfoService.GetCrossChainLimitInfoIndexAsync(
-                                    chainTokenInfo.ChainId, chainId, chainTokenInfo.Symbol)).FirstOrDefault();
-                            if (aelfDailyLimit != null)
-                            {
-                                chainTokenInfo.DailyLimit = aelfDailyLimit.DefaultDailyLimit;
-                                chainTokenInfo.RateLimit = aelfDailyLimit.RefillRate;
-                                chainTokenInfo.MinAmount =
-                                    _tokenAccessOptions.DefaultConfig.MinLiquidityInUsd.ToString();
-                            }
-                        }
+                        await ProcessChainTokenInfoAsync(chainTokenInfo, item.OtherChainTokenInfo?.ChainId);
                     }
                 }
             }
         }
 
         return itemList;
+    }
+
+    private static bool IsStatusValid(string status)
+    {
+        return status == TokenApplyOrderStatus.PoolInitialized.ToString() ||
+               status == TokenApplyOrderStatus.LiquidityAdded.ToString() ||
+               status == TokenApplyOrderStatus.Complete.ToString();
+    }
+
+    private async Task ProcessOtherChainTokenInfoAsync(ChainTokenInfoResultDto otherChainTokenInfo)
+    {
+        var token = await _tokenAppService.GetAsync(new GetTokenInput
+        {
+            ChainId = otherChainTokenInfo.ChainId,
+            Address = otherChainTokenInfo.ContractAddress
+        });
+
+        var dailyLimit = await _bridgeContractAppService.GetDailyLimitAsync(
+            otherChainTokenInfo.ChainId, token.Id, CrossChainServerConsts.AElfMainChainId);
+
+        otherChainTokenInfo.DailyLimit = dailyLimit.DefaultDailyLimit;
+
+        var rateLimit = (await _bridgeContractAppService.GetCurrentReceiptTokenBucketStatesAsync(
+                otherChainTokenInfo.ChainId, new List<Guid> { token.Id },
+                new List<string> { CrossChainServerConsts.AElfMainChainId }))
+            .FirstOrDefault();
+
+        otherChainTokenInfo.RateLimit = rateLimit?.RefillRate ?? 0;
+        otherChainTokenInfo.MinAmount = _tokenAccessOptions.DefaultConfig.MinLiquidityInUsd.ToString();
+    }
+
+    private async Task ProcessChainTokenInfoAsync(ChainTokenInfoResultDto chainTokenInfo, string otherChainId)
+    {
+        var aelfDailyLimit = (await _indexerCrossChainLimitInfoService.GetCrossChainLimitInfoIndexAsync(
+            chainTokenInfo.ChainId, otherChainId, chainTokenInfo.Symbol)).FirstOrDefault();
+
+        if (aelfDailyLimit != null)
+        {
+            chainTokenInfo.DailyLimit =
+                (decimal)(aelfDailyLimit.DefaultDailyLimit / Math.Pow(10, chainTokenInfo.Decimals));
+            chainTokenInfo.RateLimit = (decimal)(aelfDailyLimit.RefillRate / Math.Pow(10, chainTokenInfo.Decimals));
+            chainTokenInfo.MinAmount = _tokenAccessOptions.DefaultConfig.MinLiquidityInUsd.ToString();
+        }
     }
 
     private async Task<long> GetTokenApplyOrderIndexListCountAsync(string address, string symbol)
@@ -932,8 +947,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             })).Symbol;
         }
 
-        var coinId = _tokenPriceIdMappingOptions.CoinIdMapping[tokenSymbol];
-        var priceInUsd = await _tokenPriceProvider.GetPriceAsync(coinId);
+        var priceInUsd = await _aggregatePriceProvider.GetPriceAsync(tokenSymbol);
         var myLiquidity = 0m;
         if (!string.IsNullOrWhiteSpace(input.Address))
         {
@@ -962,37 +976,32 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         {
             Symbol = input.Symbol
         };
-        if (_tokenPriceIdMappingOptions.CoinIdMapping.TryGetValue(input.Symbol, out var coinId))
-        {
-            if (!coinId.IsNullOrEmpty())
-            {
-                var priceInUsd = await _tokenPriceProvider.GetPriceAsync(coinId);
-                var amountInUsd = input.Amount * priceInUsd;
-                result.TokenAmountInUsd = amountInUsd;
-            }
-            else
-            {
-                Log.Error("Token coin id is null. {symbol}", input.Symbol);
-                result.TokenAmountInUsd = 0;
-            }
-        }
-        else
-        {
-            Log.Error("Token coin id not found. {symbol}", input.Symbol);
-            result.TokenAmountInUsd = 0;
-        }
-
+        var priceInUsd = await _aggregatePriceProvider.GetPriceAsync(input.Symbol);
+        var amountInUsd = input.Amount * priceInUsd;
+        result.TokenAmountInUsd = amountInUsd;
         return result;
     }
 
     public async Task<CommitAddLiquidityDto> CommitAddLiquidityAsync(CommitAddLiquidityInput input)
     {
-        // 1. check token apply order status - pool initialized
-        // 2. update chain access status - liquidity added
-        var order = await _tokenApplyOrderRepository.GetAsync(Guid.Parse(input.OrderId));
+        var address = await GetUserAddressAsync();
+        if (address.IsNullOrEmpty())
+        {
+            throw new UserFriendlyException("No permission.");
+        }
+
+        // Validate the token apply order
+        var queryable = await _tokenApplyOrderRepository.WithDetailsAsync(x => x.ChainTokenInfo,y=>y.StatusChangedRecords);
+        var query = queryable.Where(x => x.Id == Guid.Parse(input.OrderId));
+        var order = await AsyncExecuter.FirstOrDefaultAsync(query);
         if (order == null)
         {
             throw new UserFriendlyException("Order not found.");
+        }
+
+        if (order.UserAddress != address)
+        {
+            throw new UserFriendlyException("The order does not belong to this user.");
         }
 
         var chainOrder = order.ChainTokenInfo.FirstOrDefault(c => c.ChainId == input.ChainId);
@@ -1006,8 +1015,33 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             throw new UserFriendlyException("Invalid order status.");
         }
 
-        chainOrder.Status = TokenApplyOrderStatus.LiquidityAdded.ToString();
-        await _tokenApplyOrderRepository.UpdateAsync(order);
+        // Update the status of relevant orders
+
+        var queryList = queryable.Where(x => x.UserAddress == address && x.Symbol == order.Symbol);
+        var orderList = await AsyncExecuter.ToListAsync(queryList);
+
+        var toUpdatedOrders = orderList
+            .Where(o => o.ChainTokenInfo.Any(c => c.ChainId == input.ChainId &&
+                                                  c.Status == TokenApplyOrderStatus.PoolInitialized.ToString()))
+            .ToList();
+
+        foreach (var orderApply in toUpdatedOrders)
+        {
+            var chainApply = orderApply.ChainTokenInfo.First(c => c.ChainId == input.ChainId);
+            chainApply.Status = TokenApplyOrderStatus.LiquidityAdded.ToString();
+        }
+
+        if (toUpdatedOrders.Count > 0)
+        {
+            await _tokenApplyOrderRepository.UpdateManyAsync(toUpdatedOrders);
+        }
+
+        if (input.Amount > 0)
+        {
+            await _tokenLiquidityCacheProvider.AddTokenLiquidityCacheAsync(input.OrderId, order.Symbol, input.ChainId,
+                input.Amount);
+        }
+
         return new CommitAddLiquidityDto
         {
             OrderId = input.OrderId,
@@ -1016,9 +1050,51 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         };
     }
 
-    public Task TriggerOrderStatusChangeAsync(TriggerOrderStatusChangeInput input)
+    public async Task<bool> TriggerOrderStatusChangeAsync(TriggerOrderStatusChangeInput input)
     {
-        throw new NotImplementedException();
+        var queryable = await _tokenApplyOrderRepository.WithDetailsAsync(x => x.ChainTokenInfo,y=>y.StatusChangedRecords);
+        var query = queryable.Where(x => x.Id == Guid.Parse(input.OrderId));
+        var order = await AsyncExecuter.FirstOrDefaultAsync(query);
+        if (order == null || order.Status != TokenApplyOrderStatus.PoolInitializing.ToString() ||
+            order.ChainTokenInfo == null)
+        {
+            throw new UserFriendlyException($"Invalid order {order.Id.ToString()}.");
+        }
+
+        var chainTokenInfoMap = order.ChainTokenInfo.ToDictionary(c => c.ChainId);
+        foreach (var chainToken in input.ChainIdTokenInfos)
+        {
+            if (!chainTokenInfoMap.TryGetValue(chainToken.ChainId, out var chainTokenInfo))
+            {
+                continue;
+            }
+
+            if (chainTokenInfo.Status != TokenApplyOrderStatus.PoolInitializing.ToString())
+            {
+                continue;
+            }
+
+            chainTokenInfo.Status = TokenApplyOrderStatus.PoolInitialized.ToString();
+            if (chainTokenInfo.Type != BlockchainType.Evm)
+            {
+                continue;
+            }
+
+            chainTokenInfo.ContractAddress = chainToken.TokenContractAddress;
+            chainTokenInfo.Decimals = chainToken.TokenDecimals;
+        }
+
+        order.Status = TokenApplyOrderStatus.PoolInitialized.ToString();
+        order.StatusChangedRecords.Add(new StatusChangedRecord
+        {
+            Id = Guid.NewGuid(),
+            OrderId = order.Id,
+            Status = TokenApplyOrderStatus.PoolInitialized.ToString(),
+            Time = DateTime.UtcNow
+        });
+        Log.Debug("TriggerOrderStatusChangeAsync start.{orderId}", input.OrderId);
+        await _tokenApplyOrderRepository.UpdateAsync(order);
+        return true;
     }
 
     private async Task<Dictionary<string, decimal>> GetTokenPricesAsync(
@@ -1032,16 +1108,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         foreach (var symbol in allSymbols)
         {
             Log.Debug("To get token price: {symbol}", symbol);
-            if (_tokenPriceIdMappingOptions.CoinIdMapping.TryGetValue(symbol, out var coinId))
-            {
-                var priceInUsd = await _tokenPriceProvider.GetPriceAsync(coinId);
-                Log.Debug("Token price: {symbol} {priceInUsd}", symbol, priceInUsd);
-                tokenPrices[symbol] = priceInUsd;
-            }
-            else
-            {
-                tokenPrices[symbol] = 0;
-            }
+            var priceInUsd = await _aggregatePriceProvider.GetPriceAsync(symbol);
+            tokenPrices[symbol] = priceInUsd;
         }
 
         return tokenPrices;

@@ -9,6 +9,12 @@ public class TokenApplyOrder : TokenApplyOrderBase
 {
     public List<ChainTokenInfo> ChainTokenInfo { get; set; }
     public List<StatusChangedRecord> StatusChangedRecords { get; set; }
+    
+    public TokenApplyOrder()
+    {
+        ChainTokenInfo = new List<ChainTokenInfo>();
+        StatusChangedRecords = new List<StatusChangedRecord>();
+    }
 }
 
 public class ChainTokenInfo : CrossChainServerEntity<Guid>
