@@ -88,7 +88,7 @@ public class TokenAccessController : CrossChainServerController
     }
 
     [Authorize]
-    [HttpGet("issue-binding")]
+    [HttpPost("issue-binding")]
     [ServiceFilter(typeof(ResultFilter))]
     public async Task<bool> GetBindingIssueAsync(UserTokenBindingDto input)
     {
