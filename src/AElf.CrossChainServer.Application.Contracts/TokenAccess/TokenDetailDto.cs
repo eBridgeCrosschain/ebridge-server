@@ -11,6 +11,6 @@ public class TokenDetailResultDto
 public class TokenDetailDto
 {
     public string TokenContractAddress { get; set; }
-    public int Holders { get; set; }
+    public int MergeHolders { get; set; }
     public List<string> ChainIds { get; set; }
 }

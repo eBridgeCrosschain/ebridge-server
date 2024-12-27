@@ -174,7 +174,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
         userTokenOwnerInfo.ContractAddress = chainId == CrossChainServerConsts.AElfMainChainId
             ? detailDto?.Data?.TokenContractAddress
             : _tokenAccessOptions.DAppChainTokenContractAddress;
-        userTokenOwnerInfo.Holders = detailDto?.Data?.Holders ?? 0;
+        userTokenOwnerInfo.Holders = detailDto?.Data?.MergeHolders ?? 0;
         userTokenOwnerInfo.Status = TokenApplyOrderStatus.Issued.ToString();
         return userTokenOwnerInfo;
     }
