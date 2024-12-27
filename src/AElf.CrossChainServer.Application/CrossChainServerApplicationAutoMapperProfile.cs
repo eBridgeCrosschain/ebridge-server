@@ -123,7 +123,6 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<UserLiquidityDto, UserLiquidityInfoInput>();
 
         CreateMap<TokenInfo, TokenInfoDto>();
-
         CreateMap<UserTokenItemDto, UserTokenOwnerInfoDto>().ForMember(i=>i.Icon,opt=>opt.MapFrom(i=>i.TokenImage));
         CreateMap<UserTokenOwnerInfo, UserTokenOwnerInfoDto>();
         CreateMap<UserTokenOwnerInfoDto, UserTokenOwnerInfo>();
