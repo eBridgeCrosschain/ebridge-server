@@ -96,7 +96,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             return false;
         }
 
-        foreach (var item in resultDto.Data)
+        foreach (var item in resultDto.Data.Items)
         {
             var aelfChainId = FindMatchChainId(item.AelfChain);
             var thirdChainId = FindMatchChainId(item.ThirdChain);
