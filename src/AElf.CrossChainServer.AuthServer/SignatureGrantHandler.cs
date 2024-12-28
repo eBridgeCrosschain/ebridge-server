@@ -52,12 +52,11 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
         var version = context.Request.GetParameter("version")?.ToString();
         var source = context.Request.GetParameter("source").ToString();
         var sourceType = context.Request.GetParameter("sourceType")?.ToString();
-        var recaptchaToken = context.Request.GetParameter("recaptchaToken")?.ToString();
-
+        
         _logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<SignatureGrantHandler>>();
         _logger.LogDebug(
-            "before publicKeyVal:{publicKeyVal}, signatureVal:{signatureVal}, plainText:{plainText}, caHash:{caHash}, chainId:{chainId}, version:{version}, source:{source}, sourceType:{sourceType}, recaptchaToken: {recaptchaToken}",
-            publicKeyVal, signatureVal, plainText, caHash, chainId, version, source, sourceType, recaptchaToken);
+            "before publicKeyVal:{publicKeyVal}, signatureVal:{signatureVal}, plainText:{plainText}, caHash:{caHash}, chainId:{chainId}, version:{version}, source:{source}, sourceType:{sourceType}}",
+            publicKeyVal, signatureVal, plainText, caHash, chainId, version, source, sourceType);
 
         var invalidParamResult = CheckParams(publicKeyVal, signatureVal, plainText, caHash, chainId, scope, version,
             source, sourceType);
@@ -170,13 +169,6 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
             {
                 _httpClient = context.HttpContext.RequestServices.GetRequiredService<IHttpClientFactory>()
                     .CreateClient();
-                var valid = !recaptchaToken.IsNullOrEmpty() && await IsCaptchaValid(recaptchaToken);
-                if (!valid)
-                {
-                    return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
-                        "RecaptchaToken validation failed.");
-                }
-
                 var userId = GuidHelper.UniqGuid(address);
                 var createUserResult = await CreateUserAsync(userManager, userId, address);
                 if (!createUserResult)
@@ -220,13 +212,6 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
                 _logger.LogDebug("check new wallet user data, address:{address}", fullAddress);
                 _httpClient = context.HttpContext.RequestServices.GetRequiredService<IHttpClientFactory>()
                     .CreateClient();
-                var valid = !recaptchaToken.IsNullOrEmpty() && await IsCaptchaValid(recaptchaToken);
-                if (!valid)
-                {
-                    return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
-                        "RecaptchaToken validation failed.");
-                }
-
                 var userId = GuidHelper.UniqGuid(fullAddress);
                 var createUserResult = await CreateUserAsync(userManager, userId, fullAddress, sourceType);
                 if (!createUserResult)
