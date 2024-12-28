@@ -52,10 +52,10 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
         var version = context.Request.GetParameter("version")?.ToString();
         var source = context.Request.GetParameter("source").ToString();
         var sourceType = context.Request.GetParameter("sourceType")?.ToString();
-        
+
         _logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<SignatureGrantHandler>>();
         _logger.LogDebug(
-            "before publicKeyVal:{publicKeyVal}, signatureVal:{signatureVal}, plainText:{plainText}, caHash:{caHash}, chainId:{chainId}, version:{version}, source:{source}, sourceType:{sourceType}}",
+            "before publicKeyVal:{publicKeyVal}, signatureVal:{signatureVal}, plainText:{plainText}, caHash:{caHash}, chainId:{chainId}, version:{version}, source:{source}, sourceType:{sourceType}",
             publicKeyVal, signatureVal, plainText, caHash, chainId, version, source, sourceType);
 
         var invalidParamResult = CheckParams(publicKeyVal, signatureVal, plainText, caHash, chainId, scope, version,
