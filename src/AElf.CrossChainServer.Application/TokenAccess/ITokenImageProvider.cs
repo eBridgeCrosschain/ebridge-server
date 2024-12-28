@@ -10,7 +10,7 @@ public interface ITokenImageProvider
     Task<string> GetTokenImageAsync(string symbol);
 }
 
-public class TokenImageProvider : ITokenImageProvider,ITransientDependency
+public class TokenImageProvider : ITokenImageProvider, ITransientDependency
 {
     private readonly IThirdUserTokenIssueRepository _thirdUserTokenIssueRepository;
 
@@ -21,7 +21,8 @@ public class TokenImageProvider : ITokenImageProvider,ITransientDependency
 
     public async Task<string> GetTokenImageAsync(string symbol)
     {
-        var tokenInfo = await _thirdUserTokenIssueRepository.GetListAsync(o=>o.Symbol==symbol);
-        return tokenInfo.FirstOrDefault()?.TokenImage;
+        var tokenInfo = await _thirdUserTokenIssueRepository.GetListAsync(o => o.Symbol == symbol);
+        var tokenImageExistList = tokenInfo.Where(t => t.TokenImage != null).ToList();
+        return tokenImageExistList.FirstOrDefault()?.TokenImage;
     }
 }
