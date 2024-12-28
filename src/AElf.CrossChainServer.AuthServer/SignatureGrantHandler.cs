@@ -184,9 +184,10 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
                 var userInfo = await _crossChainUserRepository.FindAsync(o => o.UserId == user.Id);
                 var chainIds = _recaptchaOptions.Value.ChainIds;
                 _logger.LogDebug("_recaptchaOptions chainIds: {chainIds}", chainIds);
-                if (userInfo.AddressInfos.IsNullOrEmpty() || IsChainIdMismatch(userInfo.AddressInfos, chainIds))
+                if (userInfo == null || userInfo.AddressInfos.IsNullOrEmpty() ||
+                    IsChainIdMismatch(userInfo.AddressInfos, chainIds))
                 {
-                    _logger.LogDebug("save user info into grain again, userId:{userId}", user.Id.ToString());
+                    _logger.LogDebug("save user info into storage again, userId:{userId}", user.Id.ToString());
 
                     var addressInfos = chainIds
                         .Select(chainId => new AddressInfoDto { ChainId = chainId, Address = address }).ToList();
