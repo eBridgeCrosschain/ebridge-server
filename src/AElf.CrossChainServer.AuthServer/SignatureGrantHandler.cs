@@ -37,7 +37,6 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
     private IOptionsSnapshot<GraphQlOption> _graphQlOptions;
     private IOptionsSnapshot<ContractOptions> _contractOptions;
     private ICrossChainUserRepository _crossChainUserRepository;
-    private IOptionsSnapshot<RecaptchaOptions> _recaptchaOptions;
 
     private readonly string _lockKeyPrefix = "CrossChainServer:Auth:SignatureGrantHandler:";
 
@@ -52,12 +51,11 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
         var version = context.Request.GetParameter("version")?.ToString();
         var source = context.Request.GetParameter("source").ToString();
         var sourceType = context.Request.GetParameter("sourceType")?.ToString();
-        var recaptchaToken = context.Request.GetParameter("recaptchaToken")?.ToString();
 
         _logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<SignatureGrantHandler>>();
         _logger.LogDebug(
-            "before publicKeyVal:{publicKeyVal}, signatureVal:{signatureVal}, plainText:{plainText}, caHash:{caHash}, chainId:{chainId}, version:{version}, source:{source}, sourceType:{sourceType}, recaptchaToken: {recaptchaToken}",
-            publicKeyVal, signatureVal, plainText, caHash, chainId, version, source, sourceType, recaptchaToken);
+            "before publicKeyVal:{publicKeyVal}, signatureVal:{signatureVal}, plainText:{plainText}, caHash:{caHash}, chainId:{chainId}, version:{version}, source:{source}, sourceType:{sourceType}",
+            publicKeyVal, signatureVal, plainText, caHash, chainId, version, source, sourceType);
 
         var invalidParamResult = CheckParams(publicKeyVal, signatureVal, plainText, caHash, chainId, scope, version,
             source, sourceType);
@@ -103,9 +101,7 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
         _distributedLock = context.HttpContext.RequestServices.GetRequiredService<IAbpDistributedLock>();
         _graphQlOptions = context.HttpContext.RequestServices.GetRequiredService<IOptionsSnapshot<GraphQlOption>>();
         _chainOptions = context.HttpContext.RequestServices.GetRequiredService<IOptionsSnapshot<ChainOptions>>();
-        _recaptchaOptions =
-            context.HttpContext.RequestServices.GetRequiredService<IOptionsSnapshot<RecaptchaOptions>>();
-
+        
         IdentityUser user = null;
         var address = string.Empty;
         if (source == AuthConstant.PortKeySource || source == AuthConstant.NightElfSource)
@@ -170,13 +166,6 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
             {
                 _httpClient = context.HttpContext.RequestServices.GetRequiredService<IHttpClientFactory>()
                     .CreateClient();
-                var valid = !recaptchaToken.IsNullOrEmpty() && await IsCaptchaValid(recaptchaToken);
-                if (!valid)
-                {
-                    return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
-                        "RecaptchaToken validation failed.");
-                }
-
                 var userId = GuidHelper.UniqGuid(address);
                 var createUserResult = await CreateUserAsync(userManager, userId, address);
                 if (!createUserResult)
@@ -190,20 +179,14 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
             {
                 _logger.LogDebug("check user data consistency, userId:{userId}", user.Id.ToString());
                 var userInfo = await _crossChainUserRepository.FindAsync(o => o.UserId == user.Id);
-                var chainIds = _recaptchaOptions.Value.ChainIds;
-                _logger.LogDebug("_recaptchaOptions chainIds: {chainIds}", chainIds);
-                if (userInfo.AddressInfos.IsNullOrEmpty() || IsChainIdMismatch(userInfo.AddressInfos, chainIds))
+                if (userInfo == null || userInfo.AddressInfos.IsNullOrEmpty())
                 {
-                    _logger.LogDebug("save user info into grain again, userId:{userId}", user.Id.ToString());
-
-                    var addressInfos = chainIds
-                        .Select(chainId => new AddressInfoDto { ChainId = chainId, Address = address }).ToList();
-
+                    _logger.LogDebug("save user info into storage again, userId:{userId}", user.Id.ToString());
                     await _crossChainUserRepository.InsertAsync(new()
                     {
                         UserId = user.Id,
                         AppId = AuthConstant.NightElfAppId,
-                        AddressInfos = addressInfos
+                        AddressInfos = new() { new() { Address = address } }
                     });
                     _logger.LogDebug("save user success, userId:{userId}", user.Id.ToString());
                 }
@@ -220,13 +203,6 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
                 _logger.LogDebug("check new wallet user data, address:{address}", fullAddress);
                 _httpClient = context.HttpContext.RequestServices.GetRequiredService<IHttpClientFactory>()
                     .CreateClient();
-                var valid = !recaptchaToken.IsNullOrEmpty() && await IsCaptchaValid(recaptchaToken);
-                if (!valid)
-                {
-                    return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
-                        "RecaptchaToken validation failed.");
-                }
-
                 var userId = GuidHelper.UniqGuid(fullAddress);
                 var createUserResult = await CreateUserAsync(userManager, userId, fullAddress, sourceType);
                 if (!createUserResult)
@@ -271,31 +247,6 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
                 chainId, caHash, version);
             return Guid.NewGuid();
         }
-    }
-
-    private async Task<bool> IsCaptchaValid(string token)
-    {
-        _logger.LogDebug("method IsCaptchaValid, token: {token}", token);
-        var response = await _httpClient.PostAsync(
-            $"{_recaptchaOptions.Value.BaseUrl}?secret={_recaptchaOptions.Value.SecretKey}&response={token}", null);
-        var jsonString = await response.Content.ReadAsStringAsync();
-        _logger.LogDebug("IsCaptchaValid response, jsonString: {json}", jsonString);
-        dynamic jsonData = JObject.Parse(jsonString);
-        return (bool)jsonData.success;
-    }
-
-    private bool IsChainIdMismatch(List<AddressInfoDto> addressInfos, List<string> recaptchaChainIds)
-    {
-        var userChainIds = addressInfos.Select(info => info.ChainId).ToList();
-
-        // Check if the lengths are equal
-        if (userChainIds.Count != recaptchaChainIds.Count)
-        {
-            return true;
-        }
-
-        // Check if the elements are the same
-        return recaptchaChainIds.Except(userChainIds).Any() || userChainIds.Except(recaptchaChainIds).Any();
     }
 
     private ForbidResult CheckParams(string publicKeyVal, string signatureVal, string plainText, string caHash,
@@ -421,20 +372,6 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
             if (identityResult.Succeeded)
             {
                 _logger.LogDebug("save user info into storage, userId:{userId}", userId.ToString());
-
-                List<AddressInfoDto> addressInfos;
-                if (sourceType.IsNullOrEmpty())
-                {
-                    var chainIds = _recaptchaOptions.Value.ChainIds;
-                    _logger.LogDebug("_recaptchaOptions chainIds: {chainIds}", chainIds);
-                    addressInfos = chainIds
-                        .Select(chainId => new AddressInfoDto { ChainId = chainId, Address = address }).ToList();
-                }
-                else
-                {
-                    addressInfos = new List<AddressInfoDto> { new() { Address = address } };
-                }
-
                 await _crossChainUserRepository.InsertAsync(new()
                 {
                     UserId = userId,
@@ -443,7 +380,7 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
                         : Enum.TryParse<WalletEnum>(sourceType, true, out var w)
                             ? w.ToString()
                             : sourceType,
-                    AddressInfos = addressInfos
+                    AddressInfos = new List<AddressInfoDto> { new() { Address = address } }
                 });
                 _logger.LogDebug("create user success, userId:{userId}", userId.ToString());
             }
