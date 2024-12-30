@@ -411,7 +411,7 @@ public class CrossChainLimitInfoAppServiceTest
         {
             new()
             {
-                TargetChainId = "MainChain_AELF",
+                TargetChainId = "AELF",
                 Capacity = 7000,
                 CurrentAmount = 700,
                 Type = CrossChainLimitType.Receipt,
@@ -425,7 +425,7 @@ public class CrossChainLimitInfoAppServiceTest
             },
             new()
             {
-                TargetChainId = "SideChain_tDVV",
+                TargetChainId = "tDVV",
                 Capacity = 7100,
                 CurrentAmount = 710,
                 Type = CrossChainLimitType.Receipt,
@@ -439,7 +439,7 @@ public class CrossChainLimitInfoAppServiceTest
             },
             new()
             {
-                TargetChainId = "MainChain_AELF",
+                TargetChainId = "AELF",
                 Capacity = 7200,
                 CurrentAmount = 720,
                 Type = CrossChainLimitType.Swap,
@@ -453,7 +453,7 @@ public class CrossChainLimitInfoAppServiceTest
             },
             new()
             {
-                TargetChainId = "SideChain_tDVV",
+                TargetChainId = "tDVV",
                 Capacity = 7300,
                 CurrentAmount = 730,
                 Type = CrossChainLimitType.Swap,
