@@ -4,6 +4,7 @@ namespace AElf.CrossChainServer.Worker;
 
 public class TonIndexSyncOptions
 {
+    public bool IsEnable { get; set; } = false;
     // ChainId -> ContractAddress
     // public Dictionary<string, List<string>> ContractAddress { get; set; } = new();
     public Dictionary<string, ContractInfo> ContractAddress { get; set; } = new();

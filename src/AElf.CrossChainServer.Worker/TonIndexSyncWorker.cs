@@ -47,6 +47,10 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
 
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
     {
+        if (!_tonIndexSyncOptions.IsEnable)
+        {
+            return;
+        }
         var chains = await _chainAppService.GetListAsync(new GetChainsInput
         {
             Type = BlockchainType.Tvm
