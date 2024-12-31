@@ -19,4 +19,5 @@ public class AddressInfoDto
 {
     public string ChainId { get; set; }
     public string Address { get; set; }
+    public Guid Id { get; set; }
 }
