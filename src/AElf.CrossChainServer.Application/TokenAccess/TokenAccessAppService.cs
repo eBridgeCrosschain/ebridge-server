@@ -165,7 +165,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         }
 
         var tokenResultList =
-            tokenHoldingList.Take(MaxResultCount).OrderBy(t => t.Status).ThenBy(t => t.Symbol).ToList();
+            tokenHoldingList.Take(MaxResultCount).OrderBy(t => t.Status).ThenBy(t => t.Symbol).DistinctBy(o=>o.Symbol).ToList();
         result.TokenList = ObjectMapper.Map<List<UserTokenInfoDto>, List<AvailableTokenDto>>(tokenResultList);
         return result;
     }
