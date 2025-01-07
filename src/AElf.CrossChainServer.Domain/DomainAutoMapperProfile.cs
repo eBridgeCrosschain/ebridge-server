@@ -21,7 +21,6 @@ namespace AElf.CrossChainServer
             CreateMap<UserLiquidityInfo, UserLiquidityEto>();
             CreateMap<UserTokenAccessInfo, UserTokenAccessInfoEto>();
             CreateMap<TokenApplyOrder, TokenApplyOrderEto>();
-            CreateMap<ChainTokenInfo, ChainTokenInfoDto>();
             CreateMap<StatusChangedRecord, StatusChangedRecordDto>();
             CreateMap<ThirdUserTokenIssueInfo, ThirdUserTokenIssueInfoEto>();
 

@@ -4,7 +4,6 @@ using AElf.CrossChainServer.CrossChain;
 using AElf.CrossChainServer.TokenAccess;
 using AElf.CrossChainServer.TokenAccess.ThirdUserTokenIssue;
 using AElf.CrossChainServer.TokenAccess.UserTokenAccess;
-using AElf.CrossChainServer.TokenAccess.UserTokenOwner;
 using AElf.CrossChainServer.TokenPool;
 using AElf.CrossChainServer.Tokens;
 using Microsoft.EntityFrameworkCore;
@@ -78,7 +77,6 @@ public class CrossChainServerDbContext :
     public DbSet<PoolLiquidityInfo> PoolLiquidityInfos { get; set; }
     public DbSet<UserLiquidityInfo> UserLiquidityInfos { get; set; }
     public DbSet<TokenApplyOrder> TokenApplyOrders { get; set; }
-    public DbSet<ChainTokenInfo> ChainTokenInfos { get; set; }
     public DbSet<StatusChangedRecord> StatusChangedRecords { get; set; }
     public DbSet<UserTokenAccessInfo> UserTokenAccessInfos { get; set; }
     public DbSet<ThirdUserTokenIssueInfo> ThirdUserTokenIssuesInfos { get; set; }
@@ -193,21 +191,10 @@ public class CrossChainServerDbContext :
             b.ConfigureByConvention();
             b.HasIndex(o => new { o.UserAddress, o.Symbol });
             //Define the relation
-            b.HasMany(x => x.ChainTokenInfo)
-                .WithOne(x => x.Order)
-                .HasForeignKey(x => x.OrderId)
-                .IsRequired();
             b.HasMany(x => x.StatusChangedRecords)
                 .WithOne(x => x.Order)
                 .HasForeignKey(x => x.OrderId)
                 .IsRequired();
-        });
-
-        builder.Entity<ChainTokenInfo>(b =>
-        {
-            b.ToTable(CrossChainServerConsts.DbTablePrefix + "ApplyOrderChainTokenInfo",
-                CrossChainServerConsts.DbSchema);
-            b.ConfigureByConvention();
         });
 
         builder.Entity<StatusChangedRecord>(b =>

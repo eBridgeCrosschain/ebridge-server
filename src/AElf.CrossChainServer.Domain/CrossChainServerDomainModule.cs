@@ -5,7 +5,6 @@ using AElf.CrossChainServer.MultiTenancy;
 using AElf.CrossChainServer.TokenAccess;
 using AElf.CrossChainServer.TokenAccess.ThirdUserTokenIssue;
 using AElf.CrossChainServer.TokenAccess.UserTokenAccess;
-using AElf.CrossChainServer.TokenAccess.UserTokenOwner;
 using AElf.CrossChainServer.TokenPool;
 using AElf.ExceptionHandler.ABP;
 using AElf.Indexing.Elasticsearch;

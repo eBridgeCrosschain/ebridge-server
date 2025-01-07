@@ -7,7 +7,7 @@ namespace AElf.CrossChainServer.TokenAccess;
 
 public interface ITokenAccessAppService
 {
-    Task<AvailableTokensDto> GetAvailableTokensAsync();
+    Task<AvailableTokensDto> GetAvailableTokensAsync(GetAvailableTokensInput input);
     Task<bool> CommitTokenAccessInfoAsync(UserTokenAccessInfoInput input);
     Task<UserTokenAccessInfoDto> GetUserTokenAccessInfoAsync(UserTokenAccessInfoBaseInput input);
     Task<CheckChainAccessStatusResultDto> CheckChainAccessStatusAsync(CheckChainAccessStatusInput input);
@@ -36,8 +36,6 @@ public interface ITokenAccessAppService
     Task<PoolInfoDto> GetPoolDetailAsync(GetPoolDetailInput input);
 
     Task<TokenPriceDto> GetTokenPriceAsync(GetTokenPriceInput input);
-
-    Task<CommitAddLiquidityDto> CommitAddLiquidityAsync(CommitAddLiquidityInput input);
     
     Task<bool> TriggerOrderStatusChangeAsync(TriggerOrderStatusChangeInput input);
 }

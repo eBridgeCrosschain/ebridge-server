@@ -13,6 +13,7 @@ namespace AElf.CrossChainServer.Tokens
 
         public virtual int Decimals { get; set; }
         public virtual int IssueChainId { get; set; }
+        public virtual bool IsBurnable { get; set; }
 
     }
 }

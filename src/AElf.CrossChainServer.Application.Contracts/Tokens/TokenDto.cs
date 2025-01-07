@@ -12,6 +12,7 @@ namespace AElf.CrossChainServer.Tokens
         public int IssueChainId { get; set; }
         public string Owner { get; set; }
         public string Icon { get; set; }
+        public bool IsBurnable { get; set; }
 
     }
 }

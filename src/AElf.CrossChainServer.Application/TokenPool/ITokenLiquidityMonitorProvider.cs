@@ -58,8 +58,7 @@ public class TokenLiquidityMonitorProvider : ITokenLiquidityMonitorProvider
     {
         var token = await _tokenAppService.GetAsync(tokenId);
         var symbol = token.Symbol;
-        decimal alarmThreshold = 0;
-        alarmThreshold = _tokenAccessOptions.TokenConfig.TryGetValue(symbol, out var value)
+        decimal alarmThreshold = _tokenAccessOptions.TokenConfig.TryGetValue(symbol, out var value)
             ? value.MinLiquidityInUsdForAlarm
             : _tokenAccessOptions.DefaultConfig.MinLiquidityInUsdForAlarm;
 

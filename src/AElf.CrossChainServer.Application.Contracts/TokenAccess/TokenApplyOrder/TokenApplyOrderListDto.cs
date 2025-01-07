@@ -12,8 +12,7 @@ public class TokenApplyOrderDto
     public string Status { get; set; }
     public long CreateTime { get; set; }
     public long UpdateTime { get; set; }
-    public List<ChainTokenInfoResultDto> ChainTokenInfo { get; set; }
-    public ChainTokenInfoResultDto OtherChainTokenInfo { get; set; }
+    public ChainTokenInfoResultDto ChainTokenInfo { get; set; }
     public Dictionary<string, string> StatusChangedRecord { get; set; }
 }
 

@@ -7,7 +7,6 @@ public enum TokenApplyOrderStatus
     Issued,
     PoolInitializing,
     PoolInitialized,
-    LiquidityAdded,
     Complete,
     Failed
 }

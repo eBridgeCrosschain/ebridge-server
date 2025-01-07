@@ -19,4 +19,6 @@ public class TokenInfo
     public string IssueChainId { get; set; }
     public bool IsNativeToken { get; set; }
     public string Icon { get; set; }
+    public bool OnlyFrom { get; set; }
+    public bool OnlyTo { get; set; }
 }

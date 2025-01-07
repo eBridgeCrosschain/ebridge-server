@@ -45,7 +45,8 @@ namespace AElf.CrossChainServer.Chains
                 Address = address,
                 Decimals = token.Decimals,
                 Symbol = token.Symbol,
-                IssueChainId = token.IssueChainId
+                IssueChainId = token.IssueChainId,
+                IsBurnable = token.IsBurnable
             };
         }
         

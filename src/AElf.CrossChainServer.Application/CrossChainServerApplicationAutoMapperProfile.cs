@@ -6,7 +6,6 @@ using AElf.CrossChainServer.CrossChain;
 using AElf.CrossChainServer.TokenAccess;
 using AElf.CrossChainServer.TokenAccess.ThirdUserTokenIssue;
 using AElf.CrossChainServer.TokenAccess.UserTokenAccess;
-using AElf.CrossChainServer.TokenAccess.UserTokenOwner;
 using AElf.CrossChainServer.TokenPool;
 using AElf.CrossChainServer.Tokens;
 using AutoMapper;
@@ -97,13 +96,9 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
 
         CreateMap<TokenApplyOrderEto, AddTokenApplyOrderIndexInput>();
         CreateMap<TokenApplyOrderEto, UpdateTokenApplyOrderIndexInput>();
-        CreateMap<AddTokenApplyOrderIndexInput, TokenApplyOrderIndex>().Ignore(t => t.ChainTokenInfo)
-            .Ignore(t => t.OtherChainTokenInfo).Ignore(t => t.StatusChangedRecord);
-        CreateMap<UpdateTokenApplyOrderIndexInput, TokenApplyOrderIndex>().Ignore(t => t.ChainTokenInfo)
-            .Ignore(t => t.OtherChainTokenInfo).Ignore(t => t.StatusChangedRecord);
-        CreateMap<ChainTokenInfoDto, ChainTokenInfoIndex>();
+        CreateMap<AddTokenApplyOrderIndexInput, TokenApplyOrderIndex>().Ignore(t => t.ChainTokenInfo).Ignore(t => t.StatusChangedRecord);
+        CreateMap<UpdateTokenApplyOrderIndexInput, TokenApplyOrderIndex>().Ignore(t => t.ChainTokenInfo).Ignore(t => t.StatusChangedRecord);
         CreateMap<TokenApplyOrder, TokenApplyOrderIndex>();
-        CreateMap<ChainAccessInfo, ChainTokenInfo>();
         CreateMap<TokenApplyOrderIndex, TokenApplyOrderDto>();
         CreateMap<ChainTokenInfoIndex, ChainTokenInfoResultDto>();
 
@@ -123,10 +118,7 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<UserLiquidityDto, UserLiquidityInfoInput>();
 
         CreateMap<TokenInfo, TokenInfoDto>();
-        CreateMap<UserTokenItemDto, UserTokenOwnerInfoDto>().ForMember(i=>i.Icon,opt=>opt.MapFrom(i=>i.TokenImage));
-        CreateMap<UserTokenOwnerInfo, UserTokenOwnerInfoDto>();
-        CreateMap<UserTokenOwnerInfoDto, UserTokenOwnerInfo>();
-        CreateMap<UserTokenOwnerInfoDto,AvailableTokenDto>().ForMember(i=>i.TokenImage,opt=>opt.MapFrom(i=>i.Icon));
+        CreateMap<UserTokenInfoDto,AvailableTokenDto>();
         CreateMap<UserTokenAccessInfoIndex, UserTokenAccessInfoDto>();
         CreateMap<ThirdTokenItemDto, ThirdUserTokenIssueInfo>()
             .ForMember(i => i.TokenName, opt => opt.MapFrom(i => i.ThirdTokenName))
@@ -138,5 +130,9 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<AddThirdUserTokenIssueInfoIndexInput, ThirdUserTokenIssueIndex>();
         CreateMap<UpdateThirdUserTokenIssueInfoIndexInput, ThirdUserTokenIssueIndex>();
         CreateMap<ThirdUserTokenIssueInfoDto, ThirdUserTokenIssueInfo>();
+
+        CreateMap<IndexerTokenHolderInfoDto, UserTokenInfoDto>()
+            .ForMember(i => i.Symbol, opt => opt.MapFrom(i => i.Token.Symbol));
+        CreateMap<UserTokenInfoDto, AvailableTokenDto>();
     }
 }

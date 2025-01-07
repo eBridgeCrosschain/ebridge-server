@@ -22,6 +22,8 @@ public class TokenAccessOptions
     public Dictionary<string, string> ChainIdMap { get; set; }
     public Dictionary<string,string> SymbolMap { get; set; }
     public string DAppChainTokenContractAddress { get; set; }
+    public List<string> TokensToFilter { get; set; } = new();
+    public List<string> ChainWhitelistForTestnet { get; set; } = new();
 }
 public class AvailableTokenConfigDto
 {

@@ -53,7 +53,8 @@ namespace AElf.CrossChainServer.Tokens
                     Decimals = tokenDto.Decimals,
                     Symbol = tokenDto.Symbol,
                     ChainId = input.ChainId,
-                    IssueChainId = tokenDto.IssueChainId
+                    IssueChainId = tokenDto.IssueChainId,
+                    IsBurnable = tokenDto.IsBurnable
                 }, autoSave: true);
             }
 

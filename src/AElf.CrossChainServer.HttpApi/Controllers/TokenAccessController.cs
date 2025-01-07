@@ -42,9 +42,9 @@ public class TokenAccessController : CrossChainServerController
     [Authorize]
     [HttpGet("tokens")]
     [ServiceFilter(typeof(ResultFilter))]
-    public async Task<AvailableTokensDto> GetAvailableTokensAsync()
+    public async Task<AvailableTokensDto> GetAvailableTokensAsync(GetAvailableTokensInput input)
     {
-        return await _tokenAccessAppService.GetAvailableTokensAsync();
+        return await _tokenAccessAppService.GetAvailableTokensAsync(input);
     }
 
     [Authorize]
@@ -139,15 +139,7 @@ public class TokenAccessController : CrossChainServerController
     {
         return await _tokenAccessAppService.GetTokenPriceAsync(input);
     }
-    
-    [Authorize]
-    [HttpPost("add-liquidity")]
-    [ServiceFilter(typeof(ResultFilter))]
-    public async Task<CommitAddLiquidityDto> CommitAddLiquidityAsync(CommitAddLiquidityInput input)
-    {
-        return await _tokenAccessAppService.CommitAddLiquidityAsync(input);
-    }
-    
+
     [Authorize(Roles = "admin")]
     [HttpPost("trigger-order-status-change")]
     [ServiceFilter(typeof(ResultFilter))]

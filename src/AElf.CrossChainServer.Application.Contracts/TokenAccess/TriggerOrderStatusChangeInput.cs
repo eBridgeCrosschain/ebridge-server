@@ -5,7 +5,7 @@ namespace AElf.CrossChainServer.TokenAccess;
 public class TriggerOrderStatusChangeInput
 {
     public string OrderId { get; set; }
-    public List<ChainTokenDto> ChainIdTokenInfos { get; set; }
+    public ChainTokenDto ChainIdTokenInfo { get; set; }
 }
 
 public class ChainTokenDto

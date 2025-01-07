@@ -68,8 +68,7 @@ public class CrossChainServerApplicationModule : AbpModule
         Configure<ApiKeyOptions>(configuration.GetSection("ApiKey"));
         Configure<TokenWhitelistOptions>(configuration.GetSection("TokenWhitelist"));
         Configure<LarkNotifyTemplateOptions>(configuration.GetSection("LarkNotifyTemplate"));
-        Configure<HeterogeneousTokenWhitelistOptions>(configuration.GetSection("HeterogeneousTokenWhitelist"));
-        Configure<ChainIdMapOptions>(configuration.GetSection("ChaInIdMap"));
+        Configure<ChainIdMapOptions>(configuration.GetSection("ChainIdMap"));
         
         context.Services.AddSingleton<IBlockchainClientFactory<AElfClient>, AElfClientFactory>();
         context.Services.AddSingleton<IBlockchainClientFactory<Nethereum.Web3.Web3>, EvmClientFactory>();
@@ -89,8 +88,8 @@ public class CrossChainServerApplicationModule : AbpModule
         context.Services.AddTransient<IAetherLinkProvider, AetherLinkProvider>();
         context.Services.AddTransient<ILarkRobotNotifyProvider,LarkRobotNotifyProvider>();
         context.Services.AddTransient<ITokenPriceProvider, TokenPriceProvider>();
-        context.Services.AddTransient<IUserTokenOwnerProvider, UserTokenOwnerProvider>();
-        context.Services.AddTransient<ITokenLiquidityCacheProvider, TokenLiquidityCacheProvider>();
+        context.Services.AddTransient<IScanProvider, ScanProvider>();
+        context.Services.AddTransient<IAwakenProvider, AwakenProvider>();
         context.Services.AddTransient<IAggregatePriceProvider, AggregatePriceProvider>();
         context.Services.AddTransient<ITokenImageProvider, TokenImageProvider>();
         context.Services.AddTransient<ITokenLiquidityMonitorProvider, TokenLiquidityMonitorProvider>();

@@ -12,77 +12,18 @@ public static class AssertHelper
     private const int DefaultErrorCode = 50000;
     private const string DefaultErrorReason = "Assert failed";
 
-    public static void IsTrue(bool expression, [CanBeNull] string reason, [ItemCanBeNull] params object[] args)
+    public static void IsTrue(bool expression, [CanBeNull] string reason)
     {
-        IsTrue(expression, DefaultErrorCode, reason, args);
-    }
-
-
-    public static void IsEmpty([CanBeNull] string str, [CanBeNull] string reason, [ItemCanBeNull] params object[] args)
-    {
-        IsTrue(str.IsNullOrEmpty(), reason, args);
-    }
-
-    public static void NotEmpty([CanBeNull] string str, [CanBeNull] string reason, [ItemCanBeNull] params object[] args)
-    {
-        IsTrue(!str.IsNullOrEmpty(), reason, args);
-    }
-
-    public static void IsEmpty(Guid guid, [CanBeNull] string reason, [ItemCanBeNull] params object[] args)
-    {
-        IsTrue(guid == Guid.Empty, reason, args);
-    }
-
-    public static void NotEmpty(Guid guid, [CanBeNull] string reason, [ItemCanBeNull] params object[] args)
-    {
-        IsTrue(guid != Guid.Empty, reason, args);
-    }
-
-    public static void NotEmpty([CanBeNull] string str, int code, [ItemCanBeNull] params object[] args)
-    {
-        IsTrue(!str.IsNullOrEmpty(), code, ErrorResult.GetMessage(code), args);
-    }
-
-    public static void IsEmpty<T>([CanBeNull] IEnumerable<T> collection, [CanBeNull] string reason,
-        [ItemCanBeNull] params object[] args)
-    {
-        IsTrue(collection.IsNullOrEmpty(), reason, args);
-    }
-
-    public static void NotEmpty<T>([CanBeNull] IEnumerable<T> collection, [CanBeNull] string reason,
-        [ItemCanBeNull] params object[] args)
-    {
-        IsTrue(!collection.IsNullOrEmpty(), reason, args);
-    }
-
-    public static void NotEmpty<T>([CanBeNull] IEnumerable<T> collection, int code,
-        [ItemCanBeNull] params object[] args)
-    {
-        IsTrue(!collection.IsNullOrEmpty(), code, ErrorResult.GetMessage(code), args);
-    }
-
-    public static void IsNull(object obj, [CanBeNull] string reason, [ItemCanBeNull] params object[] args)
-    {
-        IsTrue(obj == null, reason, args);
-    }
-
-    public static void NotNull(object obj, [CanBeNull] string reason, [ItemCanBeNull] params object[] args)
-    {
-        IsTrue(obj != null, reason, args);
-    }
-
-    public static void NotNull(object obj, int code, [ItemCanBeNull] params object[] args)
-    {
-        IsTrue(obj != null, code, ErrorResult.GetMessage(code), args);
+        IsTrue(expression, DefaultErrorCode, reason);
     }
 
     public static void IsTrue(bool expression, int code = DefaultErrorCode,
-        [CanBeNull] string reason = DefaultErrorReason, [ItemCanBeNull] params object[] args)
+        [CanBeNull] string reason = DefaultErrorReason)
     {
         if (!expression)
         {
             throw new UserFriendlyException(
-                Format(code != DefaultErrorCode ? ErrorResult.GetMessage(code) : reason, args), code.ToString());
+                Format(reason), code.ToString());
         }
     }
 
