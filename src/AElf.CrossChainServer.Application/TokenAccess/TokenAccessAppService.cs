@@ -134,6 +134,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             token.TokenName = tokenInfo?.Token.Name;
             token.Holders = tokenInfo?.MergeHolders ?? 0;
             token.LiquidityInUsd = await _awakenProvider.GetTokenLiquidityInUsdAsync(token.Symbol);
+            token.TotalSupply = tokenInfo?.TotalSupply ?? 0;
         }
 
         //step 4 : deal status, get apply order to select status; Available,Listed,Integrating.

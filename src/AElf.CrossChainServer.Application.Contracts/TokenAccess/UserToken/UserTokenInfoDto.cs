@@ -9,4 +9,5 @@ public class UserTokenInfoDto
     public int Holders { get; set; }
     public string Status { get; set; }
     public decimal Price { get; set; }
+    public decimal TotalSupply { get; set; }
 }

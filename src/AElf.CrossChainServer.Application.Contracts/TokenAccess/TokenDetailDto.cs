@@ -15,6 +15,8 @@ public class TokenDetailDto
     public string TokenContractAddress { get; set; }
     public int MergeHolders { get; set; }
     public List<string> ChainIds { get; set; }
+    public decimal TotalSupply { get; set; }
+    public decimal CirculatingSupply { get; set; }
 }
 
 public class TokenBaseInfo

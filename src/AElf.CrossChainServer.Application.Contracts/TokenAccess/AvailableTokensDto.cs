@@ -15,6 +15,7 @@ public class AvailableTokenDto
     public string LiquidityInUsd { get; set; }
     public int Holders { get; set; }
     public string Status { get; set; }
+    public decimal TotalSupply { get; set; }
 }
 
 public enum TokenStatus
