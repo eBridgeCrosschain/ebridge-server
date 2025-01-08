@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using JetBrains.Annotations;
 
-namespace AElf.CrossChainServer.TokenAccess;
+namespace AElf.CrossChainServer.TokenPool;
 
 public class GetPoolDetailInput
 {

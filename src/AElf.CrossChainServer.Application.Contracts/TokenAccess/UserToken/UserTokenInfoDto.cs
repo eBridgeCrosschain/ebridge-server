@@ -8,6 +8,6 @@ public class UserTokenInfoDto
     public string LiquidityInUsd { get; set; }
     public int Holders { get; set; }
     public string Status { get; set; }
-    public decimal Price { get; set; }
     public decimal TotalSupply { get; set; }
+    public string ChainId { get; set; }
 }

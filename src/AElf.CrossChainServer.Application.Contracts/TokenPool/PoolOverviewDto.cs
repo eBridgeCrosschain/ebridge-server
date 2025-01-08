@@ -1,6 +1,4 @@
-using JetBrains.Annotations;
-
-namespace AElf.CrossChainServer.TokenAccess;
+namespace AElf.CrossChainServer.TokenPool;
 
 public class PoolOverviewDto
 {

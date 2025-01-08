@@ -119,7 +119,8 @@ public class EvmTokenPoolIndexerSyncProvider : EvmIndexerSyncProviderBase
         {
             ChainId = chainId,
             TokenId = token.Id,
-            Liquidity = liquidityAmount
+            Liquidity = liquidityAmount,
+            Provider = address
         };
 
         // Perform pool liquidity action
@@ -180,109 +181,7 @@ public class EvmTokenPoolIndexerSyncProvider : EvmIndexerSyncProviderBase
             _userLiquidityInfoAppService.RemoveUserLiquidityAsync
         );
     }
-
-    // private async Task HandleLockedEventAsync(string chainId, FilterLog log)
-    // {
-    //     var sender = ParseAddress(log.Topics[1].ToString());
-    //     var tokenAddress =ParseAddress(log.Topics[2].ToString());
-    //     var amount = ParseAmount(log.Topics[3].ToString());
-    //     Log.ForContext("chainId", chainId).Debug(
-    //         "Handle locked event {chainId}, sender {from}, token {token}, amount {amount}",
-    //         chainId, sender, tokenAddress, amount);
-    //     // Handle locked event
-    //     var token = await _tokenAppService.GetAsync(new GetTokenInput
-    //     {
-    //         ChainId = chainId,
-    //         Address = tokenAddress
-    //     });
-    //     await _poolLiquidityInfoAppService.AddLiquidityAsync(new PoolLiquidityInfoInput
-    //     {
-    //         ChainId = chainId,
-    //         TokenId = token.Id,
-    //         Liquidity = (decimal)((BigDecimal)amount / BigInteger.Pow(10, token.Decimals))
-    //     });
-    // }
-    //
-    // private async Task HandleReleasedEventAsync(string chainId, FilterLog log)
-    // {
-    //     var sender = ParseAddress(log.Topics[1].ToString());
-    //     var tokenAddress =ParseAddress(log.Topics[2].ToString());
-    //     var amount = ParseAmount(log.Topics[3].ToString());
-    //     Log.ForContext("chainId", chainId).Debug(
-    //         "Handle release event {chainId}, sender {from}, token {token}, amount {amount}",
-    //         chainId, sender, tokenAddress, amount);
-    //     // Handle released event
-    //     var token = await _tokenAppService.GetAsync(new GetTokenInput
-    //     {
-    //         ChainId = chainId,
-    //         Address = tokenAddress
-    //     });
-    //     await _poolLiquidityInfoAppService.RemoveLiquidityAsync(new PoolLiquidityInfoInput
-    //     {
-    //         ChainId = chainId,
-    //         TokenId = token.Id,
-    //         Liquidity = (decimal)((BigDecimal)amount / BigInteger.Pow(10, token.Decimals))
-    //     });
-    // }
-    //
-    // private async Task HandleLiquidityAddedEventAsync(string chainId, FilterLog log)
-    // {
-    //     var provider = ParseAddress(log.Topics[1].ToString());
-    //     var tokenAddress =ParseAddress(log.Topics[2].ToString());
-    //     var amount = ParseAmount(log.Topics[3].ToString());
-    //     Log.ForContext("chainId", chainId).Debug(
-    //         "Handle liquidity added event {chainId}, provider {from}, token {token}, amount {amount}",
-    //         chainId, provider, tokenAddress, amount);
-    //     // Handle liquidity added event
-    //     var token = await _tokenAppService.GetAsync(new GetTokenInput
-    //     {
-    //         ChainId = chainId,
-    //         Address = tokenAddress
-    //     });
-    //     await _poolLiquidityInfoAppService.AddLiquidityAsync(new PoolLiquidityInfoInput
-    //     {
-    //         ChainId = chainId,
-    //         TokenId = token.Id,
-    //         Liquidity = (decimal)((BigDecimal)amount / BigInteger.Pow(10, token.Decimals))
-    //     });
-    //     await _userLiquidityInfoAppService.AddUserLiquidityAsync(new UserLiquidityInfoInput
-    //     {
-    //         ChainId = chainId,
-    //         Provider = provider,
-    //         TokenId = token.Id,
-    //         Liquidity = (decimal)((BigDecimal)amount / BigInteger.Pow(10, token.Decimals))
-    //     });
-    // }
-    //
-    // private async Task HandleLiquidityRemovedEventAsync(string chainId, FilterLog log)
-    // {
-    //     var provider = ParseAddress(log.Topics[1].ToString());
-    //     var tokenAddress =ParseAddress(log.Topics[2].ToString());
-    //     var amount = ParseAmount(log.Topics[3].ToString());
-    //     Log.ForContext("chainId", chainId).Debug(
-    //         "Handle liquidity added event {chainId}, provider {from}, token {token}, amount {amount}",
-    //         chainId, provider, tokenAddress, amount);
-    //     // Handle liquidity removed event
-    //     var token = await _tokenAppService.GetAsync(new GetTokenInput
-    //     {
-    //         ChainId = chainId,
-    //         Address = tokenAddress
-    //     });
-    //     await _poolLiquidityInfoAppService.RemoveLiquidityAsync(new PoolLiquidityInfoInput
-    //     {
-    //         ChainId = chainId,
-    //         TokenId = token.Id,
-    //         Liquidity = (decimal)((BigDecimal)amount / BigInteger.Pow(10, token.Decimals))
-    //     });
-    //     await _userLiquidityInfoAppService.RemoveUserLiquidityAsync(new UserLiquidityInfoInput
-    //     {
-    //         ChainId = chainId,
-    //         Provider = provider,
-    //         TokenId = token.Id,
-    //         Liquidity = (decimal)((BigDecimal)amount / BigInteger.Pow(10, token.Decimals))
-    //     });
-    // }
-
+    
     public static string ParseAddress(string topic)
     {
         return "0x" + topic.Substring(topic.Length - 40);

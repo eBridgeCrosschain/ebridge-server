@@ -7,6 +7,7 @@ using AElf.CrossChainServer.Contracts;
 using AElf.CrossChainServer.Contracts.Bridge;
 using AElf.CrossChainServer.Settings;
 using AElf.CrossChainServer.TokenAccess;
+using AElf.CrossChainServer.TokenAccess.ThirdUserTokenIssue;
 using AElf.CrossChainServer.Tokens;
 using AElf.Indexing.Elasticsearch;
 using Microsoft.Extensions.Options;
@@ -32,6 +33,7 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
     private readonly BridgeContractOptions _bridgeContractOptions;
     private readonly PoolLiquiditySyncOptions _poolLiquiditySyncOptions;
     private readonly ITokenApplyOrderRepository _tokenApplyOrderRepository;
+    private readonly IThirdUserTokenIssueRepository _thirdUserTokenIssueRepository;
     private readonly ITokenLiquidityMonitorProvider _tokenLiquidityMonitorProvider;
     private readonly TokenAccessOptions _tokenAccessOptions;
 
@@ -42,7 +44,9 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
         IOptionsSnapshot<BridgeContractOptions> bridgeContractOptions,
         IOptionsSnapshot<PoolLiquiditySyncOptions> poolLiquiditySyncOptions, ITokenAppService tokenAppService,
         IBridgeContractAppService bridgeContractAppService, ITokenApplyOrderRepository tokenApplyOrderRepository,
-        ITokenLiquidityMonitorProvider tokenLiquidityMonitorProvider, IOptionsSnapshot<TokenAccessOptions> tokenAccessOptions)
+        ITokenLiquidityMonitorProvider tokenLiquidityMonitorProvider,
+        IOptionsSnapshot<TokenAccessOptions> tokenAccessOptions,
+        IThirdUserTokenIssueRepository thirdUserTokenIssueRepository)
     {
         _poolLiquidityRepository = poolLiquidityRepository;
         _poolLiquidityInfoIndexRepository = poolLiquidityInfoIndexRepository;
@@ -54,6 +58,7 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
         _bridgeContractAppService = bridgeContractAppService;
         _tokenApplyOrderRepository = tokenApplyOrderRepository;
         _tokenLiquidityMonitorProvider = tokenLiquidityMonitorProvider;
+        _thirdUserTokenIssueRepository = thirdUserTokenIssueRepository;
         _tokenAccessOptions = tokenAccessOptions.Value;
         _bridgeContractOptions = bridgeContractOptions.Value;
         _poolLiquiditySyncOptions = poolLiquiditySyncOptions.Value;
@@ -116,7 +121,7 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
                 input.Liquidity);
             isLiquidityExist = false;
             liquidityInfo = ObjectMapper.Map<PoolLiquidityInfoInput, PoolLiquidityInfo>(input);
-            await DealUpdateOrderInfoAsync(input.ChainId, input.TokenId);
+            await DealUpdateOrderInfoAsync(input.ChainId, input.TokenId,input.Provider);
         }
         else
         {
@@ -271,37 +276,49 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
         return string.IsNullOrWhiteSpace(typePrefix) ? syncType : $"{typePrefix}-{syncType}";
     }
 
-    private async Task DealUpdateOrderInfoAsync(string chainId, Guid tokenId)
+    private async Task DealUpdateOrderInfoAsync(string chainId, Guid tokenId,string provider)
     {
         var chain = await _chainAppService.GetAsync(chainId);
-        if (chain.Type == BlockchainType.AElf)
+        if (chain.Type == BlockchainType.AElf || !string.Equals(provider,CrossChainServerConsts.AddressZero))
         {
+            Log.Information("Not deal with aelf chain liquidity or provider is not zero address.{chainId},{provider}",
+                chainId, provider);
             return;
         }
-
         var token = await _tokenRepository.GetAsync(tokenId);
         var queryable = await _tokenApplyOrderRepository.WithDetailsAsync(y => y.StatusChangedRecords);
         var query = queryable.Where(x => x.Symbol == token.Symbol && x.ChainId == chainId);
         var order = await AsyncExecuter.FirstOrDefaultAsync(query);
         if (order == null)
         {
-            Log.Warning("Token apply order not found,chainId: {chainId},symbol: {symbol}", chainId, token.Symbol);
-            return;
+            Log.Information(
+                "Token apply order not found,chainId: {chainId},symbol: {symbol}", chainId, token.Symbol);
+            var thirdTokenInfo =
+                await _thirdUserTokenIssueRepository.FindAsync(t => t.Symbol == token.Symbol && t.ChainId == chainId);
+            if (thirdTokenInfo == null)
+            {
+                Log.Warning("Third token info not found,chainId: {chainId},symbol: {symbol}", chainId, token.Symbol);
+                return;
+            }
+            await CreateTokenApplyOrderAsync(token.Symbol, thirdTokenInfo.Address, TokenApplyOrderStatus.PoolInitialized.ToString(),
+                thirdTokenInfo);
         }
-
-        if (order.Status != TokenApplyOrderStatus.PoolInitializing.ToString())
+        else
         {
-            Log.Warning("Invalid token apply order status, orderId: {orderId}", order.Id);
-            return;
+            if (order.Status != TokenApplyOrderStatus.PoolInitializing.ToString())
+            {
+                Log.Warning("Invalid token apply order status, orderId: {orderId}", order.Id);
+                return;
+            }
+
+            order.Status = TokenApplyOrderStatus.PoolInitialized.ToString();
+            order.StatusChangedRecords.Add(new StatusChangedRecord
+            {
+                Status = TokenApplyOrderStatus.PoolInitialized.ToString(),
+                Time = DateTime.UtcNow
+            });
+            await _tokenApplyOrderRepository.UpdateAsync(order, autoSave: true);
         }
-
-        order.Status = TokenApplyOrderStatus.PoolInitialized.ToString();
-        order.StatusChangedRecords.Add(new StatusChangedRecord
-        {
-            Status = TokenApplyOrderStatus.PoolInitialized.ToString(),
-            Time = DateTime.UtcNow
-        });
-        await _tokenApplyOrderRepository.UpdateAsync(order, autoSave: true);
         await DealWithAElfChainLiquidityAsync(token);
     }
 
@@ -335,5 +352,36 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
         {
             await _poolLiquidityRepository.InsertManyAsync(chainsToInsert, autoSave: true);
         }
+    }
+    
+    private async Task CreateTokenApplyOrderAsync(string symbol, string userAddress, string status,
+        ThirdUserTokenIssueInfo tokenIssueInfo)
+    {
+        var order = new TokenApplyOrder
+        {
+            Symbol = symbol,
+            UserAddress = userAddress,
+            Status = status,
+            CreateTime = ToUtcMilliSeconds(DateTime.UtcNow),
+            UpdateTime = ToUtcMilliSeconds(DateTime.UtcNow),
+            StatusChangedRecords = new List<StatusChangedRecord>
+            {
+                new() { Id = Guid.NewGuid(), Status = status, Time = DateTime.UtcNow }
+            },
+            ChainId = tokenIssueInfo.OtherChainId,
+            ChainName = tokenIssueInfo.OtherChainId,
+            TokenName = tokenIssueInfo.TokenName,
+            TotalSupply = tokenIssueInfo.TotalSupply.SafeToDecimal(),
+            Decimals = CrossChainServerConsts.DefaultEvmTokenDecimal,
+            Icon = tokenIssueInfo.TokenImage,
+            PoolAddress = _bridgeContractOptions.ContractAddresses[tokenIssueInfo.OtherChainId].TokenPoolContract,
+            ContractAddress = tokenIssueInfo.ContractAddress
+        };
+        await _tokenApplyOrderRepository.InsertAsync(order);
+    }
+    
+    public static long ToUtcMilliSeconds(DateTime dateTime)
+    {
+        return new DateTimeOffset(dateTime).ToUnixTimeMilliseconds();
     }
 }

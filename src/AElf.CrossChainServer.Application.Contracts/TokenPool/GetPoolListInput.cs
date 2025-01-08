@@ -1,7 +1,7 @@
 using JetBrains.Annotations;
 using Volo.Abp.Application.Dtos;
 
-namespace AElf.CrossChainServer.TokenAccess;
+namespace AElf.CrossChainServer.TokenPool;
 
 public class GetPoolListInput : PagedAndSortedResultRequestDto
 {

@@ -1,6 +1,6 @@
 using AElf.CrossChainServer.Tokens;
 
-namespace AElf.CrossChainServer.TokenAccess;
+namespace AElf.CrossChainServer.TokenPool;
 
 public class PoolInfoDto
 {

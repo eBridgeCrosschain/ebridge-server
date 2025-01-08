@@ -27,9 +27,10 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
     private readonly TokenAccessOptions _tokenAccessOptions;
     private readonly IThirdUserTokenIssueRepository _thirdUserTokenIssueRepository;
     private readonly IObjectMapper _objectMapper;
+
     private ApiInfo UserThirdTokenListUri =>
         new(HttpMethod.Get, _tokenAccessOptions.SymbolMarketUserThirdTokenListUri);
-    
+
     public TokenInvokeProvider(IHttpProvider httpProvider, IOptionsSnapshot<TokenAccessOptions> tokenAccessOptions,
         IThirdUserTokenIssueRepository thirdUserTokenIssueRepository, IObjectMapper objectMapper)
     {
@@ -80,7 +81,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
         return await _httpProvider.InvokeAsync<ThirdTokenResultDto>(
             _tokenAccessOptions.SymbolMarketBaseUrl, UserThirdTokenListUri, param: tokenParams);
     }
-    
+
     private async Task UpsertThirdTokenAsync(string address, ThirdTokenItemDto item, string aelfChainId,
         string thirdChainId)
     {
@@ -92,7 +93,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             Log.Debug("Update third token, user: {address}, Symbol: {symbol}, OtherChainId: {thirdChainId} TokenIssue",
                 address, item.AelfToken, thirdChainId);
             existingToken.Status = TokenApplyOrderStatus.Issued.ToString();
-            await _thirdUserTokenIssueRepository.UpdateAsync(existingToken);
+            await _thirdUserTokenIssueRepository.UpdateAsync(existingToken, autoSave: true);
         }
         else
         {
@@ -201,7 +202,8 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             {
                 BindingId = dto.BindingId,
                 ThirdTokenId = dto.ThirdTokenId,
-                Signature = BuildRequestHash(string.Concat(dto.BindingId, dto.ThirdTokenId,dto.TokenContractAddress,dto.MintToAddress)),
+                Signature = BuildRequestHash(string.Concat(dto.BindingId, dto.ThirdTokenId, dto.TokenContractAddress,
+                    dto.MintToAddress)),
                 MintToAddress = dto.MintToAddress,
                 TokenContractAddress = dto.TokenContractAddress
             }, HttpProvider.DefaultJsonSettings));
@@ -217,7 +219,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
         await _thirdUserTokenIssueRepository.UpdateAsync(userTokenIssue);
         return true;
     }
-    
+
     private string BuildRequestHash(string request)
     {
         var hashVerifyKey = _tokenAccessOptions.HashVerifyKey;

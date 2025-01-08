@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Filter;
 using AElf.CrossChainServer.TokenAccess;
+using AElf.CrossChainServer.TokenPool;
 using Asp.Versioning;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authorization;
@@ -18,10 +19,12 @@ namespace AElf.CrossChainServer.Controllers;
 public class TokenAccessController : CrossChainServerController
 {
     private readonly ITokenAccessAppService _tokenAccessAppService;
+    private readonly ILiquidityAppService _liquidityAppService;
 
-    public TokenAccessController(ITokenAccessAppService tokenAccessAppService)
+    public TokenAccessController(ITokenAccessAppService tokenAccessAppService, ILiquidityAppService liquidityAppService)
     {
         _tokenAccessAppService = tokenAccessAppService;
+        _liquidityAppService = liquidityAppService;
     }
 
     [HttpGet("token/config")]
@@ -116,21 +119,21 @@ public class TokenAccessController : CrossChainServerController
     [ServiceFilter(typeof(ResultFilter))]
     public async Task<PoolOverviewDto> GetPoolOverviewAsync([CanBeNull] string addresses)
     {
-        return await _tokenAccessAppService.GetPoolOverviewAsync(addresses);
+        return await _liquidityAppService.GetPoolOverviewAsync(addresses);
     }
     
     [HttpGet("pool-list")]
     [ServiceFilter(typeof(ResultFilter))]
     public async Task<PagedResultDto<PoolInfoDto>> GetPoolListAsync(GetPoolListInput input)
     {
-        return await _tokenAccessAppService.GetPoolListAsync(input);
+        return await _liquidityAppService.GetPoolListAsync(input);
     }
     
     [HttpGet("pool-detail")]
     [ServiceFilter(typeof(ResultFilter))]
     public async Task<PoolInfoDto> GetPoolDetailAsync(GetPoolDetailInput input)
     {
-        return await _tokenAccessAppService.GetPoolDetailAsync(input);
+        return await _liquidityAppService.GetPoolDetailAsync(input);
     }
     
     [HttpGet("token/price")]

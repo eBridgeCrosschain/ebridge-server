@@ -9,6 +9,7 @@ public static class CrossChainServerConsts
     public const string DbSchema = null;
 
     public const string AElfMainChainId = "MainChain_AELF";
+    public const string AElfMainChain = "AELF";
 
     public const int MaxReportQueryTimes = 10;
     public const int HalfOfTheProgress = 50;
@@ -26,5 +27,7 @@ public static class CrossChainServerConsts
     public const string TonRateLimitChangedOpCode = "0xef662842";
     public const string At = "@";
     public const string SuccessHttpCode = "20000";
+    public const int DefaultEvmTokenDecimal = 18;
+    public const string AddressZero = "0x0000000000000000000000000000000000000000";
 
 }

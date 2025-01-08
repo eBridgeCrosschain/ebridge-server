@@ -4,6 +4,7 @@ using AElf.CrossChainServer.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace AElf.CrossChainServer.Migrations
 {
     [DbContext(typeof(CrossChainServerDbContext))]
-    partial class CrossChainServerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250107083248_Update_Wallet")]
+    partial class Update_Wallet
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

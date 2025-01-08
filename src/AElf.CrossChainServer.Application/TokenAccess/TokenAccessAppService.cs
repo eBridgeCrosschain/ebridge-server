@@ -33,7 +33,6 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     private readonly INESTRepository<ThirdUserTokenIssueIndex, Guid> _thirdUserTokenIssueIndexRepository;
 
     private readonly IPoolLiquidityInfoAppService _poolLiquidityInfoAppService;
-    private readonly IUserLiquidityInfoAppService _userLiquidityInfoAppService;
     private readonly IChainAppService _chainAppService;
     private readonly ITokenAppService _tokenAppService;
     private readonly IBridgeContractAppService _bridgeContractAppService;
@@ -41,9 +40,9 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     private readonly ILarkRobotNotifyProvider _larkRobotNotifyProvider;
     private readonly IAggregatePriceProvider _aggregatePriceProvider;
     private readonly ITokenInvokeProvider _tokenInvokeProvider;
-    private readonly ITokenImageProvider _tokenImageProvider;
     private readonly IScanProvider _scanProvider;
     private readonly IAwakenProvider _awakenProvider;
+    private readonly ITokenInfoCacheProvider _tokenInfoCacheProvider;
 
     private readonly TokenAccessOptions _tokenAccessOptions;
     private readonly TokenWhitelistOptions _tokenWhitelistOptions;
@@ -62,7 +61,6 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         IThirdUserTokenIssueRepository thirdUserTokenIssueRepository,
         INESTRepository<UserTokenAccessInfoIndex, Guid> userAccessTokenInfoIndexRepository,
         ILarkRobotNotifyProvider larkRobotNotifyProvider, IPoolLiquidityInfoAppService poolLiquidityInfoAppService,
-        IUserLiquidityInfoAppService userLiquidityInfoAppService,
         IChainAppService chainAppService, ITokenAppService tokenAppService,
         ICrossChainUserRepository crossChainUserRepository, IBridgeContractAppService bridgeContractAppService,
         ITokenInvokeProvider tokenInvokeProvider,
@@ -70,8 +68,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         IOptionsSnapshot<TokenWhitelistOptions> tokenWhitelistOptions,
         INESTRepository<ThirdUserTokenIssueIndex, Guid> thirdUserTokenIssueIndexRepository,
         IAggregatePriceProvider aggregatePriceProvider,
-        IOptionsSnapshot<ChainIdMapOptions> chainIdMapOptions, ITokenImageProvider tokenImageProvider,
-        IScanProvider scanProvider, IAwakenProvider awakenProvider)
+        IOptionsSnapshot<ChainIdMapOptions> chainIdMapOptions, 
+        IScanProvider scanProvider, IAwakenProvider awakenProvider, ITokenInfoCacheProvider tokenInfoCacheProvider)
     {
         _tokenApplyOrderRepository = tokenApplyOrderRepository;
         _tokenApplyOrderIndexRepository = tokenApplyOrderIndexRepository;
@@ -80,7 +78,6 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         _userAccessTokenInfoIndexRepository = userAccessTokenInfoIndexRepository;
         _larkRobotNotifyProvider = larkRobotNotifyProvider;
         _poolLiquidityInfoAppService = poolLiquidityInfoAppService;
-        _userLiquidityInfoAppService = userLiquidityInfoAppService;
         _chainAppService = chainAppService;
         _tokenAppService = tokenAppService;
         _crossChainUserRepository = crossChainUserRepository;
@@ -88,9 +85,9 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         _tokenInvokeProvider = tokenInvokeProvider;
         _thirdUserTokenIssueIndexRepository = thirdUserTokenIssueIndexRepository;
         _aggregatePriceProvider = aggregatePriceProvider;
-        _tokenImageProvider = tokenImageProvider;
         _scanProvider = scanProvider;
         _awakenProvider = awakenProvider;
+        _tokenInfoCacheProvider = tokenInfoCacheProvider;
         _tokenAccessOptions = tokenAccessOptions.Value;
         _tokenWhitelistOptions = tokenWhitelistOptions.Value;
         _chainIdMapOptions = chainIdMapOptions.Value;
@@ -126,6 +123,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             tokenHoldingList.AddRange(filteredTokens);
         } while (tokenHoldingList.Count == PageSize);
 
+        tokenHoldingList = tokenHoldingList.DistinctBy(o => o.Symbol).ToList();
+
         //step 3 : get token info (ex. icon) from scan interface;
         foreach (var token in tokenHoldingList)
         {
@@ -135,6 +134,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             token.Holders = tokenInfo?.MergeHolders ?? 0;
             token.LiquidityInUsd = await _awakenProvider.GetTokenLiquidityInUsdAsync(token.Symbol);
             token.TotalSupply = tokenInfo?.TotalSupply ?? 0;
+            token.ChainId = tokenInfo?.ChainIds.FirstOrDefault();
         }
 
         //step 4 : deal status, get apply order to select status; Available,Listed,Integrating.
@@ -166,16 +166,17 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         }
 
         var tokenResultList =
-            tokenHoldingList.Take(MaxResultCount).OrderBy(t => t.Status).ThenBy(t => t.Symbol).DistinctBy(o=>o.Symbol).ToList();
+            tokenHoldingList.Take(MaxResultCount).OrderBy(t => t.Status).ThenBy(t => t.Symbol).ToList();
+        await _tokenInfoCacheProvider.AddTokenListAsync(tokenResultList);
         result.TokenList = ObjectMapper.Map<List<UserTokenInfoDto>, List<AvailableTokenDto>>(tokenResultList);
         return result;
     }
 
     private async Task<(string, long)> GetTokenLiquidityInUsdAndHoldersAsync(string symbol)
     {
-        var tokenInfo = await _scanProvider.GetTokenDetailAsync(symbol);
-        var holders = tokenInfo?.MergeHolders ?? 0;
-        var liquidityInUsd = await _awakenProvider.GetTokenLiquidityInUsdAsync(symbol);
+        var tokenInfo = await _tokenInfoCacheProvider.GetTokenAsync(symbol);
+        var holders = tokenInfo?.Holders ?? 0;
+        var liquidityInUsd = tokenInfo?.LiquidityInUsd ?? "0";
         return (liquidityInUsd, holders);
     }
 
@@ -279,7 +280,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
                 o.Address == address && o.OtherChainId == item.ChainId && o.Symbol == item.Symbol);
 
             item.TotalSupply = res?.TotalSupply.SafeToDecimal() ?? 0M;
-            item.Decimals = 0;
+            item.Decimals = CrossChainServerConsts.DefaultEvmTokenDecimal;
             item.TokenName = res?.TokenName;
             item.ContractAddress = res?.ContractAddress;
             item.Icon = res?.TokenImage;
@@ -476,12 +477,13 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         AssertHelper.IsTrue(input.ChainId.IsNullOrEmpty() || chainStatus.ChainList.Exists(
             c => c.ChainId == input.ChainId), $"Invalid chainId {input.ChainId}.");
         var address = await GetUserAddressAsync();
+        var token = await _tokenInfoCacheProvider.GetTokenAsync(input.Symbol);
         var dto = new ThirdUserTokenIssueInfoDto
         {
             Address = address,
             WalletAddress = input.Address,
             Symbol = input.Symbol,
-            ChainId = CrossChainServerConsts.AElfMainChainId,
+            ChainId = token.ChainId ?? CrossChainServerConsts.AElfMainChain,
             TokenName =
                 chainStatus.ChainList.FirstOrDefault(t => t.ChainId == input.ChainId)?.TokenName,
             TokenImage =
@@ -1050,7 +1052,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
 
     private async Task<bool> CheckLiquidityAndHolderAvailableAsync(string symbol)
     {
-        var (liquidityInUsdFromScan, holdersFromScan) = await GetTokenLiquidityInUsdAndHoldersAsync(symbol);
+        var (liquidityInUsdFromCache, holdersFromCache) = await GetTokenLiquidityInUsdAndHoldersAsync(symbol);
         var liquidityInUsd = !_tokenAccessOptions.TokenConfig.ContainsKey(symbol)
             ? _tokenAccessOptions.DefaultConfig.Liquidity
             : _tokenAccessOptions.TokenConfig[symbol].Liquidity;
@@ -1058,11 +1060,11 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             ? _tokenAccessOptions.DefaultConfig.Holders
             : _tokenAccessOptions.TokenConfig[symbol].Holders;
 
-        var decimalEnough = liquidityInUsdFromScan.SafeToDecimal() > liquidityInUsd.SafeToDecimal();
+        var decimalEnough = liquidityInUsdFromCache.SafeToDecimal() > liquidityInUsd.SafeToDecimal();
         Log.Debug("Check Liquidity available, owner: {owner} and option: {option}",
-            liquidityInUsdFromScan.SafeToDecimal(), liquidityInUsd.SafeToDecimal());
-        var holdersEnough = holdersFromScan > holders;
-        Log.Debug("Check Holders available, owner: {owner} and option: {option}", holdersFromScan, holders);
+            liquidityInUsdFromCache.SafeToDecimal(), liquidityInUsd.SafeToDecimal());
+        var holdersEnough = holdersFromCache > holders;
+        Log.Debug("Check Holders available, owner: {owner} and option: {option}", holdersFromCache, holders);
         return decimalEnough && holdersEnough;
     }
 

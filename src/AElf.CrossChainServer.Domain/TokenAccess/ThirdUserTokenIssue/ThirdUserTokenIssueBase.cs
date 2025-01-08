@@ -7,8 +7,10 @@ namespace AElf.CrossChainServer.TokenAccess.ThirdUserTokenIssue;
 public class ThirdUserTokenIssueBase : CrossChainServerEntity<Guid>
 {
     [Keyword] public string Address { get; set; }
+    // evm chain address
     [Keyword] public string WalletAddress { get; set; }
     [Keyword] public string Symbol { get; set; }
+    // aelf chain id
     [Keyword] public string ChainId { get; set; }
     public long CreateTime { get; set; }
     public long UpdateTime { get; set; }

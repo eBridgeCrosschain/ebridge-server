@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
 using Volo.Abp.Application.Dtos;
 
 namespace AElf.CrossChainServer.TokenAccess;
@@ -29,11 +28,6 @@ public interface ITokenAccessAppService
     Task<TokenConfigDto> GetTokenConfigAsync(GetTokenConfigInput input);
     
     Task<Dictionary<string, Dictionary<string, TokenInfoDto>>> GetTokenWhitelistAsync();
-    
-    Task<PoolOverviewDto> GetPoolOverviewAsync([CanBeNull] string addresses);
-    
-    Task<PagedResultDto<PoolInfoDto>> GetPoolListAsync(GetPoolListInput input);
-    Task<PoolInfoDto> GetPoolDetailAsync(GetPoolDetailInput input);
 
     Task<TokenPriceDto> GetTokenPriceAsync(GetTokenPriceInput input);
     

@@ -7,4 +7,5 @@ public class PoolLiquidityInfoInput
     public string ChainId { get; set; }
     public Guid TokenId { get; set; }
     public decimal Liquidity { get; set; }
+    public string Provider { get; set; }
 }
