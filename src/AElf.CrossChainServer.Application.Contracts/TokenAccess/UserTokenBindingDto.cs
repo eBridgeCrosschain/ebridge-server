@@ -6,4 +6,6 @@ public class UserTokenBindingDto
 {
     [Required] public string BindingId { get; set; }
     [Required] public string ThirdTokenId { get; set; }
+    [Required] public string TokenContractAddress { get; set; }
+    [Required] public string MintToAddress { get; set; }
 }

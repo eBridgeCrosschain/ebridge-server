@@ -32,4 +32,6 @@ public class BindingInput
     public string BindingId { get; set; }
     public string ThirdTokenId { get; set; }
     public string Signature { get; set; }
+    public string MintToAddress { get; set; }
+    public string TokenContractAddress { get; set; }
 }
