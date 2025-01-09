@@ -405,14 +405,17 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             Log.Debug("Order {token},{chainId} already exists.", symbol, otherChainId);
             return;
         }
-        if (await CheckIfLiquidityHasBeenAddedAsync(chain.ContractAddress, otherChainId,symbol,chain.TotalSupply))
+
+        if (await CheckIfLiquidityHasBeenAddedAsync(chain.ContractAddress, otherChainId, symbol, chain.TotalSupply))
         {
             Log.Debug("Liquidity has been added for {token} on {chainId}.", symbol, otherChainId);
             chain.Status = TokenApplyOrderStatus.PoolInitialized.ToString();
         }
-
-        // Step 3: Create a new token apply order with "PoolInitializing" status
-        chain.Status = TokenApplyOrderStatus.PoolInitializing.ToString();
+        else
+        {
+            // Step 3: Create a new token apply order with "PoolInitializing" status
+            chain.Status = TokenApplyOrderStatus.PoolInitializing.ToString();
+        }
         var tokenApplyOrder =
             CreateTokenApplyOrder(symbol, address, TokenApplyOrderStatus.PoolInitializing.ToString(), chain);
 
@@ -433,9 +436,12 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         });
     }
 
-    private async Task<bool> CheckIfLiquidityHasBeenAddedAsync(string tokenAddress, string chainId,string symbol,decimal totalSupply)
+    private async Task<bool> CheckIfLiquidityHasBeenAddedAsync(string tokenAddress, string chainId, string symbol,
+        decimal totalSupply)
     {
-        totalSupply = totalSupply == 0 ? (await _tokenInfoCacheProvider.GetTokenAsync(symbol)).TotalSupply : totalSupply;
+        totalSupply = totalSupply == 0
+            ? (await _tokenInfoCacheProvider.GetTokenAsync(symbol)).TotalSupply
+            : totalSupply;
         var liquidity = await _poolLiquidityInfoAppService.GetPoolLiquidityInfosAsync(new GetPoolLiquidityInfosInput
         {
             Token = tokenAddress,
@@ -494,6 +500,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     
     public async Task<UserTokenBindingDto> PrepareBindingIssueAsync(PrepareBindIssueInput input)
     {
+        AssertHelper.IsTrue(CheckAddress(input.Address), $"Invalid other chain address.{input.ChainId}");
         var chainStatus = await CheckChainAccessStatusAsync(new CheckChainAccessStatusInput { Symbol = input.Symbol });
         AssertHelper.IsTrue(input.ChainId.IsNullOrEmpty() || chainStatus.ChainList.Exists(
             c => c.ChainId == input.ChainId), $"Invalid chainId {input.ChainId}.");
@@ -514,6 +521,11 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             TotalSupply = input.Supply
         };
         return await _tokenInvokeProvider.PrepareBindingAsync(dto);
+    }
+
+    private static bool CheckAddress(string address)
+    {
+        return Nethereum.Util.AddressExtensions.IsValidEthereumAddressHexFormat(address) || TonAddressHelper.IsTonFriendlyAddress(address);
     }
 
     public async Task<bool> GetBindingIssueAsync(UserTokenBindingDto input)
@@ -619,6 +631,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         var index = ObjectMapper.Map<AddTokenApplyOrderIndexInput, TokenApplyOrderIndex>(input);
         index.ChainTokenInfo = new ChainTokenInfoIndex()
         {
+            Symbol = input.Symbol,
             ChainId = input.ChainId,
             ChainName = input.ChainName,
             TokenName = input.TokenName,
@@ -645,6 +658,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         var index = ObjectMapper.Map<UpdateTokenApplyOrderIndexInput, TokenApplyOrderIndex>(input);
         index.ChainTokenInfo = new ChainTokenInfoIndex()
         {
+            Symbol = input.Symbol,
             ChainId = input.ChainId,
             ChainName = input.ChainName,
             TokenName = input.TokenName,

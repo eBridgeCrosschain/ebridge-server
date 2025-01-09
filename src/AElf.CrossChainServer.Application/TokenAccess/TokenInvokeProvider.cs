@@ -204,10 +204,9 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             {
                 BindingId = dto.BindingId,
                 ThirdTokenId = dto.ThirdTokenId,
-                Signature = BuildRequestHash(string.Concat(dto.BindingId, dto.ThirdTokenId, dto.TokenContractAddress,
+                Signature = BuildRequestHash(string.Concat(dto.BindingId, dto.ThirdTokenId,
                     dto.MintToAddress)),
-                MintToAddress = dto.MintToAddress,
-                TokenContractAddress = dto.TokenContractAddress
+                MintToAddress = dto.MintToAddress
             }, HttpProvider.DefaultJsonSettings));
         if (resultDto.Code != "20000")
         {

@@ -13,6 +13,7 @@ public class TokenApplyOrderIndex : TokenApplyOrderBase, IIndexBuild
 
 public class ChainTokenInfoIndex
 {
+    [Keyword] public string Symbol { get; set; }
     [Keyword] public string ChainId { get; set; }
     [Keyword] public string ChainName { get; set; }
     [Keyword] public string TokenName { get; set; }
