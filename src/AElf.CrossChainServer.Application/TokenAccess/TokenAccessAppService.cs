@@ -485,9 +485,9 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             Symbol = input.Symbol,
             ChainId = token.ChainId ?? CrossChainServerConsts.AElfMainChain,
             TokenName =
-                chainStatus.ChainList.FirstOrDefault(t => t.ChainId == input.ChainId)?.TokenName,
+                chainStatus.ChainList.FirstOrDefault(t => t.ChainId == input.ChainId)?.TokenName ?? token.TokenName,
             TokenImage =
-                chainStatus.ChainList.FirstOrDefault(t => t.ChainId == input.ChainId)?.Icon,
+                chainStatus.ChainList.FirstOrDefault(t => t.ChainId == input.ChainId)?.Icon ?? token.TokenImage,
             OtherChainId = input.ChainId,
             ContractAddress = input.ContractAddress,
             TotalSupply = input.Supply
