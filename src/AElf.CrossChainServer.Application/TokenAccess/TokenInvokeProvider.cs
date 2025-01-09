@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 using Serilog;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace AElf.CrossChainServer.TokenAccess;
 
@@ -145,6 +146,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             Signature = BuildRequestHash(string.Concat(dto.Address, dto.Symbol, dto.ChainId, dto.TokenName, dto.Symbol,
                 dto.TokenImage, dto.TotalSupply, dto.WalletAddress, thirdChainId, dto.ContractAddress))
         };
+        Log.Debug("Tsm params:{param}",JsonSerializer.Serialize(prepareBindingInput));
         var url = $"{_tokenAccessOptions.SymbolMarketBaseUrl}{_tokenAccessOptions.SymbolMarketPrepareBindingUri}";
         var resultDto = await _httpProvider.InvokeAsync<PrepareBindingResultDto>(HttpMethod.Post, url,
             body: JsonConvert.SerializeObject(prepareBindingInput, HttpProvider.DefaultJsonSettings));
