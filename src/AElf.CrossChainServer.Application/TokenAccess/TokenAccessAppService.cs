@@ -439,9 +439,12 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     private async Task<bool> CheckIfLiquidityHasBeenAddedAsync(string tokenAddress, string chainId, string symbol,
         decimal totalSupply)
     {
+        Log.Debug("Check if liquidity has been added for {tokenAddress},{token} on {chainId}.", tokenAddress, symbol,
+            chainId);
         totalSupply = totalSupply == 0
             ? (await _tokenInfoCacheProvider.GetTokenAsync(symbol)).TotalSupply
             : totalSupply;
+        Log.Debug("Total supply of {token} is {totalSupply}.", tokenAddress, totalSupply);
         var liquidity = await _poolLiquidityInfoAppService.GetPoolLiquidityInfosAsync(new GetPoolLiquidityInfosInput
         {
             Token = tokenAddress,
@@ -449,7 +452,10 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         });
         if (liquidity.TotalCount > 0)
         {
-            return liquidity.Items.FirstOrDefault()?.Liquidity == totalSupply;
+            var liq = liquidity.Items.FirstOrDefault()?.Liquidity;
+            Log.Debug("Liquidity has been added for {token} on {chainId}, totalSupply:{total}.", tokenAddress, chainId,
+                liq);
+            return liq == totalSupply;
         }
 
         return false;
