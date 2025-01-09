@@ -405,6 +405,11 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             Log.Debug("Order {token},{chainId} already exists.", symbol, otherChainId);
             return;
         }
+        if (await CheckIfLiquidityHasBeenAddedAsync(chain.ContractAddress, otherChainId,symbol,chain.TotalSupply))
+        {
+            Log.Debug("Liquidity has been added for {token} on {chainId}.", symbol, otherChainId);
+            chain.Status = TokenApplyOrderStatus.PoolInitialized.ToString();
+        }
 
         // Step 3: Create a new token apply order with "PoolInitializing" status
         chain.Status = TokenApplyOrderStatus.PoolInitializing.ToString();
@@ -426,6 +431,22 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             TokenContract = chain.ContractAddress,
             Website = officialWebsite
         });
+    }
+
+    private async Task<bool> CheckIfLiquidityHasBeenAddedAsync(string tokenAddress, string chainId,string symbol,decimal totalSupply)
+    {
+        totalSupply = totalSupply == 0 ? (await _tokenInfoCacheProvider.GetTokenAsync(symbol)).TotalSupply : totalSupply;
+        var liquidity = await _poolLiquidityInfoAppService.GetPoolLiquidityInfosAsync(new GetPoolLiquidityInfosInput
+        {
+            Token = tokenAddress,
+            ChainId = chainId
+        });
+        if (liquidity.TotalCount > 0)
+        {
+            return liquidity.Items.FirstOrDefault()?.Liquidity == totalSupply;
+        }
+
+        return false;
     }
 
     // Utility: Creates a new TokenApplyOrder
