@@ -119,11 +119,11 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             return new UserTokenBindingDto { BindingId = res.BindingId, ThirdTokenId = res.ThirdTokenId };
         }
 
-        var aelfChainId = ConvertToTargetChainId(dto.ChainId);
+        // var aelfChainId = ConvertToTargetChainId(dto.ChainId);
         var thirdChainId = ConvertToTargetChainId(dto.OtherChainId);
-        if (string.IsNullOrEmpty(aelfChainId) || string.IsNullOrEmpty(thirdChainId))
+        if (string.IsNullOrEmpty(thirdChainId))
         {
-            Log.Warning("Failed to convert to target chainId:{0} OtherChainId:{1}", dto.ChainId, dto.OtherChainId);
+            Log.Warning("Failed to convert to target OtherChainId:{0}", dto.OtherChainId);
             return new UserTokenBindingDto();
         }
 
@@ -131,7 +131,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
         {
             Address = dto.Address,
             AelfToken = dto.Symbol,
-            AelfChain = aelfChainId,
+            AelfChain = dto.ChainId,
             ThirdTokens = new ThirdTokenDto
             {
                 TokenName = dto.TokenName,
@@ -142,7 +142,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
                 Owner = dto.WalletAddress,
                 ContractAddress = dto.ContractAddress
             },
-            Signature = BuildRequestHash(string.Concat(dto.Address, dto.Symbol, aelfChainId, dto.TokenName, dto.Symbol,
+            Signature = BuildRequestHash(string.Concat(dto.Address, dto.Symbol, dto.ChainId, dto.TokenName, dto.Symbol,
                 dto.TokenImage, dto.TotalSupply, dto.WalletAddress, thirdChainId, dto.ContractAddress))
         };
         var url = $"{_tokenAccessOptions.SymbolMarketBaseUrl}{_tokenAccessOptions.SymbolMarketPrepareBindingUri}";
