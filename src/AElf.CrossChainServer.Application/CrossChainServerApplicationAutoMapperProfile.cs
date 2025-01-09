@@ -99,7 +99,7 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<AddTokenApplyOrderIndexInput, TokenApplyOrderIndex>().Ignore(t => t.ChainTokenInfo).Ignore(t => t.StatusChangedRecord);
         CreateMap<UpdateTokenApplyOrderIndexInput, TokenApplyOrderIndex>().Ignore(t => t.ChainTokenInfo).Ignore(t => t.StatusChangedRecord);
         CreateMap<TokenApplyOrder, TokenApplyOrderIndex>();
-        CreateMap<TokenApplyOrderIndex, TokenApplyOrderDto>().ForMember(d=>d.ChainTokenInfo.Symbol, opt => opt.MapFrom(s => s.Symbol));
+        CreateMap<TokenApplyOrderIndex, TokenApplyOrderDto>().ForPath(d=>d.ChainTokenInfo.Symbol, opt => opt.MapFrom(s => s.Symbol));
         CreateMap<ChainTokenInfoIndex, ChainTokenInfoResultDto>();
 
         CreateMap<PoolLiquidityInfoInput, PoolLiquidityInfo>();
