@@ -417,7 +417,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             chain.Status = TokenApplyOrderStatus.PoolInitializing.ToString();
         }
         var tokenApplyOrder =
-            CreateTokenApplyOrder(symbol, address, TokenApplyOrderStatus.PoolInitializing.ToString(), chain);
+            CreateTokenApplyOrder(symbol, address, chain.Status, chain);
 
         // Step 5: Insert to mysql and send lark notify
         var orderInsert = await _tokenApplyOrderRepository.InsertAsync(tokenApplyOrder);
