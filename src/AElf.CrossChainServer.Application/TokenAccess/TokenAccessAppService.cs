@@ -770,22 +770,23 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
                 {
                     foreach (var chain in _tokenAccessOptions.ChainIdList)
                     {
+                        var chainIdConvert = ConvertToTargetChainId(chain);
                         var tokenInfoAelf = InitializeAelfTokenInfo(order.Symbol, token);
                         if (symbolChainOrderLiquidityMap.TryGetValue(order.Symbol, out var liquidityMap))
                         {
-                            SetAelfTokenFlags(chain, tokenInfoAelf, liquidityMap);
-                            result[order.Symbol].TryAdd(chain, tokenInfoAelf);
+                            SetAelfTokenFlags(chainIdConvert, tokenInfoAelf, liquidityMap);
+                            result[order.Symbol].TryAdd(chainIdConvert, tokenInfoAelf);
                         }
                     }
                 }
                 else
                 {
                     var tokenInfoAelf = InitializeAelfTokenInfo(order.Symbol, token);
-                    var chain = await _chainAppService.GetByAElfChainIdAsync(token.IssueChainId);
                     if (symbolChainOrderLiquidityMap.TryGetValue(order.Symbol, out var liquidityMap))
                     {
-                        SetAelfTokenFlags(chain.Id, tokenInfoAelf, liquidityMap);
-                        result[order.Symbol].TryAdd(chain.Id, tokenInfoAelf);
+                        var chainIdConvert = ChainHelper.ConvertChainIdToBase58(token.IssueChainId);
+                        SetAelfTokenFlags(chainIdConvert, tokenInfoAelf, liquidityMap);
+                        result[order.Symbol].TryAdd(chainIdConvert, tokenInfoAelf);
                     }
                 }
             }
@@ -793,6 +794,9 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
 
         return result;
     }
+    
+    private string ConvertToTargetChainId(string sourceChainId)
+        => _tokenAccessOptions.ChainIdMap.FirstOrDefault(kvp => kvp.Value == sourceChainId).Key ?? string.Empty;
 
     private void SetAelfTokenFlags(string chainId, TokenInfoDto tokenInfoDto, Dictionary<string, decimal> liquidityMap)
     {
