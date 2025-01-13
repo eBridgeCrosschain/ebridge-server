@@ -96,11 +96,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             Log.Debug(
                 "Update third token, user: {address}, Symbol: {symbol}, OtherChainId: {thirdChainId} TokenIssue,result:{result}",
                 address, item.AelfToken, thirdChainId, JsonSerializer.Serialize(item));
-            existingToken = _objectMapper.Map<ThirdTokenItemDto, ThirdUserTokenIssueInfo>(item);
-            existingToken.Address = address;
-            existingToken.Symbol = item.AelfToken;
-            existingToken.ChainId = aelfChainId;
-            existingToken.OtherChainId = thirdChainId;
+            existingToken.ContractAddress = item.ThirdContractAddress;
             existingToken.Status = TokenApplyOrderStatus.Issued.ToString();
             await _thirdUserTokenIssueRepository.UpdateAsync(existingToken, autoSave: true);
         }
