@@ -762,7 +762,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
                     if (symbolChainOrderLiquidityMap.TryGetValue(order.Symbol, out var liquidityMainMap))
                     {
                         SetAelfTokenFlags(chain, tokenInfoAelf, liquidityMainMap);
-                        result[order.Symbol].TryAdd(chainIdConvert, tokenInfoAelf);
+                        chainTokenInfoMap.TryAdd(chainIdConvert, tokenInfoAelf);
                     }
                 }
             }
@@ -774,7 +774,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
                     var chain = await _chainAppService.GetByAElfChainIdAsync(token.IssueChainId);
                     var chainIdConvert = ChainHelper.ConvertChainIdToBase58(token.IssueChainId);
                     SetAelfTokenFlags(chain.Id, tokenInfoAelf, liquiditySideMap);
-                    result[order.Symbol].TryAdd(chainIdConvert, tokenInfoAelf);
+                    chainTokenInfoMap.TryAdd(chainIdConvert, tokenInfoAelf);
                 }
             }
         }
