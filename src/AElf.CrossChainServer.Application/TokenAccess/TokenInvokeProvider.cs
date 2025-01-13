@@ -98,8 +98,8 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
         }
         else
         {
-            Log.Debug("Add third token, user: {address}, Symbol: {symbol}, OtherChainId: {thirdChainId} TokenIssue",
-                address, item.ThirdSymbol, thirdChainId);
+            Log.Debug("Add third token, user: {address}, Symbol: {symbol}, OtherChainId: {thirdChainId}，TokenAddress:{token} TokenIssue",
+                address, item.ThirdSymbol, thirdChainId, item.ThirdContractAddress);
             var info = _objectMapper.Map<ThirdTokenItemDto, ThirdUserTokenIssueInfo>(item);
             info.Address = address;
             info.Symbol = item.AelfToken;
