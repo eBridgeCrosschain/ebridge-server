@@ -324,7 +324,7 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
 
     private async Task DealWithAElfChainLiquidityAsync(string symbol)
     {
-        var token = await _tokenAppService.GetAsync(new GetTokenInput(
+        var token = await _tokenAppService.GetAsync(new GetTokenInput
         {
             ChainId = CrossChainServerConsts.AElfMainChainId,
             Symbol = symbol
