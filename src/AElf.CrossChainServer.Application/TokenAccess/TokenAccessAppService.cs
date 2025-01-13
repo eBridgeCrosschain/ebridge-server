@@ -781,6 +781,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
                     chainTokenInfoMap.TryAdd(chainIdConvert, tokenInfoAelf);
                 }
             }
+            result[order.Symbol] = chainTokenInfoMap;
         }
 
         return result;
