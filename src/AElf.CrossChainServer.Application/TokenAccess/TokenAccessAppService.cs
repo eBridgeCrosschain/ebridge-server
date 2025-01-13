@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Contracts;
@@ -465,6 +466,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     private TokenApplyOrder CreateTokenApplyOrder(string symbol, string userAddress, string status,
         ChainAccessInfo chain)
     {
+        Log.Debug("Create token apply order for {symbol} on {chainId}.chain info:{chainInfo}", symbol, chain.ChainId,
+            JsonSerializer.Serialize(chain));
         return new TokenApplyOrder
         {
             Symbol = symbol,

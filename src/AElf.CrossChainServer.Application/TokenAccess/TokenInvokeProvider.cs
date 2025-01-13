@@ -53,6 +53,8 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             return false;
         }
 
+        Log.Debug("Get third token list from tsm:{result}", JsonSerializer.Serialize(resultDto));
+
         foreach (var item in resultDto.Data.Items)
         {
             var aelfChainId = FindMatchChainId(item.AelfChain);
@@ -91,15 +93,22 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
 
         if (existingToken != null)
         {
-            Log.Debug("Update third token, user: {address}, Symbol: {symbol}, OtherChainId: {thirdChainId} TokenIssue",
-                address, item.AelfToken, thirdChainId);
+            Log.Debug(
+                "Update third token, user: {address}, Symbol: {symbol}, OtherChainId: {thirdChainId} TokenIssue,result:{result}",
+                address, item.AelfToken, thirdChainId, JsonSerializer.Serialize(item));
+            existingToken = _objectMapper.Map<ThirdTokenItemDto, ThirdUserTokenIssueInfo>(item);
+            existingToken.Address = address;
+            existingToken.Symbol = item.AelfToken;
+            existingToken.ChainId = aelfChainId;
+            existingToken.OtherChainId = thirdChainId;
             existingToken.Status = TokenApplyOrderStatus.Issued.ToString();
             await _thirdUserTokenIssueRepository.UpdateAsync(existingToken, autoSave: true);
         }
         else
         {
-            Log.Debug("Add third token, user: {address}, Symbol: {symbol}, OtherChainId: {thirdChainId}，TokenAddress:{token} TokenIssue",
-                address, item.ThirdSymbol, thirdChainId, item.ThirdContractAddress);
+            Log.Debug(
+                "Add third token, user: {address}, Symbol: {symbol}, OtherChainId: {thirdChainId}，TokenAddress:{token} TokenIssue,result:{result}",
+                address, item.ThirdSymbol, thirdChainId, item.ThirdContractAddress, JsonSerializer.Serialize(item));
             var info = _objectMapper.Map<ThirdTokenItemDto, ThirdUserTokenIssueInfo>(item);
             info.Address = address;
             info.Symbol = item.AelfToken;
@@ -146,7 +155,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             Signature = BuildRequestHash(string.Concat(dto.Address, dto.Symbol, dto.ChainId, dto.TokenName, dto.Symbol,
                 dto.TokenImage, dto.TotalSupply, dto.WalletAddress, thirdChainId, dto.ContractAddress))
         };
-        Log.Debug("Tsm params:{param}",JsonSerializer.Serialize(prepareBindingInput));
+        Log.Debug("Tsm params:{param}", JsonSerializer.Serialize(prepareBindingInput));
         var url = $"{_tokenAccessOptions.SymbolMarketBaseUrl}{_tokenAccessOptions.SymbolMarketPrepareBindingUri}";
         var resultDto = await _httpProvider.InvokeAsync<PrepareBindingResultDto>(HttpMethod.Post, url,
             body: JsonConvert.SerializeObject(prepareBindingInput, HttpProvider.DefaultJsonSettings));
