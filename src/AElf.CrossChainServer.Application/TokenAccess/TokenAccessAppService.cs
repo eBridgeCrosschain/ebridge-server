@@ -734,6 +734,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
 
         foreach (var order in orderList)
         {
+            Log.Debug("GetTokenWhitelistAsync start.{symbol}", order.Symbol);
             var chainTokenInfoMap = result.TryGetValue(order.Symbol, out var chainTokenMap)
                 ? chainTokenMap
                 : new Dictionary<string, TokenInfoDto>();

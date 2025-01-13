@@ -319,11 +319,16 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
             });
             await _tokenApplyOrderRepository.UpdateAsync(order, autoSave: true);
         }
-        await DealWithAElfChainLiquidityAsync(token);
+        await DealWithAElfChainLiquidityAsync(token.Symbol);
     }
 
-    private async Task DealWithAElfChainLiquidityAsync(Token token)
+    private async Task DealWithAElfChainLiquidityAsync(string symbol)
     {
+        var token = await _tokenAppService.GetAsync(new GetTokenInput(
+        {
+            ChainId = CrossChainServerConsts.AElfMainChainId,
+            Symbol = symbol
+        });
         var poolList = await _poolLiquidityRepository.GetListAsync(p => p.TokenId == token.Id);
         var chainList = poolList.Select(p => p.ChainId).ToHashSet();
         var chainsToInsert = new List<PoolLiquidityInfo>();
