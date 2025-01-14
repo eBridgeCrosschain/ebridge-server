@@ -21,6 +21,13 @@ public interface IHttpProvider : ISingletonDependency
         string body = null,
         Dictionary<string, string> header = null, JsonSerializerSettings settings = null, int? timeout = null,
         bool withInfoLog = false, bool withDebugLog = true);
+    
+    Task<T> InvokeAsync<T>(HttpMethod method, string url,
+        Dictionary<string, string> pathParams = null,
+        Dictionary<string, string> param = null,
+        string body = null,
+        Dictionary<string, string> header = null, JsonSerializerSettings settings = null, int? timeout = null,
+        bool withInfoLog = false, bool withDebugLog = true);
 }
 
 public class HttpProvider : IHttpProvider

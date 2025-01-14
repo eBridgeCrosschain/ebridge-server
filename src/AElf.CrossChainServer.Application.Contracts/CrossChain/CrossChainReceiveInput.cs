@@ -14,4 +14,5 @@ public class CrossChainReceiveInput
     public string ReceiptId { get; set; }
     public Guid ReceiveTokenId { get; set; }
     public decimal ReceiveAmount { get; set; }
+    public string TraceId { get; set; }
 }

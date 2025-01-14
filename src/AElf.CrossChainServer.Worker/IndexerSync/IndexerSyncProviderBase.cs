@@ -6,8 +6,7 @@ using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.Settings;
 using GraphQL;
 using GraphQL.Client.Abstractions;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
+using Serilog;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Json;
 
@@ -21,8 +20,6 @@ public abstract class IndexerSyncProviderBase : IIndexerSyncProvider, ITransient
     protected readonly IIndexerAppService IndexerAppService;
     protected readonly IChainAppService ChainAppService;
 
-    public ILogger<IndexerSyncProviderBase> Logger { get; set; }
-
     protected const int MaxRequestCount = 1000;
 
     protected IndexerSyncProviderBase(IGraphQLClientFactory graphQlClientFactory, ISettingManager settingManager,
@@ -33,9 +30,9 @@ public abstract class IndexerSyncProviderBase : IIndexerSyncProvider, ITransient
         JsonSerializer = jsonSerializer;
         IndexerAppService = indexerAppService;
         ChainAppService = chainAppService;
-        Logger = NullLogger<IndexerSyncProviderBase>.Instance;
     }
-
+    public virtual bool IsConfirmEnabled { get; set; } = true;
+    
     public async Task ExecuteAsync(string chainId, int syncDelayHeight = 0, string typePrefix = null)
     {
         var syncHeight = await GetSyncHeightAsync(chainId, typePrefix);
@@ -51,8 +48,9 @@ public abstract class IndexerSyncProviderBase : IIndexerSyncProvider, ITransient
         {
             return;
         }
-        Logger.LogDebug("Start to sync chain {ChainId} from {SyncHeight} to {EndHeight}", chainId, syncHeight + 1,
-            endHeight);
+        Log.ForContext("chainId", chainId).Debug("Start to sync chain {chainId} from {SyncHeight} to {EndHeight}",
+            chainId, syncHeight + 1, endHeight);
+
         var height = await HandleDataAsync(ChainHelper.ConvertChainIdToBase58(chain.AElfChainId), syncHeight + 1,
             endHeight);
 
@@ -66,8 +64,7 @@ public abstract class IndexerSyncProviderBase : IIndexerSyncProvider, ITransient
         {
             return data.Data;
         }
-
-        Logger.LogError("Query indexer failed. errors: {Errors}",
+        Log.Error("Query indexer failed. errors: {Errors}",
             string.Join(",", data.Errors.Select(e => e.Message).ToList()));
         throw new Exception("Query indexer failed. ");
     }

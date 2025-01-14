@@ -1,0 +1,14 @@
+{
+    "ClientId": "CrossChainServer_Authserver",
+    "apollo": {
+        "UseApollo" : false,
+        "AppId": "CrossChainServer",
+        "MetaServer": "http://localhost:8080",
+        "ConfigServer": [
+            "http://localhost:8080"
+        ],
+        "Namespaces": [
+            "appsettings.json"
+        ]
+    }
+}

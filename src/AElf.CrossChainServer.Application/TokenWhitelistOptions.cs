@@ -1,0 +1,24 @@
+using System.Collections.Generic;
+
+namespace AElf.CrossChainServer;
+
+public class TokenWhitelistOptions
+{
+    /// <summary>
+    /// token -> chainId -> tokenInfo
+    /// </summary>
+    public Dictionary<string, Dictionary<string, TokenInfo>> TokenWhitelist { get; set; } = new();
+}
+
+public class TokenInfo
+{
+    public string Name { get; set; }
+    public string Symbol { get; set; }
+    public long Decimals { get; set; }
+    public string Address { get; set; }
+    public string IssueChainId { get; set; }
+    public bool IsNativeToken { get; set; }
+    public string Icon { get; set; }
+    public bool OnlyFrom { get; set; }
+    public bool OnlyTo { get; set; }
+}

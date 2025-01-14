@@ -19,7 +19,7 @@ namespace AElf.CrossChainServer;
     typeof(AbpTenantManagementHttpApiModule),
     typeof(AbpFeatureManagementHttpApiModule),
     typeof(AbpSettingManagementHttpApiModule)
-    )]
+)]
 public class CrossChainServerHttpApiModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

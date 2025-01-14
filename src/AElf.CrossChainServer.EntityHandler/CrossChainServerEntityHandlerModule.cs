@@ -10,13 +10,15 @@ using Volo.Abp.EventBus.RabbitMq;
 using Volo.Abp.Modularity;
 using Microsoft.Extensions.Configuration;
 using AElf.CrossChainServer.EntityHandler.Core;
+using AElf.CrossChainServer.TokenPool;
 using AElf.CrossChainServer.Worker;
-using GraphQL.Client.Abstractions;
-using GraphQL.Client.Http;
-using GraphQL.Client.Serializer.Newtonsoft;
+using AElf.ExceptionHandler.ABP;
+using Microsoft.Extensions.Options;
+using Volo.Abp;
 using Volo.Abp.Auditing;
 using Volo.Abp.BlobStoring;
 using Volo.Abp.BlobStoring.Aliyun;
+using Volo.Abp.Threading;
 
 namespace AElf.CrossChainServer.EntityHandler
 {
@@ -29,7 +31,8 @@ namespace AElf.CrossChainServer.EntityHandler
         typeof(CrossChainServerEntityHandlerCoreModule),
         typeof(AbpBlobStoringAliyunModule),
         typeof(CrossChainServerWorkerModule),
-        typeof(CrossChainServerApplicationModule)
+        typeof(CrossChainServerApplicationModule),
+        typeof(AOPExceptionModule)
     )]
     public class CrossChainServerEntityHandlerModule : AbpModule
     {

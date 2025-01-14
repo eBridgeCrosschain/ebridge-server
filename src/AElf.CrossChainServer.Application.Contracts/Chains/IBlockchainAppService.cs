@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using AElf.Client.Dto;
 using AElf.CrossChainServer.Tokens;
@@ -11,5 +12,9 @@ namespace AElf.CrossChainServer.Chains
         Task<ChainStatusDto> GetChainStatusAsync(string chainId);
         Task<TransactionResultDto> GetTransactionResultAsync(string chainId, string transactionId);
         Task<MerklePathDto> GetMerklePathAsync(string chainId, string transactionId);
+        Task<List<TonTransactionDto>> GetTonTransactionAsync(GetTonTransactionInput input);
+        Task<string> GetTonUserFriendlyAddressAsync(string chainId, string address);
+        Task<FilterLogsDto> GetContractLogsAsync(string chainId, string contractAddress, long startHeight, long endHeight);
+        Task<long> GetChainHeightAsync(string chainId);
     }
 }

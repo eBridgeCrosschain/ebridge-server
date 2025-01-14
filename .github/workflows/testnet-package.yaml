@@ -3,8 +3,16 @@ on:
   push:
     branches:
       - 'release/*'
+
+run-name: Deploy eBridgeServer on ${{ github.ref }} to Testnet from ${{ github.sha }})
+
 env:
   DOTNET_INSTALL_DIR: "./.dotnet"
+
+concurrency:
+  group: workflow-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   publish:
     runs-on: ebridge-runner
@@ -12,21 +20,38 @@ jobs:
       matrix:
         servicename:
           [
+            AElf.CrossChainServer.AuthServer,
             AElf.CrossChainServer.EntityHandler,
             AElf.CrossChainServer.HttpApi.Host
           ]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache NuGet Packages
+        id: nuget-packages
+        uses: actions/cache@v4
+        env:
+          cache-name: nuget-package-cache
         with:
-          dotnet-version: '6.0' # which dotnet version is required?
-      - run: dotnet publish src/${{ matrix.servicename }}/${{ matrix.servicename }}.csproj -o out/${{ matrix.servicename }}
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ matrix.servicename }}
+
+      - name: List NuGet Packages
+        if: ${{ steps.nuget-packages.outputs.cache-hit == 'true' }}
+        continue-on-error: true
+        run: ls -lh ~/.nuget/packages
+
+      - name: Publish .NET service
+        run: dotnet publish src/${{ matrix.servicename }}/${{ matrix.servicename }}.csproj -o out/${{ matrix.servicename }}
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.servicename }}
           path: out/${{ matrix.servicename }}
           retention-days: 1
+
   build-and-push-image:
     needs: publish
     runs-on: ebridge-runner
@@ -34,6 +59,7 @@ jobs:
       matrix:
         servicename:
           [
+            AElf.CrossChainServer.AuthServer,
             AElf.CrossChainServer.EntityHandler,
             AElf.CrossChainServer.HttpApi.Host
           ]
@@ -44,16 +70,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Set short git commit SHA
         id: vars
         run: |
           calculatedSha=$(git rev-parse --short ${{ github.sha }})
           echo "short_sha=$calculatedSha" >> "$GITHUB_OUTPUT"
+
       - name: Download a single artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ matrix.servicename }}
           path: out/${{ matrix.servicename }}
+          
       - name: Create image tag
         id: meta
         uses: docker/metadata-action@v5
@@ -61,10 +90,10 @@ jobs:
           images: ${{ secrets.REPOSITORY_REGION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.REPOSITORY }}/${{ matrix.servicename }}
           tags: |
             type=sha
-      - # Setting up Docker Buildx with docker-container driver is required
-        # at the moment to be able to use a subdirectory with Git context
-        name: Set up Docker Buildx
+
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
@@ -77,10 +106,11 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
   dispatch:
-   runs-on: eBridge-runner
-   needs: build-and-push-image
-   steps:
+    runs-on: eBridge-runner
+    needs: build-and-push-image
+    steps:
     - name: Deploy
       uses: actions/github-script@v6
       with:
@@ -93,6 +123,6 @@ jobs:
           ref: 'main',
           inputs: {
             appName: 'ebridge-backend',
-             commit_sha: 'sha-${{ needs.build-and-push-image.outputs.short_sha }}',
+            commit_sha: 'sha-${{ needs.build-and-push-image.outputs.short_sha }}',
             }
           })
