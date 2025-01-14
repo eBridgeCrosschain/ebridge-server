@@ -753,6 +753,11 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             chainTokenInfoMap.TryAdd(chainId, tokenInfo);
             foreach (var aelfChainId in _tokenAccessOptions.ChainIdList)
             {
+                var chainIdAelfConvert = ConvertToTargetChainId(aelfChainId);
+                if (chainTokenInfoMap.ContainsKey(chainIdAelfConvert))
+                {
+                    continue;
+                }
                 var token = await _tokenAppService.GetAsync(new GetTokenInput
                 {
                     ChainId = aelfChainId,
@@ -770,7 +775,6 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
                     }
                     break;
                 }
-                var chainIdAelfConvert = ConvertToTargetChainId(aelfChainId);
                 var tokenInfoAelf = InitializeAelfTokenInfo(order.Symbol, token);
                 if (symbolChainOrderLiquidityMap.TryGetValue(order.Symbol, out var liquidityMainMap))
                 {
