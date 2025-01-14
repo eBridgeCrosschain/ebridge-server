@@ -24,6 +24,8 @@ public class TokenAccessOptions
     public string DAppChainTokenContractAddress { get; set; }
     public List<string> TokensToFilter { get; set; } = new();
     public List<string> ChainWhitelistForTestnet { get; set; } = new();
+    public List<string> BlackSymbolList { get; set; } = new();
+
 }
 public class AvailableTokenConfigDto
 {

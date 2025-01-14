@@ -128,7 +128,7 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<ThirdUserTokenIssueInfoEto, UpdateThirdUserTokenIssueInfoIndexInput>();
         CreateMap<AddThirdUserTokenIssueInfoIndexInput, ThirdUserTokenIssueIndex>();
         CreateMap<UpdateThirdUserTokenIssueInfoIndexInput, ThirdUserTokenIssueIndex>();
-        CreateMap<ThirdUserTokenIssueInfoDto, ThirdUserTokenIssueInfo>();
+        CreateMap<ThirdUserTokenIssueInfoDto, ThirdUserTokenIssueInfo>().Ignore(d=>d.ContractAddress);
 
         CreateMap<IndexerTokenHolderInfoDto, UserTokenInfoDto>()
             .ForMember(i => i.Symbol, opt => opt.MapFrom(i => i.Token.Symbol));

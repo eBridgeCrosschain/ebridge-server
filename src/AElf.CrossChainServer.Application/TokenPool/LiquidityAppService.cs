@@ -22,11 +22,13 @@ public class LiquidityAppService : CrossChainServerAppService, ILiquidityAppServ
     private readonly ITokenImageProvider _tokenImageProvider;
     private const int MaxMaxResultCount = 1000;
     private const int DefaultSkipCount = 0;
-    
+
     private readonly TokenAccessOptions _tokenAccessOptions;
 
-    public LiquidityAppService(IPoolLiquidityInfoAppService poolLiquidityInfoAppService, IUserLiquidityInfoAppService userLiquidityInfoAppService,
-        IOptionsSnapshot<TokenAccessOptions> tokenAccessOptions, IAggregatePriceProvider aggregatePriceProvider, ITokenImageProvider tokenImageProvider, IChainAppService chainAppService, ITokenAppService tokenAppService)
+    public LiquidityAppService(IPoolLiquidityInfoAppService poolLiquidityInfoAppService,
+        IUserLiquidityInfoAppService userLiquidityInfoAppService,
+        IOptionsSnapshot<TokenAccessOptions> tokenAccessOptions, IAggregatePriceProvider aggregatePriceProvider,
+        ITokenImageProvider tokenImageProvider, IChainAppService chainAppService, ITokenAppService tokenAppService)
     {
         _poolLiquidityInfoAppService = poolLiquidityInfoAppService;
         _userLiquidityInfoAppService = userLiquidityInfoAppService;
@@ -117,12 +119,22 @@ public class LiquidityAppService : CrossChainServerAppService, ILiquidityAppServ
                 result.Add(poolInfo);
             }
         }
-
+        DealWithBlackList(result);
         return new PagedResultDto<PoolInfoDto>
         {
             TotalCount = poolLiquidityInfos.TotalCount,
-            Items = result.OrderByDescending(r => r.TotalTvlInUsd).ToList()
+            Items = result.OrderByDescending(r => r.TotalTvlInUsd).ThenBy(r => r.Token.Symbol).ToList()
         };
+    }
+
+    private void DealWithBlackList(List<PoolInfoDto> result)
+    {
+        var blackSymbolList = _tokenAccessOptions.BlackSymbolList;
+        if (blackSymbolList.Count == 0)
+        {
+            return;
+        }
+        result.RemoveAll(r => blackSymbolList.Contains(r.Token.Symbol));
     }
 
     public async Task<PoolInfoDto> GetPoolDetailAsync(GetPoolDetailInput input)
