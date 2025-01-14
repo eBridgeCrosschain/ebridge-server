@@ -213,12 +213,14 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
                     dto.MintToAddress)),
                 MintToAddress = dto.MintToAddress
             }, HttpProvider.DefaultJsonSettings));
-        if (resultDto.Code != "20000")
+        Log.Debug("result from tsm:{res}",JsonSerializer.Serialize(resultDto));
+        if (resultDto.Code != "20000" && !string.IsNullOrEmpty(resultDto.Value))
         {
             Log.Warning($"request symbol market fail, {resultDto.Message}");
             return false;
         }
 
+        userTokenIssue.ContractAddress = resultDto.Value;
         userTokenIssue.BindingId = dto.BindingId;
         userTokenIssue.ThirdTokenId = dto.ThirdTokenId;
         userTokenIssue.Status = TokenApplyOrderStatus.Issued.ToString();

@@ -751,34 +751,31 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             }
 
             chainTokenInfoMap.TryAdd(chainId, tokenInfo);
-
-            var token = await _tokenAppService.GetAsync(new GetTokenInput
+            foreach (var aelfChainId in _tokenAccessOptions.ChainIdList)
             {
-                ChainId = CrossChainServerConsts.AElfMainChainId,
-                Symbol = order.Symbol
-            });
-            if (token.IsBurnable)
-            {
-                foreach (var chain in _tokenAccessOptions.ChainIdList)
+                var token = await _tokenAppService.GetAsync(new GetTokenInput
                 {
-                    var chainIdConvert = ConvertToTargetChainId(chain);
-                    var tokenInfoAelf = InitializeAelfTokenInfo(order.Symbol, token);
-                    if (symbolChainOrderLiquidityMap.TryGetValue(order.Symbol, out var liquidityMainMap))
+                    ChainId = aelfChainId,
+                    Symbol = order.Symbol
+                });
+                if (!token.IsBurnable)
+                {
+                    var tokenInfoAelfIssue = InitializeAelfTokenInfo(order.Symbol, token);
+                    if (symbolChainOrderLiquidityMap.TryGetValue(order.Symbol, out var liquiditySideMap))
                     {
-                        SetAelfTokenFlags(chain, tokenInfoAelf, liquidityMainMap);
-                        chainTokenInfoMap.TryAdd(chainIdConvert, tokenInfoAelf);
+                        var chain = await _chainAppService.GetByAElfChainIdAsync(token.IssueChainId);
+                        var chainIdConvert = ChainHelper.ConvertChainIdToBase58(token.IssueChainId);
+                        SetAelfTokenFlags(chain.Id, tokenInfoAelfIssue, liquiditySideMap);
+                        chainTokenInfoMap.TryAdd(chainIdConvert, tokenInfoAelfIssue);
                     }
+                    break;
                 }
-            }
-            else
-            {
+                var chainIdAelfConvert = ConvertToTargetChainId(aelfChainId);
                 var tokenInfoAelf = InitializeAelfTokenInfo(order.Symbol, token);
-                if (symbolChainOrderLiquidityMap.TryGetValue(order.Symbol, out var liquiditySideMap))
+                if (symbolChainOrderLiquidityMap.TryGetValue(order.Symbol, out var liquidityMainMap))
                 {
-                    var chain = await _chainAppService.GetByAElfChainIdAsync(token.IssueChainId);
-                    var chainIdConvert = ChainHelper.ConvertChainIdToBase58(token.IssueChainId);
-                    SetAelfTokenFlags(chain.Id, tokenInfoAelf, liquiditySideMap);
-                    chainTokenInfoMap.TryAdd(chainIdConvert, tokenInfoAelf);
+                    SetAelfTokenFlags(aelfChainId, tokenInfoAelf, liquidityMainMap);
+                    chainTokenInfoMap.TryAdd(chainIdAelfConvert, tokenInfoAelf);
                 }
             }
             result[order.Symbol] = chainTokenInfoMap;
