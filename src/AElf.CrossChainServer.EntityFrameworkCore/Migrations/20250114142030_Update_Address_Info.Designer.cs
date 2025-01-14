@@ -4,6 +4,7 @@ using AElf.CrossChainServer.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace AElf.CrossChainServer.Migrations
 {
     [DbContext(typeof(CrossChainServerDbContext))]
-    partial class CrossChainServerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250114142030_Update_Address_Info")]
+    partial class Update_Address_Info
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -72,27 +75,6 @@ namespace AElf.CrossChainServer.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("AppChains", (string)null);
-                });
-
-            modelBuilder.Entity("AElf.CrossChainServer.CrossChain.AddressInfoDto", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("Address")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("ChainId")
-                        .HasColumnType("longtext");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("char(36)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("AppWalletUserAddressInfos", (string)null);
                 });
 
             modelBuilder.Entity("AElf.CrossChainServer.CrossChain.CrossChainDailyLimit", b =>
@@ -2428,15 +2410,32 @@ namespace AElf.CrossChainServer.Migrations
                     b.ToTable("AbpTenantConnectionStrings", (string)null);
                 });
 
-            modelBuilder.Entity("AElf.CrossChainServer.CrossChain.AddressInfoDto", b =>
+            modelBuilder.Entity("AElf.CrossChainServer.CrossChain.WalletUserDto", b =>
                 {
-                    b.HasOne("AElf.CrossChainServer.CrossChain.WalletUserDto", "WalletUser")
-                        .WithMany("AddressInfos")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.OwnsMany("AElf.CrossChainServer.CrossChain.AddressInfoDto", "AddressInfos", b1 =>
+                        {
+                            b1.Property<Guid>("WalletUserDtoUserId")
+                                .HasColumnType("char(36)");
 
-                    b.Navigation("WalletUser");
+                            b1.Property<Guid>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("char(36)");
+
+                            b1.Property<string>("Address")
+                                .HasColumnType("longtext");
+
+                            b1.Property<string>("ChainId")
+                                .HasColumnType("longtext");
+
+                            b1.HasKey("WalletUserDtoUserId", "Id");
+
+                            b1.ToTable("AddressInfoDto");
+
+                            b1.WithOwner()
+                                .HasForeignKey("WalletUserDtoUserId");
+                        });
+
+                    b.Navigation("AddressInfos");
                 });
 
             modelBuilder.Entity("AElf.CrossChainServer.TokenAccess.StatusChangedRecord", b =>
@@ -2590,11 +2589,6 @@ namespace AElf.CrossChainServer.Migrations
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("AElf.CrossChainServer.CrossChain.WalletUserDto", b =>
-                {
-                    b.Navigation("AddressInfos");
                 });
 
             modelBuilder.Entity("AElf.CrossChainServer.TokenAccess.TokenApplyOrder", b =>

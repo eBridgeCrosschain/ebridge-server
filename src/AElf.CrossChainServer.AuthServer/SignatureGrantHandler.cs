@@ -21,6 +21,7 @@ using OpenIddict.Server.AspNetCore;
 using Portkey.Contracts.CA;
 using Volo.Abp.DistributedLocking;
 using Volo.Abp.Identity;
+using Volo.Abp.Linq;
 using Volo.Abp.OpenIddict;
 using Volo.Abp.OpenIddict.ExtensionGrantTypes;
 using IdentityUser = Volo.Abp.Identity.IdentityUser;
@@ -37,6 +38,8 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
     private IOptionsSnapshot<GraphQlOption> _graphQlOptions;
     private IOptionsSnapshot<ContractOptions> _contractOptions;
     private ICrossChainUserRepository _crossChainUserRepository;
+    private IAsyncQueryableExecuter _asyncExecuter;
+
 
     private readonly string _lockKeyPrefix = "CrossChainServer:Auth:SignatureGrantHandler:";
 
@@ -101,7 +104,8 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
         _distributedLock = context.HttpContext.RequestServices.GetRequiredService<IAbpDistributedLock>();
         _graphQlOptions = context.HttpContext.RequestServices.GetRequiredService<IOptionsSnapshot<GraphQlOption>>();
         _chainOptions = context.HttpContext.RequestServices.GetRequiredService<IOptionsSnapshot<ChainOptions>>();
-        
+        _asyncExecuter = context.HttpContext.RequestServices.GetRequiredService<IAsyncQueryableExecuter>();
+
         IdentityUser user = null;
         var address = string.Empty;
         if (source == AuthConstant.PortKeySource || source == AuthConstant.NightElfSource)
@@ -142,7 +146,10 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
             else
             {
                 _logger.LogDebug("check user data consistency, userId:{userId}", user.Id.ToString());
-                var userInfo = await _crossChainUserRepository.FindAsync(o => o.UserId == user.Id);
+                var queryable =
+                    await _crossChainUserRepository.WithDetailsAsync(y => y.AddressInfos);
+                var query = queryable.Where(x => x.UserId == user.Id);
+                var userInfo = await _asyncExecuter.FirstOrDefaultAsync(query);
                 if (userInfo == null || userInfo.AddressInfos.IsNullOrEmpty() || userInfo.AddressInfos.Count == 1)
                 {
                     _logger.LogDebug("save user info into storage, userId:{userId}", user.Id.ToString());
@@ -178,7 +185,10 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
             else
             {
                 _logger.LogDebug("check user data consistency, userId:{userId}", user.Id.ToString());
-                var userInfo = await _crossChainUserRepository.FindAsync(o => o.UserId == user.Id);
+                var queryable =
+                    await _crossChainUserRepository.WithDetailsAsync(y => y.AddressInfos);
+                var query = queryable.Where(x => x.UserId == user.Id);
+                var userInfo = await _asyncExecuter.FirstOrDefaultAsync(query);
                 if (userInfo == null || userInfo.AddressInfos.IsNullOrEmpty())
                 {
                     _logger.LogDebug("save user info into storage again, userId:{userId}", user.Id.ToString());

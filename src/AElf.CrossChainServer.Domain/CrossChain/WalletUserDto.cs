@@ -13,11 +13,18 @@ public class WalletUserDto : CrossChainServerEntity<Guid>
     public List<AddressInfoDto> AddressInfos { get; set; }
     public long CreateTime { get; set; }
     public long ModificationTime { get; set; }
+    
+    public WalletUserDto()
+    {
+        AddressInfos = new List<AddressInfoDto>();
+    }
 }
 
-public class AddressInfoDto
+
+public class AddressInfoDto : CrossChainServerEntity<Guid>
 {
+    [Keyword] public Guid UserId { get; set; }
     public string ChainId { get; set; }
     public string Address { get; set; }
-    // public Guid Id { get; set; }
+    public WalletUserDto WalletUser { get; set; }
 }

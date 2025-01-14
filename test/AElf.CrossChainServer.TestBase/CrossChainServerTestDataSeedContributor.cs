@@ -82,13 +82,13 @@ public class CrossChainServerTestDataSeedContributor : IDataSeedContributor, ITr
                 {
                     ChainId = "AELF",
                     Address = "test_user_address",
-                    // Id = Guid.NewGuid()
+                    Id = Guid.NewGuid()
                 },
                 new()
                 {
                     ChainId = "tDVW",
                     Address = "side_test_user_address",
-                    // Id = Guid.NewGuid()
+                    Id = Guid.NewGuid()
                 }
             },
             CreateTime = 0,

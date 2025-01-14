@@ -68,6 +68,7 @@ public class CrossChainServerDbContext :
     public DbSet<CrossChainIndexingInfo> CrossChainIndexingInfos { get; set; }
     public DbSet<CrossChainTransfer> CrossChainTransfers { get; set; }
     public DbSet<WalletUserDto> WalletUsers { get; set; }
+    public DbSet<AddressInfoDto> WalletUserAddressInfos { get; set; }
     public DbSet<BridgeContractSyncInfo> BridgeContractSyncInfos { get; set; }
     public DbSet<OracleQueryInfo> OracleQueryInfos { get; set; }
     public DbSet<ReportInfo> ReportInfos { get; set; }
@@ -137,7 +138,16 @@ public class CrossChainServerDbContext :
         {
             entity.ToTable(CrossChainServerConsts.DbTablePrefix + "WalletUsers", CrossChainServerConsts.DbSchema);
             entity.HasKey(e => e.UserId);
-            entity.OwnsMany(e => e.AddressInfos);
+            entity.HasMany(x => x.AddressInfos)
+                .WithOne(x => x.WalletUser)
+                .HasForeignKey(x => x.UserId)
+                .IsRequired();
+        });
+
+        builder.Entity<AddressInfoDto>(b =>
+        {
+            b.ToTable(CrossChainServerConsts.DbTablePrefix + "WalletUserAddressInfos", CrossChainServerConsts.DbSchema);
+            b.ConfigureByConvention();
         });
 
         builder.Entity<BridgeContractSyncInfo>(b =>
@@ -181,7 +191,7 @@ public class CrossChainServerDbContext :
         builder.Entity<UserTokenAccessInfo>(b =>
         {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "UserTokenAccessInfo", CrossChainServerConsts.DbSchema);
-            b.HasIndex(o => new { o.Address,o.Symbol }).IsUnique();
+            b.HasIndex(o => new { o.Address, o.Symbol }).IsUnique();
             b.ConfigureByConvention();
         });
 
@@ -220,7 +230,8 @@ public class CrossChainServerDbContext :
 
         builder.Entity<ThirdUserTokenIssueInfo>(b =>
         {
-            b.ToTable(CrossChainServerConsts.DbTablePrefix + "ThirdUserTokenIssueInfo", CrossChainServerConsts.DbSchema);
+            b.ToTable(CrossChainServerConsts.DbTablePrefix + "ThirdUserTokenIssueInfo",
+                CrossChainServerConsts.DbSchema);
             b.HasIndex(o => new { o.Address, o.Symbol, o.OtherChainId }).IsUnique();
             b.ConfigureByConvention();
         });
