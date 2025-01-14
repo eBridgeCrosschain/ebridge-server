@@ -433,7 +433,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             Token = tokenApplyOrder.Symbol,
             Chain = otherChainId,
             TokenContract = chain.ContractAddress,
-            Website = officialWebsite
+            Website = officialWebsite,
+            OrderId = orderInsert.Id.ToString()
         });
     }
 
@@ -500,7 +501,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
                 [TokenListingKeys.Token] = dto.Token,
                 [TokenListingKeys.TokenContract] = dto.TokenContract,
                 [TokenListingKeys.Chain] = dto.Chain,
-                [TokenListingKeys.Website] = dto.Website
+                [TokenListingKeys.Website] = dto.Website,
+                [TokenListingKeys.OrderId] = dto.OrderId
             }
         });
     }
@@ -978,5 +980,6 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         public const string TokenContract = "tokenContract";
         public const string Chain = "chain";
         public const string Website = "website";
+        public const string OrderId = "orderId";
     }
 }

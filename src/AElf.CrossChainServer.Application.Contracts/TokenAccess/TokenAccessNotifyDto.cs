@@ -6,4 +6,5 @@ public class TokenAccessNotifyDto
     public string TokenContract { get; set; }
     public string Chain { get; set; }
     public string Website { get; set; }
+    public string OrderId { get; set; }
 }
