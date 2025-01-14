@@ -69,7 +69,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         IOptionsSnapshot<TokenWhitelistOptions> tokenWhitelistOptions,
         INESTRepository<ThirdUserTokenIssueIndex, Guid> thirdUserTokenIssueIndexRepository,
         IAggregatePriceProvider aggregatePriceProvider,
-        IOptionsSnapshot<ChainIdMapOptions> chainIdMapOptions, 
+        IOptionsSnapshot<ChainIdMapOptions> chainIdMapOptions,
         IScanProvider scanProvider, IAwakenProvider awakenProvider, ITokenInfoCacheProvider tokenInfoCacheProvider)
     {
         _tokenApplyOrderRepository = tokenApplyOrderRepository;
@@ -417,6 +417,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             // Step 3: Create a new token apply order with "PoolInitializing" status
             chain.Status = TokenApplyOrderStatus.PoolInitializing.ToString();
         }
+
         var tokenApplyOrder =
             CreateTokenApplyOrder(symbol, address, chain.Status, chain);
 
@@ -508,7 +509,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     }
 
     #endregion
-    
+
     public async Task<UserTokenBindingDto> PrepareBindingIssueAsync(PrepareBindIssueInput input)
     {
         AssertHelper.IsTrue(CheckAddress(input.Address), $"Invalid other chain address.{input.ChainId}");
@@ -536,7 +537,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
 
     private static bool CheckAddress(string address)
     {
-        return Nethereum.Util.AddressExtensions.IsValidEthereumAddressHexFormat(address) || TonAddressHelper.IsTonFriendlyAddress(address);
+        return Nethereum.Util.AddressExtensions.IsValidEthereumAddressHexFormat(address) ||
+               TonAddressHelper.IsTonFriendlyAddress(address);
     }
 
     public async Task<bool> GetBindingIssueAsync(UserTokenBindingDto input)
@@ -760,6 +762,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
                 {
                     continue;
                 }
+
                 var token = await _tokenAppService.GetAsync(new GetTokenInput
                 {
                     ChainId = aelfChainId,
@@ -767,7 +770,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
                 });
                 if (!token.IsBurnable)
                 {
-                    var tokenInfoAelfIssue = InitializeAelfTokenInfo(order.Symbol, token);
+                    var tokenInfoAelfIssue = InitializeAelfTokenInfo(order.Symbol, token, order.ChainTokenInfo.Icon);
                     if (symbolChainOrderLiquidityMap.TryGetValue(order.Symbol, out var liquiditySideMap))
                     {
                         var chain = await _chainAppService.GetByAElfChainIdAsync(token.IssueChainId);
@@ -775,21 +778,24 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
                         SetAelfTokenFlags(chain.Id, tokenInfoAelfIssue, liquiditySideMap);
                         chainTokenInfoMap.TryAdd(chainIdConvert, tokenInfoAelfIssue);
                     }
+
                     break;
                 }
-                var tokenInfoAelf = InitializeAelfTokenInfo(order.Symbol, token);
+
+                var tokenInfoAelf = InitializeAelfTokenInfo(order.Symbol, token, order.ChainTokenInfo.Icon);
                 if (symbolChainOrderLiquidityMap.TryGetValue(order.Symbol, out var liquidityMainMap))
                 {
                     SetAelfTokenFlags(aelfChainId, tokenInfoAelf, liquidityMainMap);
                     chainTokenInfoMap.TryAdd(chainIdAelfConvert, tokenInfoAelf);
                 }
             }
+
             result[order.Symbol] = chainTokenInfoMap;
         }
 
         return result;
     }
-    
+
     private string ConvertToTargetChainId(string sourceChainId)
         => _tokenAccessOptions.ChainIdMap.FirstOrDefault(kvp => kvp.Value == sourceChainId).Key ?? string.Empty;
 
@@ -826,14 +832,14 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         };
     }
 
-    private static TokenInfoDto InitializeAelfTokenInfo(string symbol, TokenDto token)
+    private static TokenInfoDto InitializeAelfTokenInfo(string symbol, TokenDto token, string icon)
     {
         return new TokenInfoDto
         {
             Symbol = symbol,
             Name = token.Symbol,
             Address = token.Address,
-            Icon = token.Icon,
+            Icon = icon,
             Decimals = token.Decimals,
             IsNativeToken = false,
             IssueChainId = token.IssueChainId.ToString(),
@@ -844,7 +850,6 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
 
     #endregion
 
-    
 
     public async Task<TokenPriceDto> GetTokenPriceAsync(GetTokenPriceInput input)
     {
@@ -868,7 +873,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         {
             throw new UserFriendlyException($"Invalid order {order.Id.ToString()}.");
         }
-        
+
         order.ContractAddress ??= input.ChainIdTokenInfo.TokenContractAddress;
         order.Decimals = order.Decimals == 0
             ? order.Decimals
@@ -886,7 +891,6 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         return true;
     }
 
-    
 
     private async Task<string> GetUserAddressAsync()
     {
