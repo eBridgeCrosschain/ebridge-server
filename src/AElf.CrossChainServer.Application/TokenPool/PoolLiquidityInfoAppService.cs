@@ -121,7 +121,7 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
                 input.Liquidity);
             isLiquidityExist = false;
             liquidityInfo = ObjectMapper.Map<PoolLiquidityInfoInput, PoolLiquidityInfo>(input);
-            await DealUpdateOrderInfoAsync(input.ChainId, input.TokenId,input.Provider);
+            await DealUpdateOrderInfoAsync(input.ChainId, input.TokenId, input.Provider);
         }
         else
         {
@@ -276,15 +276,16 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
         return string.IsNullOrWhiteSpace(typePrefix) ? syncType : $"{typePrefix}-{syncType}";
     }
 
-    private async Task DealUpdateOrderInfoAsync(string chainId, Guid tokenId,string provider)
+    private async Task DealUpdateOrderInfoAsync(string chainId, Guid tokenId, string provider)
     {
         var chain = await _chainAppService.GetAsync(chainId);
-        if (chain.Type == BlockchainType.AElf || !string.Equals(provider,CrossChainServerConsts.AddressZero))
+        if (chain.Type == BlockchainType.AElf || !string.Equals(provider, CrossChainServerConsts.AddressZero))
         {
             Log.Information("Not deal with aelf chain liquidity or provider is not zero address.{chainId},{provider}",
                 chainId, provider);
             return;
         }
+
         var token = await _tokenRepository.GetAsync(tokenId);
         var queryable = await _tokenApplyOrderRepository.WithDetailsAsync(y => y.StatusChangedRecords);
         var query = queryable.Where(x => x.Symbol == token.Symbol && x.ChainId == chainId);
@@ -300,7 +301,9 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
                 Log.Warning("Third token info not found,chainId: {chainId},symbol: {symbol}", chainId, token.Symbol);
                 return;
             }
-            await CreateTokenApplyOrderAsync(token.Symbol, thirdTokenInfo.Address, TokenApplyOrderStatus.PoolInitialized.ToString(),
+
+            await CreateTokenApplyOrderAsync(token.Symbol, thirdTokenInfo.Address,
+                TokenApplyOrderStatus.PoolInitialized.ToString(),
                 thirdTokenInfo);
         }
         else
@@ -319,46 +322,64 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
             });
             await _tokenApplyOrderRepository.UpdateAsync(order, autoSave: true);
         }
+
         await DealWithAElfChainLiquidityAsync(token.Symbol);
     }
 
     private async Task DealWithAElfChainLiquidityAsync(string symbol)
     {
-        var token = await _tokenAppService.GetAsync(new GetTokenInput
-        {
-            ChainId = CrossChainServerConsts.AElfMainChainId,
-            Symbol = symbol
-        });
-        var poolList = await _poolLiquidityRepository.GetListAsync(p => p.TokenId == token.Id);
-        var chainList = poolList.Select(p => p.ChainId).ToHashSet();
         var chainsToInsert = new List<PoolLiquidityInfo>();
-
-        if (token.IsBurnable)
+        var chainIdSet = _tokenAccessOptions.ChainIdList.ToHashSet();
+        var tokens = await Task.WhenAll(chainIdSet.Select(chainId => _tokenAppService.GetAsync(new GetTokenInput
         {
-            chainsToInsert.AddRange(_tokenAccessOptions.ChainIdList
-                .Where(aelfChainId => !chainList.Contains(aelfChainId)).Select(aelfChainId =>
-                    new PoolLiquidityInfo { ChainId = aelfChainId, TokenId = token.Id, Liquidity = 0 }));
-        }
-        else
+            ChainId = chainId,
+            Symbol = symbol
+        })));
+        if (tokens.Length > 0)
         {
-            var aelfChain = await _chainAppService.GetByAElfChainIdAsync(token.IssueChainId);
-            if (!chainList.Contains(aelfChain.Id))
+            if (tokens.First().IsBurnable)
             {
-                chainsToInsert.Add(new PoolLiquidityInfo
+                var toAdd = new List<PoolLiquidityInfo>();
+                foreach (var token in tokens)
                 {
-                    ChainId = aelfChain.Id,
-                    TokenId = token.Id,
-                    Liquidity = 0
-                });
+                    var existingPool = await _poolLiquidityRepository.FindAsync(p => p.TokenId == token.Id);
+                    if (existingPool == null)
+                    {
+                        toAdd.Add(new PoolLiquidityInfo
+                        {
+                            ChainId = token.ChainId,
+                            TokenId = token.Id,
+                            Liquidity = 0
+                        });
+                    }
+                }
+                chainsToInsert.AddRange(toAdd);
+            }
+            else
+            {
+                var issueChainId = tokens.First().IssueChainId;
+                var chain = await _chainAppService.GetByAElfChainIdAsync(issueChainId);
+                var token = tokens.FirstOrDefault(t => t.ChainId == chain.Id);
+                if (token != null)
+                {
+                    if (await _poolLiquidityRepository.FindAsync(token.Id) == null)
+                    {
+                        chainsToInsert.Add(new PoolLiquidityInfo
+                        {
+                            ChainId = token.ChainId,
+                            TokenId = token.Id,
+                            Liquidity = 0
+                        });
+                    }
+                }
             }
         }
-
         if (chainsToInsert.Count != 0)
         {
             await _poolLiquidityRepository.InsertManyAsync(chainsToInsert, autoSave: true);
         }
     }
-    
+
     private async Task CreateTokenApplyOrderAsync(string symbol, string userAddress, string status,
         ThirdUserTokenIssueInfo tokenIssueInfo)
     {
@@ -379,12 +400,13 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
             TotalSupply = tokenIssueInfo.TotalSupply.SafeToDecimal(),
             Decimals = CrossChainServerConsts.DefaultEvmTokenDecimal,
             Icon = tokenIssueInfo.TokenImage,
-            PoolAddress = _bridgeContractOptions.ContractAddresses[tokenIssueInfo.OtherChainId].TokenPoolContract,
+            PoolAddress = _bridgeContractOptions.ContractAddresses[tokenIssueInfo.OtherChainId]
+                .TokenPoolContract,
             ContractAddress = tokenIssueInfo.ContractAddress
         };
         await _tokenApplyOrderRepository.InsertAsync(order);
     }
-    
+
     public static long ToUtcMilliSeconds(DateTime dateTime)
     {
         return new DateTimeOffset(dateTime).ToUnixTimeMilliseconds();
