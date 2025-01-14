@@ -148,7 +148,7 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
                 _logger.LogDebug("check user data consistency, userId:{userId}", user.Id.ToString());
                 var queryable =
                     await _crossChainUserRepository.WithDetailsAsync(y => y.AddressInfos);
-                var query = queryable.Where(x => x.UserId == user.Id);
+                var query = queryable.Where(x => x.Id == user.Id);
                 var userInfo = await _asyncExecuter.FirstOrDefaultAsync(query);
                 if (userInfo == null || userInfo.AddressInfos.IsNullOrEmpty() || userInfo.AddressInfos.Count == 1)
                 {
@@ -156,7 +156,7 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
                     var addressInfos = await GetAddressInfosAsync(caHash, version);
                     await _crossChainUserRepository.InsertAsync(new()
                     {
-                        UserId = user.Id,
+                        Id = user.Id,
                         CaHash = caHash,
                         AppId = AuthConstant.PortKeyAppId,
                         AddressInfos = addressInfos
@@ -187,16 +187,16 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
                 _logger.LogDebug("check user data consistency, userId:{userId}", user.Id.ToString());
                 var queryable =
                     await _crossChainUserRepository.WithDetailsAsync(y => y.AddressInfos);
-                var query = queryable.Where(x => x.UserId == user.Id);
+                var query = queryable.Where(x => x.Id == user.Id);
                 var userInfo = await _asyncExecuter.FirstOrDefaultAsync(query);
                 if (userInfo == null || userInfo.AddressInfos.IsNullOrEmpty())
                 {
                     _logger.LogDebug("save user info into storage again, userId:{userId}", user.Id.ToString());
                     await _crossChainUserRepository.InsertAsync(new()
                     {
-                        UserId = user.Id,
+                        Id = user.Id,
                         AppId = AuthConstant.NightElfAppId,
-                        AddressInfos = new() { new() { Address = address } }
+                        AddressInfos = new() { new() { Id = new Guid(), Address = address, UserId = user.Id } }
                     });
                     _logger.LogDebug("save user success, userId:{userId}", user.Id.ToString());
                 }
@@ -351,7 +351,7 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
                 var addressInfos = await GetAddressInfosAsync(caHash, version);
                 await _crossChainUserRepository.InsertAsync(new()
                 {
-                    UserId = userId,
+                    Id = userId,
                     CaHash = caHash,
                     AppId = AuthConstant.PortKeyAppId,
                     AddressInfos = addressInfos
@@ -384,13 +384,13 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
                 _logger.LogDebug("save user info into storage, userId:{userId}", userId.ToString());
                 await _crossChainUserRepository.InsertAsync(new()
                 {
-                    UserId = userId,
+                    Id = userId,
                     AppId = sourceType.IsNullOrEmpty()
                         ? AuthConstant.NightElfAppId
                         : Enum.TryParse<WalletEnum>(sourceType, true, out var w)
                             ? w.ToString()
                             : sourceType,
-                    AddressInfos = new List<AddressInfoDto> { new() { Address = address } }
+                    AddressInfos = new List<AddressInfoDto> { new() { Id = Guid.NewGuid(),Address = address } }
                 });
                 _logger.LogDebug("create user success, userId:{userId}", userId.ToString());
             }
@@ -416,7 +416,7 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
         if (holderInfoDto != null && !holderInfoDto.CaHolderInfo.IsNullOrEmpty())
         {
             addressInfos.AddRange(holderInfoDto.CaHolderInfo.Select(t => new AddressInfoDto
-                { ChainId = t.ChainId, Address = t.CaAddress }));
+                { Id = Guid.NewGuid(), ChainId = t.ChainId, Address = t.CaAddress }));
             chainIds = holderInfoDto.CaHolderInfo.Select(t => t.ChainId).ToList();
         }
 
@@ -453,6 +453,7 @@ public partial class SignatureGrantHandler : ITokenExtensionGrant
 
         return new AddressInfoDto()
         {
+            Id = Guid.NewGuid(),
             Address = output.CaAddress.ToBase58(),
             ChainId = chainId
         };

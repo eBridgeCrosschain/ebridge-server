@@ -894,7 +894,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         if (!userId.HasValue) return null;
         var queryable =
             await _crossChainUserRepository.WithDetailsAsync(y => y.AddressInfos);
-        var query = queryable.Where(x => x.UserId == userId);
+        var query = queryable.Where(x => x.Id == userId);
         var userDto = await AsyncExecuter.FirstOrDefaultAsync(query);
         return userDto?.AddressInfos?.FirstOrDefault()?.Address;
     }

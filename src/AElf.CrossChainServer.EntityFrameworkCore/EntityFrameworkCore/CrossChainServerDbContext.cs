@@ -137,7 +137,7 @@ public class CrossChainServerDbContext :
         builder.Entity<WalletUserDto>(entity =>
         {
             entity.ToTable(CrossChainServerConsts.DbTablePrefix + "WalletUsers", CrossChainServerConsts.DbSchema);
-            entity.HasKey(e => e.UserId);
+            entity.HasKey(e => e.Id);
             entity.HasMany(x => x.AddressInfos)
                 .WithOne(x => x.WalletUser)
                 .HasForeignKey(x => x.UserId)

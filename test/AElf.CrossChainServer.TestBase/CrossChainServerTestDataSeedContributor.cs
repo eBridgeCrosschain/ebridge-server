@@ -73,7 +73,6 @@ public class CrossChainServerTestDataSeedContributor : IDataSeedContributor, ITr
         await _crossChainUserRepository.InsertAsync(new()
         {
             Id = new Guid("d3d94468-2d38-4b1f-9dcd-fbfc7ddcab1b"),
-            UserId = new Guid("d3d94468-2d38-4b1f-9dcd-fbfc7ddcab1b"),
             AppId = "test_app_id",
             CaHash = "test_ca_hash",
             AddressInfos = new List<AddressInfoDto>
