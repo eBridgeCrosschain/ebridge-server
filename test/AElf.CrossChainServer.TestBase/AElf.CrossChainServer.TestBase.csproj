@@ -3,18 +3,21 @@
   <Import Project="..\..\common.props" />
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>AElf.CrossChainServer</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Volo.Abp.TestBase" Version="5.3.0" />
-    <PackageReference Include="Volo.Abp.Autofac" Version="5.3.0" />
-    <PackageReference Include="Volo.Abp.Authorization" Version="5.3.0" />
+    <PackageReference Include="Volo.Abp.TestBase" Version="8.2.0" />
+    <PackageReference Include="Volo.Abp.Autofac" Version="8.2.0" />
+    <PackageReference Include="Volo.Abp.Authorization" Version="8.2.0" />
     <ProjectReference Include="..\..\src\AElf.CrossChainServer.Domain\AElf.CrossChainServer.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Serilog.AspNetCore" Version="5.0.0" />
+    <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
+    <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
     <PackageReference Include="NSubstitute" Version="4.3.0" />
     <PackageReference Include="Shouldly" Version="4.0.3" />

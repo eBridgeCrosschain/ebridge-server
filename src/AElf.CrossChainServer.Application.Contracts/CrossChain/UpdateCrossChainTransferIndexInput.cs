@@ -12,6 +12,7 @@ public class UpdateCrossChainTransferIndexInput
     public string ToAddress { get; set; }
     public string TransferTransactionId { get; set; }
     public string ReceiveTransactionId { get; set; }
+    public string InlineTransferTransactionId { get; set; }
     public DateTime TransferTime { get; set; }
     public long TransferBlockHeight { get; set; }
     public DateTime ReceiveTime { get; set; }
@@ -24,4 +25,5 @@ public class UpdateCrossChainTransferIndexInput
     public double Progress { get; set; }
     public DateTime ProgressUpdateTime { get; set; }
     public bool TransferNeedToBeApproved { get; set; }
+    public string TraceId { get; set; }
 }

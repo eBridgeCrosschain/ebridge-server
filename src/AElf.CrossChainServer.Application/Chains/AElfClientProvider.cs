@@ -44,11 +44,13 @@ namespace AElf.CrossChainServer.Chains
                 ChainId = chainId,
                 Address = address,
                 Decimals = token.Decimals,
-                Symbol = token.Symbol
+                Symbol = token.Symbol,
+                IssueChainId = token.IssueChainId,
+                IsBurnable = token.IsBurnable
             };
         }
-
-        public async Task<BlockDto> GetBlockByHeightAsync(string chainId, long height, bool includeTransactions = false)
+        
+        public virtual async Task<BlockDto> GetBlockByHeightAsync(string chainId, long height, bool includeTransactions = false)
         {
             var client = BlockchainClientFactory.GetClient(chainId);
             var block = await client.GetBlockByHeightAsync(height,includeTransactions);
@@ -75,8 +77,8 @@ namespace AElf.CrossChainServer.Chains
         {
             throw new NotImplementedException();
         }
-
-        public async Task<ChainStatusDto> GetChainStatusAsync(string chainId)
+        
+        public virtual async Task<ChainStatusDto> GetChainStatusAsync(string chainId)
         {
             var client = BlockchainClientFactory.GetClient(chainId);
             var status = await client.GetChainStatusAsync();
@@ -87,7 +89,7 @@ namespace AElf.CrossChainServer.Chains
                 ConfirmedBlockHeight = status.LastIrreversibleBlockHeight
             };
         }
-
+        
         public async Task<TransactionResultDto> GetTransactionResultAsync(string chainId, string transactionId)
         {
             var client = BlockchainClientFactory.GetClient(chainId);
@@ -101,7 +103,8 @@ namespace AElf.CrossChainServer.Chains
                             result.Status != TransactionResultStatus.Pending.ToString().ToUpper(),
                 BlockHeight = result.BlockNumber,
                 BlockHash = result.BlockHash,
-                Transaction = result.Transaction
+                Transaction = result.Transaction,
+                Logs = result.Logs
             };
         }
 
@@ -139,7 +142,12 @@ namespace AElf.CrossChainServer.Chains
             var client = BlockchainClientFactory.GetClient(chainId);
             return await client.GetMerklePathByTransactionIdAsync(txId);
         }
-        
+
+        public Task<FilterLogsDto> GetContractLogsAsync(string chainId, string contractAddress, long startHeight, long endHeight)
+        {
+            throw new NotImplementedException();
+        }
+
         protected string GetPrivateKey(string chainId)
         {
             return _accountOptions.PrivateKeys[chainId];

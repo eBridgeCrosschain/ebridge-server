@@ -4,8 +4,10 @@ using System.Threading.Tasks;
 using AElf.Indexing.Elasticsearch;
 using Microsoft.Extensions.Logging;
 using Nest;
+using Serilog;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Uow;
 
 namespace AElf.CrossChainServer.CrossChain;
 
@@ -14,16 +16,19 @@ public class OracleQueryInfoAppService : CrossChainServerAppService, IOracleQuer
 {
     private readonly INESTRepository<OracleQueryInfoIndex, Guid> _oracleQueryInfoIndexRepository;
     private readonly IOracleQueryInfoRepository _oracleQueryInfoRepository;
+    private readonly IUnitOfWorkManager _unitOfWorkManager;
 
     public OracleQueryInfoAppService(IOracleQueryInfoRepository oracleQueryInfoRepository,
-        INESTRepository<OracleQueryInfoIndex, Guid> oracleQueryInfoIndexRepository)
+        INESTRepository<OracleQueryInfoIndex, Guid> oracleQueryInfoIndexRepository, IUnitOfWorkManager unitOfWorkManager)
     {
         _oracleQueryInfoRepository = oracleQueryInfoRepository;
         _oracleQueryInfoIndexRepository = oracleQueryInfoIndexRepository;
+        _unitOfWorkManager = unitOfWorkManager;
     }
-
+    
     public async Task CreateAsync(CreateOracleQueryInfoInput input)
     {
+        using var uow = _unitOfWorkManager.Begin();
         if (await _oracleQueryInfoRepository.FirstOrDefaultAsync(o =>
                 o.ChainId == input.ChainId && o.QueryId == input.QueryId && o.Option == input.Option) != null)
         {
@@ -32,6 +37,7 @@ public class OracleQueryInfoAppService : CrossChainServerAppService, IOracleQuer
 
         var info = ObjectMapper.Map<CreateOracleQueryInfoInput, OracleQueryInfo>(input);
         await _oracleQueryInfoRepository.InsertAsync(info);
+        await uow.CompleteAsync();
     }
     
     public async Task UpdateAsync(UpdateOracleQueryInfoInput input)
@@ -48,7 +54,7 @@ public class OracleQueryInfoAppService : CrossChainServerAppService, IOracleQuer
         {
             if (info.Step >= input.Step)
             {
-                Logger.LogDebug(
+                Log.ForContext("chainId",info.ChainId).Debug(
                     "Invalid oracle step. ChainId: {chainId}, QueryId: {queryId}, Step: {step}, Input Step: {inputStep}",
                     info.ChainId, info.QueryId, info.Step, input.Step);
                 continue;

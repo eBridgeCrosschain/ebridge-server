@@ -1,10 +1,13 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using AElf.Client.Dto;
 using AElf.CrossChainServer.Tokens;
 using Microsoft.Extensions.Options;
 using Nethereum.BlockchainProcessing.BlockStorage.Entities.Mapping;
 using Nethereum.Contracts.Standards.ERC20.ContractDefinition;
+using Nethereum.RPC.Eth.DTOs;
+using Serilog;
 
 namespace AElf.CrossChainServer.Chains
 {
@@ -24,7 +27,7 @@ namespace AElf.CrossChainServer.Chains
         {
             var client = BlockchainClientFactory.GetClient(chainId);
             var contractHandler = client.Eth.GetContractHandler(address);
-            
+
             return new TokenDto
             {
                 ChainId = chainId,
@@ -45,13 +48,13 @@ namespace AElf.CrossChainServer.Chains
             var latestBlockNumber = await client.Eth.Blocks.GetBlockNumber.SendRequestAsync();
             return latestBlockNumber.ToLong();
         }
-        
+
         public async Task<ChainStatusDto> GetChainStatusAsync(string chainId)
         {
             var client = BlockchainClientFactory.GetClient(chainId);
             var latestBlockNumber = await client.Eth.Blocks.GetBlockNumber.SendRequestAsync();
             var blockNumber = latestBlockNumber.ToLong();
-            
+
             return new ChainStatusDto
             {
                 ChainId = chainId,
@@ -68,6 +71,36 @@ namespace AElf.CrossChainServer.Chains
         public Task<MerklePathDto> GetMerklePathAsync(string chainId, string txId)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<FilterLogsDto> GetContractLogsAsync(string chainId, string contractAddress, long startHeight,
+            long endHeight)
+        {
+            Log.Debug("Get contract logs from {startHeight} to {endHeight}", startHeight, endHeight);
+            var client = BlockchainClientFactory.GetClient(chainId);
+            var filterLogs = await client.Eth.Filters.GetLogs.SendRequestAsync(new NewFilterInput
+            {
+                Address = new[] { contractAddress },
+                FromBlock = new BlockParameter((ulong)startHeight),
+                ToBlock = new BlockParameter((ulong)endHeight)
+            });
+            var logs = filterLogs.Select(l => new FilterLog
+            {
+                Address = l.Address,
+                BlockHash = l.BlockHash,
+                BlockNumber = l.BlockNumber.ToLong(),
+                Data = l.Data,
+                LogIndex = l.LogIndex.ToLong(),
+                Topics = l.Topics,
+                TransactionHash = l.TransactionHash,
+                TransactionIndex = l.TransactionIndex.ToLong(),
+                Type = l.Type,
+                Removed = l.Removed
+            }).ToList();
+            return new FilterLogsDto
+            {
+                Logs = logs
+            };
         }
     }
 }

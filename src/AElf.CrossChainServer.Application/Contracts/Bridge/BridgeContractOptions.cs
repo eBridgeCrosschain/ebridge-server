@@ -13,4 +13,6 @@ public class BridgeContractAddress
     public string BridgeOutContract { get; set; }
 
     public string LimiterContract { get; set; }
+    public string TokenPoolContract { get; set; }
+
 }

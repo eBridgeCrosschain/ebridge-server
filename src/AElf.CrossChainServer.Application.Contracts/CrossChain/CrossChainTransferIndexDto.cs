@@ -16,6 +16,7 @@ public class CrossChainTransferIndexDto: EntityDto<Guid>
     public string ToAddress { get; set; }
     public string TransferTransactionId { get; set; }
     public string ReceiveTransactionId { get; set; }
+    public string InlineTransferTransactionId { get; set; }
     public long TransferTime { get; set; }
     public long TransferBlockHeight { get; set; }
     public long ReceiveTime { get; set; }
@@ -32,4 +33,5 @@ public class CrossChainTransferIndexDto: EntityDto<Guid>
     public long ProgressUpdateTime { get; set; }
 
     public bool TransferNeedToBeApproved { get; set; }
+    public string TraceId { get; set; }
 }

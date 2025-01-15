@@ -12,6 +12,7 @@ jobs:
       matrix:
         servicename:
           [
+            AElf.CrossChainServer.AuthServer,
             AElf.CrossChainServer.EntityHandler,
             AElf.CrossChainServer.HttpApi.Host,
             AElf.CrossChainServer.DbMigrator
@@ -20,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '6.0' # which dotnet version is required?
+          dotnet-version: '8.0' # which dotnet version is required?
       - run: dotnet publish src/${{ matrix.servicename }}/${{ matrix.servicename }}.csproj -o out/${{ matrix.servicename }}
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -35,6 +36,7 @@ jobs:
       matrix:
         servicename:
           [
+            AElf.CrossChainServer.AuthServer,
             AElf.CrossChainServer.EntityHandler,
             AElf.CrossChainServer.HttpApi.Host,
             AElf.CrossChainServer.DbMigrator

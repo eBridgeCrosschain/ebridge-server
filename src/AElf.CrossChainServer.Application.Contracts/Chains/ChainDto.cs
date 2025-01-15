@@ -6,7 +6,7 @@ namespace AElf.CrossChainServer.Chains
     {
         public string Name { get; set; }
         /// <summary>
-        /// 0: AElf, 1: Evm
+        /// 0: AElf, 1: Evm, 2:TVM
         /// </summary>
         public BlockchainType Type { get; set; }
         public bool IsMainChain { get; set; }

@@ -2,8 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.BridgeContract;
+using AElf.CrossChainServer.ExceptionHandler;
+using AElf.CrossChainServer.TokenPool;
+using AElf.ExceptionHandler;
 using Microsoft.Extensions.Options;
 using Volo.Abp;
+using Volo.Abp.Domain.Entities;
 
 namespace AElf.CrossChainServer.Contracts.Bridge;
 
@@ -35,6 +39,7 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
         {
             return new List<ReceiptInfoDto>();
         }
+
         return await provider.GetSendReceiptInfosAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].BridgeInContract, targetChainId, tokenId, fromIndex,
             endIndex);
@@ -49,11 +54,12 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
         {
             return new List<ReceivedReceiptInfoDto>();
         }
+
         return await provider.GetReceivedReceiptInfosAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].BridgeOutContract, targetChainId, tokenId, fromIndex,
             endIndex);
     }
-
+    
     public async Task<BridgeContractSyncInfoDto> GetSyncInfoAsync(string chainId, TransferType type,
         string targetChainId, Guid tokenId)
     {
@@ -62,7 +68,7 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
 
         return ObjectMapper.Map<BridgeContractSyncInfo, BridgeContractSyncInfoDto>(info);
     }
-
+    
     public async Task UpdateSyncInfoAsync(string chainId, TransferType type, string targetChainId, Guid tokenId,
         long syncIndex)
     {
@@ -79,15 +85,28 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
                 TokenId = tokenId,
                 SyncIndex = syncIndex,
             };
-            await _bridgeContractSyncInfoRepository.InsertAsync(info);
+            await InsertBridgeSyncInfoAsync(info);
         }
         else
         {
             info.SyncIndex = syncIndex;
-            await _bridgeContractSyncInfoRepository.UpdateAsync(info);
+            await UpdateBridgeSyncInfoAsync(info);
         }
     }
 
+    [ExceptionHandler(typeof(Exception), typeof(InvalidOperationException), typeof(ArgumentNullException), Message = "Insert bridge sync info failed.",
+        LogTargets = new[]{"info"})]
+    public virtual async Task InsertBridgeSyncInfoAsync(BridgeContractSyncInfo info)
+    {
+        await _bridgeContractSyncInfoRepository.InsertAsync(info);
+    }
+
+    [ExceptionHandler(typeof(Exception), typeof(InvalidOperationException), typeof(ArgumentNullException), Message = "update bridge sync info failed.",
+        LogTargets = new[]{"info"})]
+    public virtual async Task UpdateBridgeSyncInfoAsync(BridgeContractSyncInfo info)
+    {
+        await _bridgeContractSyncInfoRepository.UpdateAsync(info);
+    }
     public async Task<List<ReceiptIndexDto>> GetTransferReceiptIndexAsync(string chainId, List<Guid> tokenIds,
         List<string> targetChainIds)
     {
@@ -133,7 +152,9 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
         return await provider.GetSwapIdByTokenAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].BridgeOutContract, fromChainId, symbol);
     }
-
+    
+    [ExceptionHandler(typeof(Exception), Message = "Swap token failed.",ReturnDefault = ReturnDefault.Default, 
+        LogTargets = new[]{"chainId","swapId","receiptId","originAmount","receiverAddress"})]
     public async Task<string> SwapTokenAsync(string chainId, string swapId, string receiptId, string originAmount,
         string receiverAddress)
     {
@@ -146,6 +167,17 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
         return await provider.SwapTokenAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].BridgeOutContract, privateKey, swapId, receiptId,
             originAmount, receiverAddress);
+    }
+
+    public async Task<DailyLimitDto> GetDailyLimitAsync(string chainId, Guid tokenId, string targetChainId)
+    {
+        var provider = await _bridgeContractProviderFactory.GetBridgeContractProviderAsync(chainId);
+        if (provider == null)
+        {
+            return new DailyLimitDto();
+        }
+        return await provider.GetDailyLimitAsync(chainId,
+            _bridgeContractOptions.ContractAddresses[chainId].LimiterContract, tokenId, targetChainId);
     }
 
     public async Task<List<TokenBucketDto>> GetCurrentReceiptTokenBucketStatesAsync(string chainId, List<Guid> tokenIds,
@@ -170,5 +202,16 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
         }
         return await provider.GetCurrentSwapTokenBucketStatesAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].LimiterContract, tokenIds, fromChainIds);
+    }
+    
+    public async Task<List<PoolLiquidityDto>> GetPoolLiquidityAsync(string chainId, string contractAddress,
+        List<Guid> tokenIds)
+    {
+        var provider = await _bridgeContractProviderFactory.GetBridgeContractProviderAsync(chainId);
+        if (provider == null)
+        {
+            return new List<PoolLiquidityDto>();
+        }
+        return await provider.GetPoolLiquidityAsync(chainId, contractAddress, tokenIds);
     }
 }

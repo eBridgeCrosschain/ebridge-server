@@ -61,7 +61,7 @@ public class IndexerCrossChainLimitInfoServiceTest
             });
 
         //IGraphQLClientFactory crest _service
-        var _service = new IndexerCrossChainLimitInfoService(_mockGraphQlClientFactory, _mockLogger);
+        var _service = new IndexerCrossChainLimitInfoService(_mockGraphQlClientFactory);
 
         // Act
         var result = await _service.GetAllCrossChainLimitInfoIndexAsync();
@@ -114,7 +114,7 @@ public class IndexerCrossChainLimitInfoServiceTest
             });
 
         //IGraphQLClientFactory crest _service
-        var _service = new IndexerCrossChainLimitInfoService(_mockGraphQlClientFactory, _mockLogger);
+        var _service = new IndexerCrossChainLimitInfoService(_mockGraphQlClientFactory);
 
         // Act
         var result = await _service.GetAllCrossChainLimitInfoIndexAsync();

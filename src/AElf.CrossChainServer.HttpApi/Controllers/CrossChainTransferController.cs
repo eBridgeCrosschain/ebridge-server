@@ -1,5 +1,10 @@
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using AElf.CrossChainServer.Contracts;
 using AElf.CrossChainServer.CrossChain;
+using AElf.CrossChainServer.Indexer;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
@@ -14,11 +19,10 @@ public class CrossChainTransferController
 {
     private readonly ICrossChainTransferAppService _crossChainTransferAppService;
 
-    public CrossChainTransferController(ICrossChainTransferAppService crossChainTransferAppService)
+    public CrossChainTransferController(ICrossChainTransferAppService crossChainTransferAppService,IIndexerAppService indexerAppService)
     {
         _crossChainTransferAppService = crossChainTransferAppService;
     }
-    
 
     [HttpGet]
     public Task<PagedResultDto<CrossChainTransferIndexDto>> GetListAsync(GetCrossChainTransfersInput input)

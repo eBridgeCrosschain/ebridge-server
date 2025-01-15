@@ -19,6 +19,8 @@ public class CrossChainTransferBase : CrossChainServerEntity<Guid>
     public string TransferTransactionId { get; set; }
     [Keyword]
     public string ReceiveTransactionId { get; set; }
+    [Keyword]
+    public string InlineTransferTransactionId { get; set; }
     public DateTime TransferTime { get; set; }
     public long TransferBlockHeight { get; set; }
     public DateTime ReceiveTime { get; set; }
@@ -31,4 +33,6 @@ public class CrossChainTransferBase : CrossChainServerEntity<Guid>
     public DateTime ProgressUpdateTime { get; set; }
     public bool TransferNeedToBeApproved { get; set; }
     public int ReceiveTransactionAttemptTimes { get; set; }
+    [Keyword]
+    public string TraceId { get; set; }
 }

@@ -2,20 +2,27 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using AElf.CrossChainServer.MultiTenancy;
+using AElf.CrossChainServer.TokenAccess;
+using AElf.CrossChainServer.TokenAccess.ThirdUserTokenIssue;
+using AElf.CrossChainServer.TokenAccess.UserTokenAccess;
+using AElf.CrossChainServer.TokenPool;
+using AElf.ExceptionHandler.ABP;
 using AElf.Indexing.Elasticsearch;
 using AElf.Indexing.Elasticsearch.Options;
 using Volo.Abp.AuditLogging;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.BackgroundJobs;
+using Volo.Abp.Caching;
 using Volo.Abp.Domain.Entities.Events.Distributed;
 using Volo.Abp.Emailing;
 using Volo.Abp.FeatureManagement;
 using Volo.Abp.Identity;
-using Volo.Abp.IdentityServer;
+using Volo.Abp.Localization;
 using Volo.Abp.Modularity;
 using Volo.Abp.MultiTenancy;
+using Volo.Abp.OpenIddict;
 using Volo.Abp.PermissionManagement.Identity;
-using Volo.Abp.PermissionManagement.IdentityServer;
+using Volo.Abp.PermissionManagement.OpenIddict;
 using Volo.Abp.SettingManagement;
 using Volo.Abp.TenantManagement;
 
@@ -23,51 +30,88 @@ namespace AElf.CrossChainServer;
 
 [DependsOn(
     typeof(CrossChainServerDomainSharedModule),
+    typeof(AbpCachingModule),
     typeof(AbpAuditLoggingDomainModule),
     typeof(AbpBackgroundJobsDomainModule),
     typeof(AbpFeatureManagementDomainModule),
+    typeof(AbpOpenIddictDomainModule),
     typeof(AbpIdentityDomainModule),
+    typeof(AbpPermissionManagementDomainOpenIddictModule),
     typeof(AbpPermissionManagementDomainIdentityModule),
-    typeof(AbpIdentityServerDomainModule),
-    typeof(AbpPermissionManagementDomainIdentityServerModule),
     typeof(AbpSettingManagementDomainModule),
     typeof(AbpTenantManagementDomainModule),
     typeof(AbpEmailingModule),
-    typeof(AElfIndexingElasticsearchModule)
+    typeof(AElfIndexingElasticsearchModule),
+    typeof(AOPExceptionModule)
 )]
 public class CrossChainServerDomainModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         Configure<AbpAutoMapperOptions>(options => { options.AddMaps<CrossChainServerDomainModule>(); });
-        
-        Configure<AbpMultiTenancyOptions>(options =>
+        Configure<AbpLocalizationOptions>(options =>
         {
-            options.IsEnabled = MultiTenancyConsts.IsEnabled;
+            options.Languages.Add(new LanguageInfo("ar", "ar", "العربية"));
+            options.Languages.Add(new LanguageInfo("cs", "cs", "Čeština"));
+            options.Languages.Add(new LanguageInfo("en", "en", "English"));
+            options.Languages.Add(new LanguageInfo("en-GB", "en-GB", "English (UK)"));
+            options.Languages.Add(new LanguageInfo("hu", "hu", "Magyar"));
+            options.Languages.Add(new LanguageInfo("hr", "hr", "Croatian"));
+            options.Languages.Add(new LanguageInfo("fi", "fi", "Finnish"));
+            options.Languages.Add(new LanguageInfo("fr", "fr", "Français"));
+            options.Languages.Add(new LanguageInfo("hi", "hi", "Hindi"));
+            options.Languages.Add(new LanguageInfo("it", "it", "Italiano"));
+            options.Languages.Add(new LanguageInfo("pt-BR", "pt-BR", "Português"));
+            options.Languages.Add(new LanguageInfo("ru", "ru", "Русский"));
+            options.Languages.Add(new LanguageInfo("sk", "sk", "Slovak"));
+            options.Languages.Add(new LanguageInfo("tr", "tr", "Türkçe"));
+            options.Languages.Add(new LanguageInfo("zh-Hans", "zh-Hans", "简体中文"));
+            options.Languages.Add(new LanguageInfo("zh-Hant", "zh-Hant", "繁體中文"));
+            options.Languages.Add(new LanguageInfo("de-DE", "de-DE", "Deutsch"));
+            options.Languages.Add(new LanguageInfo("es", "es", "Español"));
         });
+
+        Configure<AbpMultiTenancyOptions>(options => { options.IsEnabled = MultiTenancyConsts.IsEnabled; });
 
 #if DEBUG
         context.Services.Replace(ServiceDescriptor.Singleton<IEmailSender, NullEmailSender>());
 #endif
-        
-        Configure<IndexCreateOption>(x =>
-        {
-            x.AddModule(typeof(CrossChainServerDomainModule));
-        });
+
+        Configure<IndexCreateOption>(x => { x.AddModule(typeof(CrossChainServerDomainModule)); });
 
         Configure<AbpDistributedEntityEventOptions>(options =>
         {
             options.AutoEventSelectors.Add<CrossChainTransfer>();
             options.EtoMappings.Add<CrossChainTransfer, CrossChainTransferEto>();
-            
+
             options.AutoEventSelectors.Add<CrossChainIndexingInfo>();
             options.EtoMappings.Add<CrossChainIndexingInfo, CrossChainIndexingInfoEto>();
-            
+
             options.AutoEventSelectors.Add<OracleQueryInfo>();
             options.EtoMappings.Add<OracleQueryInfo, OracleQueryInfoEto>();
-            
+
             options.AutoEventSelectors.Add<ReportInfo>();
             options.EtoMappings.Add<ReportInfo, ReportInfoEto>();
+
+            options.AutoEventSelectors.Add<CrossChainDailyLimit>();
+            options.EtoMappings.Add<CrossChainDailyLimit, CrossChainDailyLimitEto>();
+            options.AutoEventSelectors.Add<CrossChainRateLimit>();
+            options.EtoMappings.Add<CrossChainRateLimit, CrossChainRateLimitEto>();
+
+            options.AutoEventSelectors.Add<UserTokenAccessInfo>();
+            options.EtoMappings.Add<UserTokenAccessInfo, UserTokenAccessInfoEto>();
+
+            options.AutoEventSelectors.Add<ThirdUserTokenIssueInfo>();
+            options.EtoMappings.Add<ThirdUserTokenIssueInfo, ThirdUserTokenIssueInfoEto>();
+
+            options.AutoEventSelectors.Add<TokenApplyOrder>();
+            options.EtoMappings.Add<TokenApplyOrder, TokenApplyOrderEto>();
+            
+            options.AutoEventSelectors.Add<PoolLiquidityInfo>();
+            options.EtoMappings.Add<PoolLiquidityInfo, PoolLiquidityEto>();
+            
+            options.AutoEventSelectors.Add<UserLiquidityInfo>();
+            options.EtoMappings.Add<UserLiquidityInfo, UserLiquidityEto>();
         });
     }
 }

@@ -8,11 +8,12 @@ using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Contracts;
 using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.Settings;
-using Microsoft.Extensions.Logging;
+using AElf.ExceptionHandler;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
+using Serilog;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Uow;
 
 namespace AElf.CrossChainServer.CrossChain;
 
@@ -28,14 +29,14 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
     private readonly CrossChainOptions _crossChainOptions;
     private readonly ISettingManager _settingManager;
     private readonly ReportQueryTimesOptions _reportQueryTimesOptions;
-
-
+    private readonly IUnitOfWorkManager _unitOfWorkManager;
+    
     public ReportInfoAppService(IReportInfoRepository reportInfoRepository,
         INESTRepository<ReportInfoIndex, Guid> nestRepository, IBridgeContractAppService bridgeContractAppService,
         IBlockchainAppService blockchainAppService,
         IReportContractAppService reportContractAppService,
         IOptionsSnapshot<CrossChainOptions> crossChainOptions, IIndexerAppService indexerAppService,
-        ISettingManager settingManager,IOptionsSnapshot<ReportQueryTimesOptions> reportQueryTimesOptions)
+        ISettingManager settingManager,IOptionsSnapshot<ReportQueryTimesOptions> reportQueryTimesOptions, IUnitOfWorkManager unitOfWorkManager)
     {
         _reportInfoRepository = reportInfoRepository;
         _nestRepository = nestRepository;
@@ -44,12 +45,14 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
         _reportContractAppService = reportContractAppService;
         _indexerAppService = indexerAppService;
         _settingManager = settingManager;
+        _unitOfWorkManager = unitOfWorkManager;
         _crossChainOptions = crossChainOptions.Value;
         _reportQueryTimesOptions = reportQueryTimesOptions.Value;
     }
 
     public async Task CreateAsync(CreateReportInfoInput input)
     {
+        using var uow = _unitOfWorkManager.Begin();
         if (await _reportInfoRepository.FirstOrDefaultAsync(o =>
                 o.ChainId == input.ChainId && o.RoundId == input.RoundId && o.Token == input.Token &&
                 o.TargetChainId == input.TargetChainId) != null)
@@ -63,6 +66,7 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
         info.ResendTimes = resendTimes;
         
         await _reportInfoRepository.InsertAsync(info);
+        await uow.CompleteAsync();
     }
 
     public async Task UpdateStepAsync(string chainId, long roundId, string token, string targetChainId, ReportStep step, long blockHeight)
@@ -72,7 +76,7 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
 
         if (info == null || info.Step >= step)
         {
-            Logger.LogDebug(
+            Log.Debug(
                 "Invalid report step. ChainId: {chainId}, RoundId: {roundId}, Step: {oldStep}, Input Step: {newStep}",
                 info?.ChainId, roundId, info?.Step, step);
             return;
@@ -116,11 +120,11 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
 
     public async Task UpdateStepAsync()
     {
+        using var uow = _unitOfWorkManager.Begin();
         var q = await _reportInfoRepository.GetQueryableAsync();
-        Logger.LogInformation("Report query times: {queryTimes}", _reportQueryTimesOptions.QueryTimes);
         var list = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Step == ReportStep.Confirmed && o.QueryTimes < _reportQueryTimesOptions.QueryTimes));
-
+        await uow.CompleteAsync();
         if (list.Count == 0)
         {
             return;
@@ -160,11 +164,12 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
 
     public async Task ReSendQueryAsync()
     {
+        using var uow = _unitOfWorkManager.Begin();
         var q = await _reportInfoRepository.GetQueryableAsync();
-        Logger.LogInformation("Max report resend times:{time}",_crossChainOptions.MaxReportResendTimes);
         var list = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Step == ReportStep.Proposed && o.ResendTimes < _crossChainOptions.MaxReportResendTimes));
-
+        await uow.CompleteAsync();
+        
         if (list.Count == 0)
         {
             return;
@@ -188,8 +193,8 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
             else
             {
                 var txId = await SendQueryTransactionAsync(item);
-                Logger.LogInformation("ReSend Query, Resending Report: {reportId}, Query Tx Id: {txId}", item.Id, txId);
-
+                Log.ForContext("txId",txId)
+                    .Information("ReSend Query, Resending Report: {reportId}, Query Tx Id: {txId}", item.Id, txId);
                 item.QueryTransactionId = txId;
                 item.Step = ReportStep.Resending;
             }
@@ -203,12 +208,14 @@ public class ReportInfoAppService : CrossChainServerAppService,IReportInfoAppSer
         }
     }
 
-    public async Task CheckQueryTransactionAsync()
+    [ExceptionHandler(typeof(Exception),Message = "Check query transaction failed.")]
+    public virtual async Task CheckQueryTransactionAsync()
     {
+        using var uow = _unitOfWorkManager.Begin();
         var q = await _reportInfoRepository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Step == ReportStep.Resending));
-
+        await uow.CompleteAsync();
         if (list.Count == 0)
         {
             return;

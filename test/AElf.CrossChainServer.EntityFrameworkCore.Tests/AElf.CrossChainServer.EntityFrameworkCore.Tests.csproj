@@ -3,14 +3,14 @@
   <Import Project="..\..\common.props" />
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>AElf.CrossChainServer</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\AElf.CrossChainServer.EntityFrameworkCore\AElf.CrossChainServer.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\AElf.CrossChainServer.TestBase\AElf.CrossChainServer.TestBase.csproj" />
-    <PackageReference Include="Volo.Abp.EntityFrameworkCore.Sqlite" Version="5.3.0" />
+    <PackageReference Include="Volo.Abp.EntityFrameworkCore.Sqlite" Version="8.2.0" />
   </ItemGroup>
 
   <ItemGroup>

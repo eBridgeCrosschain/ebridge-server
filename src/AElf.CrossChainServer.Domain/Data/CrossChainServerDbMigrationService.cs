@@ -5,8 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
+using Serilog;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Identity;
@@ -17,8 +16,6 @@ namespace AElf.CrossChainServer.Data;
 
 public class CrossChainServerDbMigrationService : ITransientDependency
 {
-    public ILogger<CrossChainServerDbMigrationService> Logger { get; set; }
-
     private readonly IDataSeeder _dataSeeder;
     private readonly IEnumerable<ICrossChainServerDbSchemaMigrator> _dbSchemaMigrators;
     private readonly ITenantRepository _tenantRepository;
@@ -34,8 +31,6 @@ public class CrossChainServerDbMigrationService : ITransientDependency
         _dbSchemaMigrators = dbSchemaMigrators;
         _tenantRepository = tenantRepository;
         _currentTenant = currentTenant;
-
-        Logger = NullLogger<CrossChainServerDbMigrationService>.Instance;
     }
 
     public async Task MigrateAsync()
@@ -47,12 +42,12 @@ public class CrossChainServerDbMigrationService : ITransientDependency
             return;
         }
 
-        Logger.LogInformation("Started database migrations...");
+        Log.Information("Started database migrations...");
 
         await MigrateDatabaseSchemaAsync();
         await SeedDataAsync();
 
-        Logger.LogInformation($"Successfully completed host database migrations.");
+        Log.Information($"Successfully completed host database migrations.");
 
         var tenants = await _tenantRepository.GetListAsync(includeDetails: true);
 
@@ -78,17 +73,17 @@ public class CrossChainServerDbMigrationService : ITransientDependency
                 await SeedDataAsync(tenant);
             }
 
-            Logger.LogInformation("Successfully completed {tenantName} tenant database migrations.", tenant.Name);
+            Log.Information("Successfully completed {tenantName} tenant database migrations.", tenant.Name);
         }
 
-        Logger.LogInformation("Successfully completed all database migrations.");
-        Logger.LogInformation("You can safely end this process...");
+        Log.Information("Successfully completed all database migrations.");
+        Log.Information("You can safely end this process...");
     }
 
     private async Task MigrateDatabaseSchemaAsync(Tenant tenant = null)
     {
-        Logger.LogInformation(
-            "Migrating schema for {name} database...",tenant == null ? "host" : tenant.Name + " tenant");
+        Log.Information(
+            "Migrating schema for {name} database...", tenant == null ? "host" : tenant.Name + " tenant");
 
         foreach (var migrator in _dbSchemaMigrators)
         {
@@ -98,11 +93,13 @@ public class CrossChainServerDbMigrationService : ITransientDependency
 
     private async Task SeedDataAsync(Tenant tenant = null)
     {
-        Logger.LogInformation("Executing {name} database seed...", tenant == null ? "host" : tenant.Name + " tenant");
+        Log.Information($"Executing {(tenant == null ? "host" : tenant.Name + " tenant")} database seed...");
 
         await _dataSeeder.SeedAsync(new DataSeedContext(tenant?.Id)
-            .WithProperty(IdentityDataSeedContributor.AdminEmailPropertyName, IdentityDataSeedContributor.AdminEmailDefaultValue)
-            .WithProperty(IdentityDataSeedContributor.AdminPasswordPropertyName, IdentityDataSeedContributor.AdminPasswordDefaultValue)
+            .WithProperty(IdentityDataSeedContributor.AdminEmailPropertyName,
+                IdentityDataSeedContributor.AdminEmailDefaultValue)
+            .WithProperty(IdentityDataSeedContributor.AdminPasswordPropertyName,
+                IdentityDataSeedContributor.AdminPasswordDefaultValue)
         );
     }
 
@@ -134,7 +131,7 @@ public class CrossChainServerDbMigrationService : ITransientDependency
         }
         catch (Exception e)
         {
-            Logger.LogWarning("Couldn't determinate if any migrations exist : {message}", e.Message);
+            Log.Warning("Couldn't determinate if any migrations exist : {message}", e.Message);
             return false;
         }
     }
@@ -155,7 +152,7 @@ public class CrossChainServerDbMigrationService : ITransientDependency
 
     private void AddInitialMigration()
     {
-        Logger.LogInformation("Creating initial migration...");
+        Log.Information("Creating initial migration...");
 
         string argumentPrefix;
         string fileName;

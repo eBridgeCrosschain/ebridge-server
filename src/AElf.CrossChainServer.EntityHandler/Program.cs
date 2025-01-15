@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.EntityHandler.Extension;
+using AElf.ExceptionHandler.ABP;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -24,7 +25,6 @@ namespace AElf.CrossChainServer.EntityHandler
                 .MinimumLevel.Information()
 #endif
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
-                .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
                 .Enrich.FromLogContext()
                 .ReadFrom.Configuration(configuration)
 #if DEBUG
@@ -55,9 +55,10 @@ namespace AElf.CrossChainServer.EntityHandler
                 {
                     services.AddApplication<CrossChainServerEntityHandlerModule>();
                 })
-                .ConfigureAppConfiguration((h,c)=>c.AddJsonFile("apollo.appsettings.json")) 
+                .ConfigureAppConfiguration((h,c)=>c.AddJsonFile("apollo.appsettings.json"))
                 .UseApollo()
                 .UseAutofac()
+                .UseAElfExceptionHandler()
                 .UseSerilog();
     }
     
