@@ -6,7 +6,9 @@ using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.Settings;
 using AElf.CrossChainServer.TokenPool;
 using AElf.CrossChainServer.Tokens;
+using AElf.CrossChainServer.Worker.EvmIndexerSync;
 using GraphQL;
+using Microsoft.Extensions.Options;
 using Serilog;
 using Volo.Abp.Json;
 
@@ -16,14 +18,16 @@ public class UserLiquidityIndexerSyncProvider : IndexerSyncProviderBase
 {
     private readonly IUserLiquidityInfoAppService _userLiquidityInfoAppService;
     private readonly ITokenAppService _tokenAppService;
+    private readonly EvmContractSyncOptions _evmContractSyncOptions;
 
     public UserLiquidityIndexerSyncProvider(IGraphQLClientFactory graphQlClientFactory, ISettingManager settingManager,
         IJsonSerializer jsonSerializer, IIndexerAppService indexerAppService, IChainAppService chainAppService,
-        IUserLiquidityInfoAppService userLiquidityInfoAppService, ITokenAppService tokenAppService) : base(
+        IUserLiquidityInfoAppService userLiquidityInfoAppService, ITokenAppService tokenAppService,IOptionsSnapshot<EvmContractSyncOptions> evmContractSyncOptions) : base(
         graphQlClientFactory, settingManager, jsonSerializer, indexerAppService, chainAppService)
     {
         _userLiquidityInfoAppService = userLiquidityInfoAppService;
         _tokenAppService = tokenAppService;
+        _evmContractSyncOptions = evmContractSyncOptions.Value;
     }
 
     public override bool IsConfirmEnabled { get; set; } = false;
@@ -31,6 +35,10 @@ public class UserLiquidityIndexerSyncProvider : IndexerSyncProviderBase
 
     protected override async Task<long> HandleDataAsync(string aelfChainId, long startHeight, long endHeight)
     {
+        if (!_evmContractSyncOptions.Enabled)
+        {
+            return 0;
+        }
         Log.ForContext("chainId", aelfChainId).Debug(
             "Start to sync user liquidity info {chainId} from {StartHeight} to {EndHeight}",
             aelfChainId, startHeight, endHeight);

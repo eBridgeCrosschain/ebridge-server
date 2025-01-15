@@ -6,7 +6,9 @@ using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.Settings;
 using AElf.CrossChainServer.TokenPool;
 using AElf.CrossChainServer.Tokens;
+using AElf.CrossChainServer.Worker.EvmIndexerSync;
 using GraphQL;
+using Microsoft.Extensions.Options;
 using Serilog;
 using Volo.Abp.Json;
 
@@ -16,20 +18,26 @@ public class PoolLiquidityIndexerSyncProvider : IndexerSyncProviderBase
 {
     private readonly IPoolLiquidityInfoAppService _poolLiquidityInfoAppService;
     private readonly ITokenAppService _tokenAppService;
+    private readonly EvmContractSyncOptions _evmContractSyncOptions;
 
     public PoolLiquidityIndexerSyncProvider(IGraphQLClientFactory graphQlClientFactory, ISettingManager settingManager,
         IJsonSerializer jsonSerializer, IIndexerAppService indexerAppService, IChainAppService chainAppService,
-        IPoolLiquidityInfoAppService poolLiquidityInfoAppService, ITokenAppService tokenAppService) : base(
+        IPoolLiquidityInfoAppService poolLiquidityInfoAppService, ITokenAppService tokenAppService, IOptionsSnapshot<EvmContractSyncOptions> evmContractSyncOptions) : base(
         graphQlClientFactory, settingManager, jsonSerializer, indexerAppService, chainAppService)
     {
         _poolLiquidityInfoAppService = poolLiquidityInfoAppService;
         _tokenAppService = tokenAppService;
+        _evmContractSyncOptions = evmContractSyncOptions.Value;
     }
     public override bool IsConfirmEnabled { get; set; } = false;
     protected override string SyncType { get; } = CrossChainServerSettings.PoolLiquidityIndexerSync;
 
     protected override async Task<long> HandleDataAsync(string aelfChainId, long startHeight, long endHeight)
     {
+        if (!_evmContractSyncOptions.Enabled)
+        {
+            return 0;
+        }
         Log.ForContext("chainId", aelfChainId).Debug(
             "Start to sync pool liquidity info {chainId} from {StartHeight} to {EndHeight}",
             aelfChainId, startHeight, endHeight);
