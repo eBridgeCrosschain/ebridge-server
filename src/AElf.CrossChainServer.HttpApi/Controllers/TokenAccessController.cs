@@ -49,6 +49,14 @@ public class TokenAccessController : CrossChainServerController
     {
         return await _tokenAccessAppService.GetAvailableTokensAsync(input);
     }
+    
+    [Authorize]
+    [HttpGet("token-detail")]
+    [ServiceFilter(typeof(ResultFilter))]
+    public async Task<AvailableTokenDetailDto> GetAvailableTokenDetailAsync(string symbol)
+    {
+        return await _tokenAccessAppService.GetAvailableTokenDetailAsync(symbol);
+    }
 
     [Authorize]
     [HttpPost("commit-basic-info")]

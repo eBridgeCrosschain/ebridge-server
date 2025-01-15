@@ -26,7 +26,7 @@ public class TokenInfoCacheProvider : ITokenInfoCacheProvider
         {
             await _tokenCache.SetAsync(GetCacheKey(info.Symbol), info, new DistributedCacheEntryOptions
             {
-                AbsoluteExpiration = DateTimeOffset.Now.AddDays(7)
+                AbsoluteExpiration = DateTimeOffset.Now.AddMonths(1)
             });
         }
     }
@@ -34,7 +34,7 @@ public class TokenInfoCacheProvider : ITokenInfoCacheProvider
     {
         var key = GetCacheKey(symbol);
         var info = await _tokenCache.GetAsync(key);
-        return info ?? new UserTokenInfoDto();
+        return info;
     }
     private string GetCacheKey(string key)
     {

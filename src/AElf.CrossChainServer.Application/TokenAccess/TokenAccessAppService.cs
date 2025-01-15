@@ -106,7 +106,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         //step 1 : get user token holder list from scan indexer;
         var tokenHoldingList = new List<UserTokenInfoDto>();
         var skipCount = 0;
-        do
+        while (true)
         {
             var tokenList =
                 await _scanProvider.GetTokenHolderListAsync(address, skipCount, PageSize, input.Symbol ?? "");
@@ -122,35 +122,57 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             var filteredTokens =
                 toAddTokenList.Where(t => !_tokenAccessOptions.TokensToFilter.Contains(t.Symbol)).ToList();
             tokenHoldingList.AddRange(filteredTokens);
-        } while (tokenHoldingList.Count == PageSize);
+            if (tokenList.Items.Count < PageSize)
+            {
+                break;
+            }
+        }
 
         tokenHoldingList = tokenHoldingList.DistinctBy(o => o.Symbol).ToList();
-
+        var supportChainList = _tokenAccessOptions.ChainWhitelistForTestnet.Count == 0
+            ? _tokenAccessOptions.OtherChainIdList
+            : _tokenAccessOptions.ChainWhitelistForTestnet;
         //step 3 : get token info (ex. icon) from scan interface;
-        foreach (var token in tokenHoldingList)
+        //step 4 : deal status, get apply order to select status; Available,Listed,Integrating.
+        var tasks = tokenHoldingList.Select(async token =>
+        {
+            await GetTokenInfoAsync(token, supportChainList);
+        });
+        await Task.WhenAll(tasks);
+
+        var tokenResultList =
+            tokenHoldingList.Take(MaxResultCount).OrderBy(t => t.Status).ThenBy(t => t.Symbol).ToList();
+        await _tokenInfoCacheProvider.AddTokenListAsync(tokenResultList);
+        result.TokenList = ObjectMapper.Map<List<UserTokenInfoDto>, List<AvailableTokenDto>>(tokenResultList);
+        return result;
+    }
+    
+    private async Task GetTokenInfoAsync(UserTokenInfoDto token, List<string> supportChainList)
+    {
+        var tokenInCache = await _tokenInfoCacheProvider.GetTokenAsync(token.Symbol);
+        if (tokenInCache != null)
+        {
+            token.TokenImage = tokenInCache.TokenImage;
+            token.TokenName = tokenInCache.TokenName;
+            token.TotalSupply = tokenInCache.TotalSupply;
+            token.ChainId = tokenInCache.ChainId;
+        }
+        else
         {
             var tokenInfo = await _scanProvider.GetTokenDetailAsync(token.Symbol);
             token.TokenImage = tokenInfo?.Token.ImageUrl;
             token.TokenName = tokenInfo?.Token.Name;
-            token.Holders = tokenInfo?.MergeHolders ?? 0;
-            token.LiquidityInUsd = await _awakenProvider.GetTokenLiquidityInUsdAsync(token.Symbol);
             token.TotalSupply = tokenInfo?.TotalSupply ?? 0;
             token.ChainId = tokenInfo?.ChainIds.FirstOrDefault();
         }
-
-        //step 4 : deal status, get apply order to select status; Available,Listed,Integrating.
-        var supportChainList = _tokenAccessOptions.ChainWhitelistForTestnet.Count == 0
-            ? _tokenAccessOptions.OtherChainIdList
-            : _tokenAccessOptions.ChainWhitelistForTestnet;
-        foreach (var token in tokenHoldingList)
+            
+        var orderList = await GetTokenApplyOrderIndexListAsync(null, token.Symbol);
+        if (orderList == null || orderList.Count == 0)
         {
-            var orderList = await GetTokenApplyOrderIndexListAsync(null, token.Symbol);
-            if (orderList == null || orderList.Count == 0)
-            {
-                token.Status = TokenStatus.Available.ToString();
-                continue;
-            }
-
+            token.Status = TokenStatus.Available.ToString();
+        }
+        else
+        {
             var orderChainStatus = orderList
                 .ToDictionary(order => order.ChainTokenInfo.ChainId, order => order.ChainTokenInfo.Status);
 
@@ -158,19 +180,14 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             if (!isAllChainHasOrder)
             {
                 token.Status = TokenStatus.Available.ToString();
-                continue;
             }
-
-            var isAllChainOrderComplete = supportChainList.All(c =>
-                orderChainStatus.TryGetValue(c, out var status) && status == TokenApplyOrderStatus.Complete.ToString());
-            token.Status = isAllChainOrderComplete ? TokenStatus.Listed.ToString() : TokenStatus.Integrating.ToString();
+            else
+            {
+                var isAllChainOrderComplete = supportChainList.All(c =>
+                    orderChainStatus.TryGetValue(c, out var status) && status == TokenApplyOrderStatus.Complete.ToString());
+                token.Status = isAllChainOrderComplete ? TokenStatus.Listed.ToString() : TokenStatus.Integrating.ToString();
+            }
         }
-
-        var tokenResultList =
-            tokenHoldingList.Take(MaxResultCount).OrderBy(t => t.Status).ThenBy(t => t.Symbol).ToList();
-        await _tokenInfoCacheProvider.AddTokenListAsync(tokenResultList);
-        result.TokenList = ObjectMapper.Map<List<UserTokenInfoDto>, List<AvailableTokenDto>>(tokenResultList);
-        return result;
     }
 
     private async Task<(string, long)> GetTokenLiquidityInUsdAndHoldersAsync(string symbol)
@@ -179,6 +196,21 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         var holders = tokenInfo?.Holders ?? 0;
         var liquidityInUsd = tokenInfo?.LiquidityInUsd ?? "0";
         return (liquidityInUsd, holders);
+    }
+    
+    public async Task<AvailableTokenDetailDto> GetAvailableTokenDetailAsync(string symbol)
+    {
+        var tokenInfo = await _scanProvider.GetTokenDetailAsync(symbol);
+        var liquidityInUsd = await _awakenProvider.GetTokenLiquidityInUsdAsync(symbol);
+        var token = await _tokenInfoCacheProvider.GetTokenAsync(symbol);
+        token.Holders = tokenInfo.MergeHolders;
+        token.LiquidityInUsd = liquidityInUsd;
+        await _tokenInfoCacheProvider.AddTokenListAsync(new List<UserTokenInfoDto> { token });
+        return new AvailableTokenDetailDto
+        {
+            LiquidityInUsd = liquidityInUsd,
+            Holders = tokenInfo.MergeHolders
+        };
     }
 
     public async Task<bool> CommitTokenAccessInfoAsync(UserTokenAccessInfoInput input)
