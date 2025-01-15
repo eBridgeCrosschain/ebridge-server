@@ -47,8 +47,14 @@ public class LiquidityAppService : CrossChainServerAppService, ILiquidityAppServ
                 MaxResultCount = MaxMaxResultCount,
                 SkipCount = DefaultSkipCount
             });
-        var poolCount = poolLiquidityInfoList.TotalCount;
-        var symbolList = poolLiquidityInfoList.Items
+        var blackSymbolList = _tokenAccessOptions.BlackSymbolList;
+        var poolList = new List<PoolLiquidityIndexDto>();
+        if (blackSymbolList.Count > 0)
+        {
+            poolList.AddRange(poolLiquidityInfoList.Items.ToList().Where(r => !blackSymbolList.Contains(r.TokenInfo.Symbol)));
+        }
+        var poolCount = poolList.Count;
+        var symbolList = poolList
             .Select(p => p.TokenInfo.Symbol)
             .Select(symbol =>
                 _tokenAccessOptions.SymbolMap.TryGetValue(symbol, out var aelfSymbol) ? aelfSymbol : symbol)
@@ -59,8 +65,8 @@ public class LiquidityAppService : CrossChainServerAppService, ILiquidityAppServ
             ? new List<UserLiquidityIndexDto>()
             : await _userLiquidityInfoAppService.GetUserLiquidityInfosAsync(new GetUserLiquidityInput
                 { Providers = addresses.Split(',').ToList() });
-        var tokenPrice = await GetTokenPricesAsync(poolLiquidityInfoList.Items.ToList());
-        var totalLiquidityInUsd = CalculateTotalLiquidityInUsd(poolLiquidityInfoList.Items.ToList(), tokenPrice);
+        var tokenPrice = await GetTokenPricesAsync(poolList);
+        var totalLiquidityInUsd = CalculateTotalLiquidityInUsd(poolList, tokenPrice);
         var totalMyLiquidityInUsd = CalculateUserTotalLiquidityInUsd(userLiquidityInfoList, tokenPrice);
         return new PoolOverviewDto
         {
@@ -119,6 +125,7 @@ public class LiquidityAppService : CrossChainServerAppService, ILiquidityAppServ
                 result.Add(poolInfo);
             }
         }
+
         DealWithBlackList(result);
         return new PagedResultDto<PoolInfoDto>
         {
@@ -134,6 +141,7 @@ public class LiquidityAppService : CrossChainServerAppService, ILiquidityAppServ
         {
             return;
         }
+
         result.RemoveAll(r => blackSymbolList.Contains(r.Token.Symbol));
     }
 
@@ -190,7 +198,7 @@ public class LiquidityAppService : CrossChainServerAppService, ILiquidityAppServ
             TokenPrice = priceInUsd
         };
     }
-    
+
     private async Task<Dictionary<string, decimal>> GetTokenPricesAsync(
         List<PoolLiquidityIndexDto> poolLiquidityInfoList)
     {
