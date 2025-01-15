@@ -132,11 +132,11 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
 
         if (isLiquidityExist)
         {
-            await _poolLiquidityRepository.UpdateAsync(liquidityInfo, autoSave: true);
+            await _poolLiquidityRepository.UpdateAsync(liquidityInfo);
         }
         else
         {
-            await _poolLiquidityRepository.InsertAsync(liquidityInfo, autoSave: true);
+            await _poolLiquidityRepository.InsertAsync(liquidityInfo);
         }
 
         await _tokenLiquidityMonitorProvider.MonitorTokenLiquidityAsync(liquidityInfo.ChainId, liquidityInfo.TokenId,
@@ -320,7 +320,7 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
                 Status = TokenApplyOrderStatus.PoolInitialized.ToString(),
                 Time = DateTime.UtcNow
             });
-            await _tokenApplyOrderRepository.UpdateAsync(order, autoSave: true);
+            await _tokenApplyOrderRepository.UpdateAsync(order);
         }
 
         await DealWithAElfChainLiquidityAsync(token.Symbol);
@@ -329,13 +329,18 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
     private async Task DealWithAElfChainLiquidityAsync(string symbol)
     {
         var chainsToInsert = new List<PoolLiquidityInfo>();
-        var chainIdSet = _tokenAccessOptions.ChainIdList.ToHashSet();
-        var tokens = await Task.WhenAll(chainIdSet.Select(chainId => _tokenAppService.GetAsync(new GetTokenInput
+        var chainIdSet = _tokenAccessOptions.ChainIdList;
+        var tokens = new List<TokenDto>();
+        foreach (var chainId in chainIdSet)
         {
-            ChainId = chainId,
-            Symbol = symbol
-        })));
-        if (tokens.Length > 0)
+            var token = await _tokenAppService.GetAsync(new GetTokenInput
+            {
+                ChainId = chainId,
+                Symbol = symbol
+            });
+            tokens.Add(token);
+        }
+        if (tokens.Count > 0)
         {
             if (tokens.First().IsBurnable)
             {
@@ -376,7 +381,7 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
         }
         if (chainsToInsert.Count != 0)
         {
-            await _poolLiquidityRepository.InsertManyAsync(chainsToInsert, autoSave: true);
+            await _poolLiquidityRepository.InsertManyAsync(chainsToInsert);
         }
     }
 
