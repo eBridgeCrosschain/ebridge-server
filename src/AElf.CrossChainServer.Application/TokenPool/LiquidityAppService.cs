@@ -51,7 +51,12 @@ public class LiquidityAppService : CrossChainServerAppService, ILiquidityAppServ
         var poolList = new List<PoolLiquidityIndexDto>();
         if (blackSymbolList.Count > 0)
         {
-            poolList.AddRange(poolLiquidityInfoList.Items.ToList().Where(r => !blackSymbolList.Contains(r.TokenInfo.Symbol)));
+            poolList.AddRange(poolLiquidityInfoList.Items.ToList()
+                .Where(r => !blackSymbolList.Contains(r.TokenInfo.Symbol)));
+        }
+        else
+        {
+            poolList.AddRange(poolLiquidityInfoList.Items.ToList());
         }
         var poolCount = poolList.Count;
         var symbolList = poolList
