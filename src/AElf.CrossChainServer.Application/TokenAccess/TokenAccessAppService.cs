@@ -200,6 +200,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     
     public async Task<AvailableTokenDetailDto> GetAvailableTokenDetailAsync(string symbol)
     {
+        var address = await GetUserAddressAsync();
+        AssertHelper.IsTrue(!address.IsNullOrEmpty(), "No permission.");
         var tokenInfo = await _scanProvider.GetTokenDetailAsync(symbol);
         var liquidityInUsd = await _awakenProvider.GetTokenLiquidityInUsdAsync(symbol);
         var token = await _tokenInfoCacheProvider.GetTokenAsync(symbol);
