@@ -249,8 +249,6 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     {
         var address = await GetUserAddressAsync();
         AssertHelper.IsTrue(!address.IsNullOrEmpty(), "No permission.");
-        AssertHelper.IsTrue(await CheckLiquidityAndHolderAvailableAsync(input.Symbol),
-            "Not enough liquidity or holders.");
         var info = await GetUserTokenAccessInfoAsync(address, input.Symbol);
         return info.FirstOrDefault();
     }
