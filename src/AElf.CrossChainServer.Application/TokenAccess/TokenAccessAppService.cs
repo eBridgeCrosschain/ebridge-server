@@ -200,11 +200,15 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     
     public async Task<AvailableTokenDetailDto> GetAvailableTokenDetailAsync(string symbol)
     {
+        var address = await GetUserAddressAsync();
+        AssertHelper.IsTrue(!address.IsNullOrEmpty(), "No permission.");
         var tokenInfo = await _scanProvider.GetTokenDetailAsync(symbol);
         var liquidityInUsd = await _awakenProvider.GetTokenLiquidityInUsdAsync(symbol);
         var token = await _tokenInfoCacheProvider.GetTokenAsync(symbol);
         token.Holders = tokenInfo.MergeHolders;
         token.LiquidityInUsd = liquidityInUsd;
+        Log.Debug("Get available token detail {symbol} with liquidity {liquidityInUsd},holders {holders}.", symbol,
+            liquidityInUsd, tokenInfo.MergeHolders);
         await _tokenInfoCacheProvider.AddTokenListAsync(new List<UserTokenInfoDto> { token });
         return new AvailableTokenDetailDto
         {
@@ -249,8 +253,6 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     {
         var address = await GetUserAddressAsync();
         AssertHelper.IsTrue(!address.IsNullOrEmpty(), "No permission.");
-        AssertHelper.IsTrue(await CheckLiquidityAndHolderAvailableAsync(input.Symbol),
-            "Not enough liquidity or holders.");
         var info = await GetUserTokenAccessInfoAsync(address, input.Symbol);
         return info.FirstOrDefault();
     }
