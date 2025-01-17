@@ -207,6 +207,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         var token = await _tokenInfoCacheProvider.GetTokenAsync(symbol);
         token.Holders = tokenInfo.MergeHolders;
         token.LiquidityInUsd = liquidityInUsd;
+        Log.Debug("Get available token detail {symbol} with liquidity {liquidityInUsd},holders {holders}.", symbol,
+            liquidityInUsd, tokenInfo.MergeHolders);
         await _tokenInfoCacheProvider.AddTokenListAsync(new List<UserTokenInfoDto> { token });
         return new AvailableTokenDetailDto
         {
