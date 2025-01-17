@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Distributed;
+using Serilog;
 using Volo.Abp.Caching;
 
 namespace AElf.CrossChainServer.TokenAccess;
@@ -24,6 +26,7 @@ public class TokenInfoCacheProvider : ITokenInfoCacheProvider
     {
         foreach (var info in userTokenInfoList)
         {
+            Log.Debug("Add token info to cache. {symbol},{info}", info.Symbol,JsonSerializer.Serialize(info));
             await _tokenCache.SetAsync(GetCacheKey(info.Symbol), info, new DistributedCacheEntryOptions
             {
                 AbsoluteExpiration = DateTimeOffset.Now.AddMonths(1)
