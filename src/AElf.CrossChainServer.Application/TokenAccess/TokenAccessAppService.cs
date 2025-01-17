@@ -134,10 +134,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             : _tokenAccessOptions.ChainWhitelistForTestnet;
         //step 3 : get token info (ex. icon) from scan interface;
         //step 4 : deal status, get apply order to select status; Available,Listed,Integrating.
-        var tasks = tokenHoldingList.Select(async token =>
-        {
-            await GetTokenInfoAsync(token, supportChainList);
-        });
+        var tasks = tokenHoldingList.Select(async token => { await GetTokenInfoAsync(token, supportChainList); });
         await Task.WhenAll(tasks);
 
         var tokenResultList =
@@ -146,7 +143,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         result.TokenList = ObjectMapper.Map<List<UserTokenInfoDto>, List<AvailableTokenDto>>(tokenResultList);
         return result;
     }
-    
+
     private async Task GetTokenInfoAsync(UserTokenInfoDto token, List<string> supportChainList)
     {
         var tokenInCache = await _tokenInfoCacheProvider.GetTokenAsync(token.Symbol);
@@ -156,6 +153,8 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             token.TokenName = tokenInCache.TokenName;
             token.TotalSupply = tokenInCache.TotalSupply;
             token.ChainId = tokenInCache.ChainId;
+            token.Holders = tokenInCache.Holders;
+            token.LiquidityInUsd = tokenInCache.LiquidityInUsd;
         }
         else
         {
@@ -165,7 +164,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             token.TotalSupply = tokenInfo?.TotalSupply ?? 0;
             token.ChainId = tokenInfo?.ChainIds.FirstOrDefault();
         }
-            
+
         var orderList = await GetTokenApplyOrderIndexListAsync(null, token.Symbol);
         if (orderList == null || orderList.Count == 0)
         {
@@ -184,8 +183,11 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             else
             {
                 var isAllChainOrderComplete = supportChainList.All(c =>
-                    orderChainStatus.TryGetValue(c, out var status) && status == TokenApplyOrderStatus.Complete.ToString());
-                token.Status = isAllChainOrderComplete ? TokenStatus.Listed.ToString() : TokenStatus.Integrating.ToString();
+                    orderChainStatus.TryGetValue(c, out var status) &&
+                    status == TokenApplyOrderStatus.Complete.ToString());
+                token.Status = isAllChainOrderComplete
+                    ? TokenStatus.Listed.ToString()
+                    : TokenStatus.Integrating.ToString();
             }
         }
     }
@@ -197,7 +199,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         var liquidityInUsd = tokenInfo?.LiquidityInUsd ?? "0";
         return (liquidityInUsd, holders);
     }
-    
+
     public async Task<AvailableTokenDetailDto> GetAvailableTokenDetailAsync(string symbol)
     {
         var address = await GetUserAddressAsync();
