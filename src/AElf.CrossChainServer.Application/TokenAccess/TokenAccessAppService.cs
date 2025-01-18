@@ -273,13 +273,13 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
         PopulateChainLists(result, input.Symbol);
 
         // Update third-party token data
-        await _tokenInvokeProvider.GetThirdTokenListAndUpdateAsync(address, input.Symbol);
+        await _tokenInvokeProvider.GetThirdTokenListAndUpdateAsync(input.Symbol);
 
         // Retrieve token apply order data
-        var applyOrderList = await GetTokenApplyOrderIndexListAsync(address, input.Symbol);
+        var applyOrderList = await GetTokenApplyOrderIndexListAsync(null, input.Symbol);
 
         // Process other chain list
-        await ProcessOtherChainListAsync(result.ChainList, applyOrderList, input.Symbol, address);
+        await ProcessOtherChainListAsync(result.ChainList, applyOrderList, input.Symbol);
 
         return result;
     }
@@ -299,8 +299,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
     private async Task ProcessOtherChainListAsync(
         List<ChainAccessInfo> otherChainList,
         List<TokenApplyOrderIndex> applyOrderList,
-        string symbol,
-        string address)
+        string symbol)
     {
         foreach (var item in otherChainList)
         {
@@ -314,7 +313,7 @@ public class TokenAccessAppService : CrossChainServerAppService, ITokenAccessApp
             var applyStatus = applyOrder?.ChainTokenInfo?.Status;
             // Retrieve user token issue details
             var res = await _thirdUserTokenIssueRepository.FindAsync(o =>
-                o.Address == address && o.OtherChainId == item.ChainId && o.Symbol == item.Symbol);
+                o.OtherChainId == item.ChainId && o.Symbol == item.Symbol);
 
             item.TotalSupply = res?.TotalSupply.SafeToDecimal() ?? 0M;
             item.Decimals = CrossChainServerConsts.DefaultEvmTokenDecimal;

@@ -17,7 +17,7 @@ namespace AElf.CrossChainServer.TokenAccess;
 
 public interface ITokenInvokeProvider
 {
-    Task<bool> GetThirdTokenListAndUpdateAsync(string address, string symbol);
+    Task<bool> GetThirdTokenListAndUpdateAsync(string symbol);
     Task<UserTokenBindingDto> PrepareBindingAsync(ThirdUserTokenIssueInfoDto dto);
     Task<bool> BindingAsync(UserTokenBindingDto dto);
 }
@@ -43,13 +43,13 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
 
     [ExceptionHandler(typeof(Exception),
         Message = "[GetThirdTokenListAndUpdateAsync] Get third token from symbolMarket failed.",
-        ReturnDefault = ReturnDefault.Default, LogTargets = new[] { "address", "symbol" })]
-    public async Task<bool> GetThirdTokenListAndUpdateAsync(string address, string symbol)
+        ReturnDefault = ReturnDefault.Default, LogTargets = new[] { "symbol" })]
+    public async Task<bool> GetThirdTokenListAndUpdateAsync(string symbol)
     {
-        var resultDto = await FetchThirdTokenListAsync(address, symbol);
+        var resultDto = await FetchThirdTokenListAsync(symbol);
         if (resultDto.Code != "20000" || resultDto.Data == null)
         {
-            Log.Warning("Get {address} {symbol} failed, message: {message}", address, symbol, resultDto.Message);
+            Log.Warning("Get {symbol} failed, message: {message}", symbol, resultDto.Message);
             return false;
         }
 
@@ -67,17 +67,16 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
                 continue;
             }
 
-            await UpsertThirdTokenAsync(address, item, aelfChainId, thirdChainId);
+            await UpsertThirdTokenAsync(item, aelfChainId, thirdChainId);
         }
 
         return false;
     }
 
-    private async Task<ThirdTokenResultDto> FetchThirdTokenListAsync(string address, string symbol)
+    private async Task<ThirdTokenResultDto> FetchThirdTokenListAsync(string symbol)
     {
         var tokenParams = new Dictionary<string, string>
         {
-            ["address"] = address,
             ["aelfToken"] = symbol
         };
 
@@ -85,17 +84,17 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             _tokenAccessOptions.SymbolMarketBaseUrl, UserThirdTokenListUri, param: tokenParams);
     }
 
-    private async Task UpsertThirdTokenAsync(string address, ThirdTokenItemDto item, string aelfChainId,
+    private async Task UpsertThirdTokenAsync(ThirdTokenItemDto item, string aelfChainId,
         string thirdChainId)
     {
         var existingToken = await _thirdUserTokenIssueRepository.FindAsync(o =>
-            o.Address == address && o.Symbol == item.AelfToken && o.OtherChainId == thirdChainId);
+            o.Symbol == item.AelfToken && o.OtherChainId == thirdChainId);
 
         if (existingToken != null)
         {
             Log.Debug(
-                "Update third token, user: {address}, Symbol: {symbol}, OtherChainId: {thirdChainId} TokenIssue,result:{result}",
-                address, item.AelfToken, thirdChainId, JsonSerializer.Serialize(item));
+                "Update third token, Symbol: {symbol}, OtherChainId: {thirdChainId} TokenIssue,result:{result}",
+                 item.AelfToken, thirdChainId, JsonSerializer.Serialize(item));
             existingToken.ContractAddress = item.ThirdContractAddress;
             existingToken.Status = TokenApplyOrderStatus.Issued.ToString();
             await _thirdUserTokenIssueRepository.UpdateAsync(existingToken, autoSave: true);
@@ -103,10 +102,10 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
         else
         {
             Log.Debug(
-                "Add third token, user: {address}, Symbol: {symbol}, OtherChainId: {thirdChainId}，TokenAddress:{token} TokenIssue,result:{result}",
-                address, item.ThirdSymbol, thirdChainId, item.ThirdContractAddress, JsonSerializer.Serialize(item));
+                "Add third token, Symbol: {symbol}, OtherChainId: {thirdChainId}，TokenAddress:{token} TokenIssue,result:{result}",
+                 item.ThirdSymbol, thirdChainId, item.ThirdContractAddress, JsonSerializer.Serialize(item));
             var info = _objectMapper.Map<ThirdTokenItemDto, ThirdUserTokenIssueInfo>(item);
-            info.Address = address;
+            info.Address = item.Address;
             info.Symbol = item.AelfToken;
             info.ChainId = aelfChainId;
             info.OtherChainId = thirdChainId;
@@ -214,7 +213,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
                 MintToAddress = dto.MintToAddress
             }, HttpProvider.DefaultJsonSettings));
         Log.Debug("result from tsm:{res}",JsonSerializer.Serialize(resultDto));
-        if (resultDto.Code != "20000" && !string.IsNullOrEmpty(resultDto.Value))
+        if (resultDto.Code != "20000" || string.IsNullOrEmpty(resultDto.Value))
         {
             Log.Warning($"request symbol market fail, {resultDto.Message}");
             return false;

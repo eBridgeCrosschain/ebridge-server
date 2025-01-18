@@ -232,7 +232,7 @@ public class CrossChainServerDbContext :
         {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "ThirdUserTokenIssueInfo",
                 CrossChainServerConsts.DbSchema);
-            b.HasIndex(o => new { o.Address, o.Symbol, o.OtherChainId }).IsUnique();
+            b.HasIndex(o => new { o.Symbol, o.OtherChainId }).IsUnique();
             b.ConfigureByConvention();
         });
     }
