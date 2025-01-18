@@ -180,6 +180,7 @@ public class TokenInvokeProvider : ITokenInvokeProvider, ITransientDependency
             info.BindingId = bindingId;
             info.ThirdTokenId = thirdTokenId;
             info.Status = status;
+            Log.Debug("insert info:{info}",JsonSerializer.Serialize(info));
             await _thirdUserTokenIssueRepository.InsertAsync(info);
         }
 
