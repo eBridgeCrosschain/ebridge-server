@@ -295,7 +295,7 @@ public class PoolLiquidityInfoAppService : CrossChainServerAppService, IPoolLiqu
             Log.Information(
                 "Token apply order not found,chainId: {chainId},symbol: {symbol}", chainId, token.Symbol);
             var thirdTokenInfo =
-                await _thirdUserTokenIssueRepository.FindAsync(t => t.Symbol == token.Symbol && t.ChainId == chainId);
+                await _thirdUserTokenIssueRepository.FindAsync(t => t.Symbol == token.Symbol && t.OtherChainId == chainId);
             if (thirdTokenInfo == null)
             {
                 Log.Warning("Third token info not found,chainId: {chainId},symbol: {symbol}", chainId, token.Symbol);
