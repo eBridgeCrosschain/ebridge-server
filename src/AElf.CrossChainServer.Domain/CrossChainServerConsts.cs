@@ -20,7 +20,7 @@ public static class CrossChainServerConsts
     public const long DefaultRateLimitSeconds = 60;
 
     public const string TonTransferredOpCode = "0xfcaf1515";
-    public const string TonReceivedOpCode = "0xc14bc81f";
+    public const string TonReceivedOpCode = "0x9e47031d";
     public const string TonDailyLimitChangedOpCode = "0x40839634";
     public const string TonDailyLimitConsumedOpCode = "0xc3de3da2";
     public const string TonRateLimitConsumedOpCode = "0x7a170c15";

@@ -194,7 +194,7 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         });
     }
 
-    private async Task ReceiveAsync(string chainId, DateTime blockTime, TonMessageDto outMessage,
+    private async Task ReceiveAsync(string chainId,DateTime blockTime, TonMessageDto outMessage,
         string txId)
     {
         Log.ForContext("chainId", chainId).Debug(
@@ -202,10 +202,10 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         var body = Cell.From(outMessage.MessageContent.Body);
         var bodySlice = body.Parse();
         var eventId = bodySlice.LoadUInt(32);
-        var fromChainId = (int)bodySlice.LoadInt(32);
         var toAddress = bodySlice.LoadAddress();
         var tokenAddress = bodySlice.LoadAddress();
         var amount = bodySlice.LoadCoins().ToBigInt();
+        var fromChainId = (int)bodySlice.LoadInt(32);
         var receipt = bodySlice.LoadRef();
         var receiptSlice = receipt.Parse();
         var keyHash = receiptSlice.LoadBytes(32).ToHex();
