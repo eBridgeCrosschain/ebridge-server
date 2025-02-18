@@ -62,7 +62,6 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
             {
                 continue;
             }
-
             Log.Debug("Sync ton chain bridge contract:{contract}", contract.BridgeContract);
             await HandleTonTransactionAsync(chain.Id, contract.BridgeContract);
             foreach (var pool in contract.BridgePoolContract)
