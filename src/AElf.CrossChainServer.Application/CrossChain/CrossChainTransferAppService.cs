@@ -599,7 +599,6 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                     toUpdate.Add(transfer);
                     continue;
                 }
-
                 transfer.ReceiveTransactionId = txId;
                 transfer.ReceiveTransactionAttemptTimes += 1;
                 toUpdate.Add(transfer);
