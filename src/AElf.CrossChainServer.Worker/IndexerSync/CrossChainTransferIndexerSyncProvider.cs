@@ -138,7 +138,7 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
         {
             return chainId;
         }
-
+        Log.Debug("Start to get chain id by {originalChainId}", originalChainId);
         var toChain =
             await ChainAppService.GetByAElfChainIdAsync(
                 ChainHelper.ConvertBase58ToChainId(originalChainId));
