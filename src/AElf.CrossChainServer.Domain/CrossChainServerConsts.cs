@@ -29,5 +29,9 @@ public static class CrossChainServerConsts
     public const string SuccessHttpCode = "20000";
     public const int DefaultEvmTokenDecimal = 18;
     public const string AddressZero = "0x0000000000000000000000000000000000000000";
+    public const string TonCoinAddress = "EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c";
+    public const int TonCoinTokenDecimal = 9;
+    public const string TonCoinTokenSymbol = "TON";
+
 
 }

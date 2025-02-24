@@ -37,25 +37,41 @@ namespace AElf.CrossChainServer.Tokens
                 (input.Symbol.IsNullOrWhiteSpace() || o.Symbol == input.Symbol));
             if (token == null)
             {
-                var tokenDto = await _blockchainAppService.GetTokenInfoAsync(input.ChainId, input.Address, input.Symbol);
-                if (tokenDto == null)
+                if (input.Address != null && input.Address == CrossChainServerConsts.TonCoinAddress)
                 {
-                    Log.ForContext("chainId", input.ChainId).Error(
-                        "Cannot get token! chain: {chainId}, address: {address}, symbol: {symbol}.", input.ChainId,
-                        input.Address ?? string.Empty, input.Symbol ?? string.Empty);
-                   
-                    throw new EntityNotFoundException("Token not exist.");
+                    token = await _tokenRepository.InsertAsync(new Token
+                    {
+                        Address = input.Address,
+                        Decimals = CrossChainServerConsts.TonCoinTokenDecimal,
+                        Symbol = CrossChainServerConsts.TonCoinTokenSymbol,
+                        ChainId = input.ChainId,
+                        IssueChainId = 0,
+                        IsBurnable = false
+                    }, autoSave: true);
                 }
-
-                token = await _tokenRepository.InsertAsync(new Token
+                else
                 {
-                    Address = tokenDto.Address,
-                    Decimals = tokenDto.Decimals,
-                    Symbol = tokenDto.Symbol,
-                    ChainId = input.ChainId,
-                    IssueChainId = tokenDto.IssueChainId,
-                    IsBurnable = tokenDto.IsBurnable
-                }, autoSave: true);
+                    var tokenDto = await _blockchainAppService.GetTokenInfoAsync(input.ChainId, input.Address, input.Symbol);
+                    if (tokenDto == null)
+                    {
+                        Log.ForContext("chainId", input.ChainId).Error(
+                            "Cannot get token! chain: {chainId}, address: {address}, symbol: {symbol}.", input.ChainId,
+                            input.Address ?? string.Empty, input.Symbol ?? string.Empty);
+                   
+                        throw new EntityNotFoundException("Token not exist.");
+                    }
+
+                    token = await _tokenRepository.InsertAsync(new Token
+                    {
+                        Address = tokenDto.Address,
+                        Decimals = tokenDto.Decimals,
+                        Symbol = tokenDto.Symbol,
+                        ChainId = input.ChainId,
+                        IssueChainId = tokenDto.IssueChainId,
+                        IsBurnable = tokenDto.IsBurnable
+                    }, autoSave: true);
+                }
+                
             }
 
             return ObjectMapper.Map<Token, TokenDto>(token);
