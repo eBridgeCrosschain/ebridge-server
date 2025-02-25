@@ -108,13 +108,9 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
                     switch (outMsg.Opcode)
                     {
                         case CrossChainServerConsts.TonReceivedOpCode:
-                            var result = await ReceiveAsync(chainId, DateTimeHelper.FromUnixTimeSeconds(tx.Now), outMsg,
+                            await ReceiveAsync(chainId, DateTimeHelper.FromUnixTimeSeconds(tx.Now), outMsg,
                                 txId);
-                            if (result)
-                            {
-                                break;
-                            }
-                            continue;
+                            break;
                         case CrossChainServerConsts.TonTransferredOpCode:
                             await TransferAsync(chainId, tx.McBlockSeqno, DateTimeHelper.FromUnixTimeSeconds(tx.Now),
                                 outMsg, traceId, txId);
@@ -199,7 +195,7 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         });
     }
 
-    private async Task<bool> ReceiveAsync(string chainId, DateTime blockTime, TonMessageDto outMessage,
+    private async Task ReceiveAsync(string chainId, DateTime blockTime, TonMessageDto outMessage,
         string txId)
     {
         Log.ForContext("chainId", chainId).Debug(
@@ -207,12 +203,6 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         var body = Cell.From(outMessage.MessageContent.Body);
         var bodySlice = body.Parse();
         var eventId = bodySlice.LoadUInt(32);
-        if (eventId != CrossChainServerConsts.TonReleasedEventId)
-        {
-            Log.Warning("Received event is not released.txId:{id}", txId);
-            return false;
-        }
-
         var toAddress = bodySlice.LoadAddress();
         var tokenAddress = bodySlice.LoadAddress();
         var amount = bodySlice.LoadCoins().ToBigInt();
@@ -241,7 +231,6 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
             ReceiveTime = blockTime,
             ReceiveTokenId = token.Id,
         });
-        return true;
     }
 
     private async Task SetDailyLimitAsync(string chainId, string tokenAddress, TonMessageDto outMessage)
