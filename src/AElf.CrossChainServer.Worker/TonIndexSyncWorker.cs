@@ -210,7 +210,7 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         var receipt = bodySlice.LoadRef();
         var receiptSlice = receipt.Parse();
         var keyHash = receiptSlice.LoadBytes(32).ToHex();
-        var index = receiptSlice.LoadUInt(64);
+        var index = receiptSlice.LoadUInt(256);
         var receiptId = $"{keyHash}.{index}";
 
         var token = await _tokenAppService.GetAsync(new GetTokenInput
