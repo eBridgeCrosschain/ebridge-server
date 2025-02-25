@@ -51,6 +51,7 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         {
             return;
         }
+
         var chains = await _chainAppService.GetListAsync(new GetChainsInput
         {
             Type = BlockchainType.Tvm
@@ -62,6 +63,7 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
             {
                 continue;
             }
+
             Log.Debug("Sync ton chain bridge contract:{contract}", contract.BridgeContract);
             await HandleTonTransactionAsync(chain.Id, contract.BridgeContract);
             foreach (var pool in contract.BridgePoolContract)
@@ -105,13 +107,17 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
                 {
                     switch (outMsg.Opcode)
                     {
+                        case CrossChainServerConsts.TonReceivedOpCode:
+                            var result = await ReceiveAsync(chainId, DateTimeHelper.FromUnixTimeSeconds(tx.Now), outMsg,
+                                txId);
+                            if (result)
+                            {
+                                break;
+                            }
+                            continue;
                         case CrossChainServerConsts.TonTransferredOpCode:
                             await TransferAsync(chainId, tx.McBlockSeqno, DateTimeHelper.FromUnixTimeSeconds(tx.Now),
                                 outMsg, traceId, txId);
-                            break;
-                        case CrossChainServerConsts.TonReceivedOpCode:
-                            await ReceiveAsync(chainId, DateTimeHelper.FromUnixTimeSeconds(tx.Now), outMsg,
-                                txId);
                             break;
                         case CrossChainServerConsts.TonDailyLimitChangedOpCode:
                             await SetDailyLimitAsync(chainId, tokenAddress, outMsg);
@@ -193,7 +199,7 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         });
     }
 
-    private async Task ReceiveAsync(string chainId,DateTime blockTime, TonMessageDto outMessage,
+    private async Task<bool> ReceiveAsync(string chainId, DateTime blockTime, TonMessageDto outMessage,
         string txId)
     {
         Log.ForContext("chainId", chainId).Debug(
@@ -203,9 +209,10 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         var eventId = bodySlice.LoadUInt(32);
         if (eventId != CrossChainServerConsts.TonReleasedEventId)
         {
-            Log.Warning("Received event is not released.txId:{id}",txId);
-            return;
+            Log.Warning("Received event is not released.txId:{id}", txId);
+            return false;
         }
+
         var toAddress = bodySlice.LoadAddress();
         var tokenAddress = bodySlice.LoadAddress();
         var amount = bodySlice.LoadCoins().ToBigInt();
@@ -234,6 +241,7 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
             ReceiveTime = blockTime,
             ReceiveTokenId = token.Id,
         });
+        return true;
     }
 
     private async Task SetDailyLimitAsync(string chainId, string tokenAddress, TonMessageDto outMessage)
