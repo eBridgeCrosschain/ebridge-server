@@ -22,7 +22,7 @@ public class EvmTokenSwapSyncProvider(
 {
     private readonly EvmContractSyncOptions _evmContractSyncOptions = evmContractSyncOptions.Value;
 
-    private const string TokenSwappedEvent = "TokenSwapEvent(address,address,uint256,string,string,uint256);";
+    private const string TokenSwappedEvent = "TokenSwapEvent(address,address,uint256,string,string,uint256)";
     private static string TokenSwappedEventSignature => TokenSwappedEvent.GetEventSignature();
 
     protected override string SyncType { get; } = CrossChainServerSettings.EvmTokenSwappedIndexerSync;
