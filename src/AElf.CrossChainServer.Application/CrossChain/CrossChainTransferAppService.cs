@@ -75,7 +75,6 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
 
         if (!input.FromAddress.IsNullOrWhiteSpace())
         {
-        
             var shouldFromQuery = new List<Func<QueryContainerDescriptor<CrossChainTransferIndex>, QueryContainer>>();
 
             if (!Base58CheckEncoding.Verify(input.FromAddress) &&
@@ -86,9 +85,10 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
 
             if (TonAddressHelper.IsTonFriendlyAddress(input.FromAddress))
             {
-                shouldFromQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(TonAddressHelper.GetTonRawAddress(input.FromAddress))));
+                shouldFromQuery.Add(q => q.Term(i =>
+                    i.Field(f => f.FromAddress).Value(TonAddressHelper.GetTonRawAddress(input.FromAddress))));
             }
-            
+
             shouldFromQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(input.FromAddress)));
 
             mustQuery.Add(q => q.Bool(bb => bb
@@ -106,10 +106,13 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
             {
                 shouldToQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(input.ToAddress.ToLower())));
             }
+
             if (TonAddressHelper.IsTonFriendlyAddress(input.ToAddress))
             {
-                shouldToQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(TonAddressHelper.GetTonRawAddress(input.ToAddress))));
+                shouldToQuery.Add(q => q.Term(i =>
+                    i.Field(f => f.ToAddress).Value(TonAddressHelper.GetTonRawAddress(input.ToAddress))));
             }
+
             shouldToQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(input.ToAddress)));
 
             mustQuery.Add(q => q.Bool(bb => bb
@@ -142,7 +145,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                         s => s.Term(i => i.Field(f => f.ToAddress).Value(rawAddress))
                     )));
                 }
-                
+
 
                 shouldAddressesQuery.Add(q => q.Bool(b => b.Should(
                     s => s.Term(i => i.Field(f => f.FromAddress).Value(address)),
@@ -535,7 +538,8 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         var q = await _crossChainTransferRepository.GetQueryableAsync();
         var crossChainTransfers = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Status == CrossChainStatus.Indexed &&
-                        o.Progress == CrossChainServerConsts.FullOfTheProgress && o.ReceiveTransactionId != null)
+                        o.Progress == CrossChainServerConsts.FullOfTheProgress && o.ReceiveTransactionId != null &&
+                        o.Type == CrossChainType.Homogeneous)
             .OrderBy(o => o.ProgressUpdateTime)
             .Skip(PageCount * page)
             .Take(PageCount));
@@ -557,7 +561,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                         "AutoReceive.TransferTransactionId:{id}", transfer.TransferTransactionId);
                 var toChain = await _chainAppService.GetAsync(transfer.ToChainId);
                 var fromChain = await _chainAppService.GetAsync(transfer.FromChainId);
-                if (toChain == null || toChain.Type != BlockchainType.AElf || fromChain.Type == BlockchainType.Tvm)
+                if (toChain == null || toChain.Type != BlockchainType.AElf)
                 {
                     continue;
                 }
@@ -576,20 +580,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                     toUpdate.Add(transfer);
                     continue;
                 }
-
-                // Heterogeneous:check limit.
-                if (transfer.Type == CrossChainType.Heterogeneous &&
-                    !await _checkTransferProvider.CheckTransferAsync(
-                        transfer.FromChainId,
-                        transfer.ToChainId, transfer.TransferTokenId, transfer.TransferAmount))
-                {
-                    Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId)
-                        .Warning(
-                            "Incorrect chain or check limit failed, from chain:{fromChainId}, to chain:{toChainId}, Id: {transferId}, transfer amount:{amount}",
-                            transfer.FromChainId, transfer.ToChainId, transfer.Id, transfer.TransferAmount);
-                    continue;
-                }
-
+                
                 var provider = GetCrossChainTransferProvider(transfer.Type);
                 var txId = await provider.SendReceiveTransactionAsync(transfer);
                 if (string.IsNullOrWhiteSpace(txId))
@@ -599,6 +590,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                     toUpdate.Add(transfer);
                     continue;
                 }
+
                 transfer.ReceiveTransactionId = txId;
                 transfer.ReceiveTransactionAttemptTimes += 1;
                 toUpdate.Add(transfer);
@@ -634,8 +626,10 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                 var chain = await _chainAppService.GetAsync(transfer.ToChainId);
                 var crossChainTransferInfo =
                     await _indexerAppService.GetPendingTransactionAsync(
-                        ChainHelper.ConvertChainIdToBase58(chain.AElfChainId), 
-                        string.IsNullOrWhiteSpace(transfer.InlineTransferTransactionId) ? transfer.TransferTransactionId : transfer.InlineTransferTransactionId);
+                        ChainHelper.ConvertChainIdToBase58(chain.AElfChainId),
+                        string.IsNullOrWhiteSpace(transfer.InlineTransferTransactionId)
+                            ? transfer.TransferTransactionId
+                            : transfer.InlineTransferTransactionId);
                 if (crossChainTransferInfo == null)
                 {
                     Logger.LogInformation("Transaction not exist. TransferTransactionId:{id}",
@@ -695,7 +689,8 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         var q = await _crossChainTransferRepository.GetQueryableAsync();
         var crossChainTransfers = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Progress == CrossChainServerConsts.FullOfTheProgress && o.ReceiveTransactionId == null &&
-                        o.ReceiveTransactionAttemptTimes < _autoReceiveConfigOptions.ReceiveRetryTimes)
+                        o.ReceiveTransactionAttemptTimes < _autoReceiveConfigOptions.ReceiveRetryTimes &&
+                        o.Type == CrossChainType.Homogeneous)
             .OrderBy(o => o.ProgressUpdateTime)
             .Skip(PageCount * page)
             .Take(PageCount));

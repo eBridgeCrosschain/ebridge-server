@@ -1,22 +1,20 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Settings;
+using Nethereum.ABI.FunctionEncoding.Attributes;
 using Serilog;
 using Volo.Abp.DependencyInjection;
 
 namespace AElf.CrossChainServer.Worker.EvmIndexerSync;
 
-public abstract class EvmIndexerSyncProviderBase : IEvmSyncProvider, ITransientDependency
+public abstract class EvmIndexerSyncProviderBase(ISettingManager settingManager)
+    : IEvmSyncProvider, ITransientDependency
 {
-    protected readonly ISettingManager SettingManager;
+    protected readonly ISettingManager SettingManager = settingManager;
     public IBlockchainAppService BlockchainAppService { get; set; }
     protected const int MaxRequestCount = 1000;
-
-    protected EvmIndexerSyncProviderBase(ISettingManager settingManager)
-    {
-        SettingManager = settingManager;
-    }
 
     public async Task ExecuteAsync(string chainId)
     {
@@ -62,6 +60,14 @@ public abstract class EvmIndexerSyncProviderBase : IEvmSyncProvider, ITransientD
     protected async Task<FilterLogsDto> GetContractLogsAsync(string chainId, string contractAddress, long startHeight, long endHeight)
     {
         var logs = await BlockchainAppService.GetContractLogsAsync(chainId, contractAddress, startHeight, endHeight);
+        return logs;
+    }
+
+    protected async Task<FilterLogsAndEventsDto<TEventDTO>> GetContractLogsAndParseAsync<TEventDTO>(string chainId,
+        string contractAddress, long startHeight, long endHeight, string logSignature)
+        where TEventDTO : IEventDTO, new()
+    {
+        var logs = await BlockchainAppService.GetContractLogsAndParseAsync<TEventDTO>(chainId, contractAddress, startHeight, endHeight,logSignature);
         return logs;
     }
 
