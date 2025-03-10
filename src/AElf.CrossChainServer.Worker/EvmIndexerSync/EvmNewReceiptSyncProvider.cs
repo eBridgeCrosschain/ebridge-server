@@ -7,6 +7,7 @@ using AElf.CrossChainServer.CrossChain;
 using AElf.CrossChainServer.Settings;
 using AElf.CrossChainServer.Tokens;
 using AElf.CrossChainServer.Worker.EvmIndexerSync.Dtos;
+using AElf.Types;
 using Microsoft.Extensions.Options;
 using Nethereum.Util;
 using Serilog;
@@ -21,7 +22,7 @@ public class EvmNewReceiptSyncProvider(
 {
     private readonly EvmContractSyncOptions _evmContractSyncOptions = evmContractSyncOptions.Value;
 
-    private const string NewReceiptEvent = "NewReceipt(string,address,address,uint256,string,string,uint256)";
+    private const string NewReceiptEvent = "NewReceipt(string,address,address,uint256,string,bytes32,uint256)";
     private static string NewReceiptEventSignature => NewReceiptEvent.GetEventSignature();
 
     protected override string SyncType { get; } = CrossChainServerSettings.EvmNewReceiptIndexerSync;
@@ -66,7 +67,7 @@ public class EvmNewReceiptSyncProvider(
                 TransferTransactionId = log.TransactionHash,
                 FromAddress = events.Owner,
                 ReceiptId = events.ReceiptId,
-                ToAddress = events.TargetAddress,
+                ToAddress = Address.FromBytes(events.TargetAddress).ToBase58(),
                 TransferAmount = (decimal)((BigDecimal)events.Amount / BigInteger.Pow(10, token.Decimals)),
                 TransferTime = DateTimeHelper.FromUnixTimeMilliseconds((long)events.BlockTime * 1000),
                 FromChainId = chainId,

@@ -28,8 +28,8 @@ public class NewReceiptEvent: IEventDTO
     [Parameter("string", "targetChainId", 5, false)]
     public string TargetChainId { get; set; }
     
-    [Parameter("string", "targetAddress", 6, false)]
-    public string TargetAddress { get; set; }
+    [Parameter("bytes32", "targetAddress", 6, false)]
+    public byte[] TargetAddress { get; set; }
     [Parameter("uint256","blockTime",7,false)]
     public BigInteger BlockTime { get; set; }
 

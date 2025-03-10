@@ -472,7 +472,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         var q = await _crossChainTransferRepository.GetQueryableAsync();
         var crossChainTransfers = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Status == CrossChainStatus.Transferred &&
-                        o.ProgressUpdateTime > DateTime.UtcNow.AddDays(-3))
+                        o.ProgressUpdateTime > DateTime.UtcNow.AddDays(-1))
             .OrderBy(o => o.ProgressUpdateTime)
             .Skip(PageCount * page)
             .Take(PageCount));
