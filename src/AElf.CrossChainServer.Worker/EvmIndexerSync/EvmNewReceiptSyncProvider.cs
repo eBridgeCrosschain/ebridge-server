@@ -66,7 +66,7 @@ public class EvmNewReceiptSyncProvider(
             {
                 TransferTransactionId = log.TransactionHash,
                 FromAddress = events.Owner,
-                ReceiptId = events.ReceiptId,
+                ReceiptId = events.ReceiptId[2..],
                 ToAddress = Address.FromBytes(events.TargetAddress).ToBase58(),
                 TransferAmount = (decimal)((BigDecimal)events.Amount / BigInteger.Pow(10, token.Decimals)),
                 TransferTime = DateTimeHelper.FromUnixTimeMilliseconds((long)events.BlockTime * 1000),
