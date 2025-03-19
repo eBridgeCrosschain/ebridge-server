@@ -121,11 +121,8 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
                         case CrossChainServerConsts.TonRateLimitChangedOpCode:
                             await SetRateLimitAsync(chainId, tokenAddress, outMsg);
                             break;
-                        case CrossChainServerConsts.TonDailyLimitConsumedOpCode:
-                            await ConsumeDailyLimitAsync(chainId, tokenAddress, outMsg);
-                            break;
-                        case CrossChainServerConsts.TonRateLimitConsumedOpCode:
-                            await ConsumeRateLimitAsync(chainId, tokenAddress, outMsg);
+                        case CrossChainServerConsts.TonLimitConsumedOpCode:
+                            await ConsumeLimitAsync(chainId, tokenAddress, outMsg);
                             break;
                         default:
                             continue;
@@ -263,9 +260,9 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         });
     }
 
-    private async Task ConsumeDailyLimitAsync(string chainId, string tokenAddress, TonMessageDto outMessage)
+    private async Task ConsumeLimitAsync(string chainId, string tokenAddress, TonMessageDto outMessage)
     {
-        Log.ForContext("chainId", chainId).Debug("Start to consume daily limit:{tokenAddress}", tokenAddress);
+        Log.ForContext("chainId", chainId).Debug("Start to consume limit:{tokenAddress}", tokenAddress);
         var body = Cell.From(outMessage.MessageContent.Body);
         var bodySlice = body.Parse();
         var eventId = bodySlice.LoadUInt(32);
@@ -280,6 +277,14 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         });
 
         await _crossChainLimitAppService.ConsumeCrossChainDailyLimitAsync(new ConsumeCrossChainDailyLimitInput
+        {
+            ChainId = chainId,
+            Type = type,
+            TargetChainId = ChainHelper.ConvertChainIdToBase58(toChainId),
+            TokenId = token.Id,
+            Amount = (decimal)((BigDecimal)amount / BigInteger.Pow(10, token.Decimals))
+        });
+        await _crossChainLimitAppService.ConsumeCrossChainRateLimitAsync(new ConsumeCrossChainRateLimitInput
         {
             ChainId = chainId,
             Type = type,

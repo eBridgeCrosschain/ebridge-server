@@ -10,7 +10,8 @@ namespace AElf.CrossChainServer.Worker.EvmIndexerSync.Dtos;
  *    address token,
  *    uint256 amount,
  *    string receiptId,
- *    string fromChainId
+ *    string fromChainId,
+ *    uint256 blockTime  
  * );
  */
 public class TokenSwappedEvent : IEventDTO

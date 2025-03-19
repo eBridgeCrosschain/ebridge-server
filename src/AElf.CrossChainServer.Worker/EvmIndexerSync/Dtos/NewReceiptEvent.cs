@@ -9,7 +9,8 @@ namespace AElf.CrossChainServer.Worker.EvmIndexerSync.Dtos;
  *    address owner,
  *    uint256 amount,
  *    string targetChainId,
- *    string targetAddress
+ *    bytes32 targetAddress,
+ *    uint256 blockTime  
  *);
  */
 [Event("NewReceipt")]

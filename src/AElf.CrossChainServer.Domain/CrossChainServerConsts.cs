@@ -22,8 +22,7 @@ public static class CrossChainServerConsts
     public const string TonTransferredOpCode = "0xfcaf1515";
     public const string TonReceivedOpCode = "0x3d76fd5a";
     public const string TonDailyLimitChangedOpCode = "0x40839634";
-    public const string TonDailyLimitConsumedOpCode = "0xc3de3da2";
-    public const string TonRateLimitConsumedOpCode = "0x7a170c15";
+    public const string TonLimitConsumedOpCode = "0xb9ac7cea";
     public const string TonRateLimitChangedOpCode = "0xef662842";
     public const string At = "@";
     public const string SuccessHttpCode = "20000";
