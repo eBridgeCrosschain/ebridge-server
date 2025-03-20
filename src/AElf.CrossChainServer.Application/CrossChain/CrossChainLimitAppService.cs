@@ -61,8 +61,11 @@ public class CrossChainLimitAppService : CrossChainServerAppService, ICrossChain
     {
         var limit = await _crossChainRateLimitRepository.GetAsync(o =>
             o.ChainId == input.ChainId && o.TargetChainId == input.TargetChainId && o.TokenId == input.TokenId && o.Type == input.Type);
-        limit.CurrentAmount -= input.Amount;
-        await _crossChainRateLimitRepository.UpdateAsync(limit);
+        if (limit.IsEnable)
+        {
+            limit.CurrentAmount -= input.Amount;
+            await _crossChainRateLimitRepository.UpdateAsync(limit);
+        }
     }
 
     public async Task<List<CrossChainRateLimitDto>> GetCrossChainRateLimitsAsync()
