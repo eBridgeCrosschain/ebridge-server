@@ -350,4 +350,5 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
             Amount = (decimal)((BigDecimal)amount / BigInteger.Pow(10, token.Decimals))
         });
     }
+    
 }
