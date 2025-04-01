@@ -69,6 +69,15 @@ public class CrossChainServerTestDataSeedContributor : IDataSeedContributor, ITr
             IsMainChain = true,
             AElfChainId = 0
         });
+        
+        await _chainRepository.InsertAsync(new Chain()
+        {
+            Id = "Solana",
+            Type = BlockchainType.Svm,
+            Name = "Solana",
+            IsMainChain = true,
+            AElfChainId = 0
+        });
 
         await _crossChainUserRepository.InsertAsync(new()
         {

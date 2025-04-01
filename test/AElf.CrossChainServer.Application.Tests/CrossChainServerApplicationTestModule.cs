@@ -35,7 +35,8 @@ public class CrossChainServerApplicationTestModule : AbpModule
             {
                 { "Ethereum", "https://kovan.infura.io/v3/" },
                 { "MainChain_AELF", "https://aelf.io" },
-                { "Ton", "https://toncenter.com/api/v3/" }
+                { "Ton", "https://toncenter.com/api/v3/" },
+                { "Solana", "https://api.mainnet-beta.solana.com" }
             };
         });
 

@@ -76,6 +76,7 @@ public class CrossChainServerApplicationModule : AbpModule
         context.Services.AddTransient<IBlockchainClientProvider, AElfClientProvider>();
         context.Services.AddTransient<IBlockchainClientProvider, EvmClientProvider>();
         context.Services.AddTransient<IBlockchainClientProvider, TonClientProvider>();
+        context.Services.AddTransient<IBlockchainClientProvider, SolanaClientProvider>();
         
         context.Services.AddTransient<IBridgeContractProvider, EvmBridgeContractProvider>();
         context.Services.AddTransient<IBridgeContractProvider, AElfBridgeContractProvider>();

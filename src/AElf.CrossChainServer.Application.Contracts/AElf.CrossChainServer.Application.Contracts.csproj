@@ -19,6 +19,7 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
     <PackageReference Include="Nethereum.Contracts" Version="4.7.0" />
     <PackageReference Include="Serilog" Version="3.1.1" />
+    <PackageReference Include="Solnet.Rpc" Version="6.1.0" />
     <PackageReference Include="TonSdk.Core" Version="0.3.9" />
     <PackageReference Include="Volo.Abp.ObjectExtending" Version="8.2.0" />
     <PackageReference Include="Volo.Abp.Account.Application.Contracts" Version="8.2.0" />

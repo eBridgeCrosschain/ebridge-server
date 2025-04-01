@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Tokens;
 using AElf.Indexing.Elasticsearch;
-using Nest;
 using Volo.Abp;
 
 namespace AElf.CrossChainServer.CrossChain;
@@ -63,7 +63,9 @@ public class CrossChainLimitAppService : CrossChainServerAppService, ICrossChain
             o.ChainId == input.ChainId && o.TargetChainId == input.TargetChainId && o.TokenId == input.TokenId && o.Type == input.Type);
         if (limit.IsEnable)
         {
-            limit.CurrentAmount -= input.Amount;
+            limit.CurrentAmount = input.blockchainType == BlockchainType.Svm
+                ? input.Amount
+                : limit.CurrentAmount - input.Amount;
             await _crossChainRateLimitRepository.UpdateAsync(limit);
         }
     }
@@ -104,7 +106,9 @@ public class CrossChainLimitAppService : CrossChainServerAppService, ICrossChain
     {
         var limit = await _crossChainDailyLimitRepository.GetAsync(o =>
             o.ChainId == input.ChainId && o.TargetChainId == input.TargetChainId && o.TokenId == input.TokenId && o.Type == input.Type);
-        limit.RemainAmount -= input.Amount;
+        limit.RemainAmount = input.blockchainType == BlockchainType.Svm
+            ? input.Amount
+            : limit.RemainAmount - input.Amount;
         await _crossChainDailyLimitRepository.UpdateAsync(limit);
     }
 }

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using AElf.Client.Dto;
 using AElf.CrossChainServer.Tokens;
+using Solnet.Rpc.Models;
 
 namespace AElf.CrossChainServer.Chains
 {
@@ -14,6 +15,10 @@ namespace AElf.CrossChainServer.Chains
         Task<MerklePathDto> GetMerklePathAsync(string chainId, string transactionId);
         Task<List<TonTransactionDto>> GetTonTransactionAsync(GetTonTransactionInput input);
         Task<string> GetTonUserFriendlyAddressAsync(string chainId, string address);
+        Task<List<string>> GetSignaturesForAddressAsync(string chainId, string accountPubKey, ulong limit = 1000, 
+            string before = null, string until = null);
+        Task<TransactionMetaSlotInfo> GetSolanaTransactionAsync(string chainId, string signature);
+        Task<BlockInfo> GetSolanaBlockAsync(string chainId, ulong slot);
         Task<FilterLogsDto> GetContractLogsAsync(string chainId, string contractAddress, long startHeight, long endHeight);
         Task<long> GetChainHeightAsync(string chainId);
     }

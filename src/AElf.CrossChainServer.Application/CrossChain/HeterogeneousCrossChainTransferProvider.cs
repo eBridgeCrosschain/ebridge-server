@@ -74,6 +74,14 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
                     TraceId = transfer.TraceId
                 });
             }
+            else if(fromChain.Type == BlockchainType.Svm)
+            {
+                Log.Debug("Calculate cross chain progress from solana to aelf.{txId}",transfer.TransferTransactionId);
+                return await _aetherLinkProvider.CalculateCrossChainProgressAsync(new AetherLinkCrossChainStatusInput
+                {
+                    TransactionId = transfer.TransferTransactionId
+                });
+            }
             return await _oracleQueryInfoAppService.CalculateCrossChainProgressAsync(transfer.ToChainId,transfer.ReceiptId);
         }
         // aelf -> ton
@@ -84,6 +92,14 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
             {
                 // SourceChainId = fromChain.AElfChainId,
                 TransactionId = transfer.TransferTransactionId
+            });
+        }
+        else if (chain.Type == BlockchainType.Svm)
+        {
+            Log.Debug("Calculate cross chain progress from aelf to solana.{txId}",transfer.ReceiveTransactionId);
+            return await _aetherLinkProvider.CalculateCrossChainProgressAsync(new AetherLinkCrossChainStatusInput
+            {
+                TransactionId = transfer.ReceiveTransactionId
             });
         }
         // aelf ->ethereum

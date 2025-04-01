@@ -180,7 +180,7 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
                     SwapRateLimitsInfo = swapRateLimits
                 });
             }
-            else if (chain.Type == BlockchainType.Tvm)
+            else if (chain.Type == BlockchainType.Tvm || chain.Type == BlockchainType.Svm)
             {
                 Log.ForContext("fromChainId", crossChainLimitInfo.Key.FromChainId)
                     .ForContext("toChainId", crossChainLimitInfo.Key.ToChainId)

@@ -7,6 +7,7 @@ using AElf.CrossChainServer.Contracts.Bridge;
 using AElf.CrossChainServer.Tokens;
 using AElf.ExceptionHandler;
 using Microsoft.Extensions.Options;
+using Solnet.Rpc.Models;
 using Volo.Abp;
 
 namespace AElf.CrossChainServer.Chains
@@ -16,13 +17,16 @@ namespace AElf.CrossChainServer.Chains
     {
         private readonly IBlockchainClientProviderFactory _blockchainClientProviderFactory;
         private readonly ITonIndexProvider _tonIndexProvider;
+        private readonly ISolanaIndexProvider _solanaIndexProvider;
         private BridgeContractOptions _bridgeContractOptions;
 
         public BlockchainAppService(IBlockchainClientProviderFactory blockchainClientProviderFactory,
-            ITonIndexProvider tonIndexProvider, IOptionsSnapshot<BridgeContractOptions> bridgeContractOptions)
+            ITonIndexProvider tonIndexProvider, ISolanaIndexProvider solanaIndexProvider, 
+            IOptionsSnapshot<BridgeContractOptions> bridgeContractOptions)
         {
             _blockchainClientProviderFactory = blockchainClientProviderFactory;
             _tonIndexProvider = tonIndexProvider;
+            _solanaIndexProvider = solanaIndexProvider;
             _bridgeContractOptions = bridgeContractOptions.Value;
         }
 
@@ -100,6 +104,22 @@ namespace AElf.CrossChainServer.Chains
         public Task<string> GetTonUserFriendlyAddressAsync(string chainId, string address)
         {
             return _tonIndexProvider.GetTonUserFriendlyAddressAsync(chainId, address);
+        }
+
+        public async Task<List<string>> GetSignaturesForAddressAsync(string chainId, string accountPubKey,
+            ulong limit = 1000, string before = null, string until = null)
+        {
+            return await _solanaIndexProvider.GetSignaturesForAddressAsync(chainId, accountPubKey, limit, before, until);
+        }
+
+        public async Task<TransactionMetaSlotInfo> GetSolanaTransactionAsync(string chainId, string signature)
+        {
+            return await _solanaIndexProvider.GetTransactionAsync(chainId, signature);
+        }
+
+        public async Task<BlockInfo> GetSolanaBlockAsync(string chainId, ulong slot)
+        {
+            return await _solanaIndexProvider.GetBlockAsync(chainId, slot);
         }
 
         public async Task<FilterLogsDto> GetContractLogsAsync(string chainId, string contractAddress, long startHeight, long endHeight)

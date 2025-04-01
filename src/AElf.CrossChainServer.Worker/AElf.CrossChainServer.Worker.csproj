@@ -11,6 +11,7 @@
 
     <ItemGroup>
       <PackageReference Include="GraphQL.Client" Version="5.1.1" />
+      <PackageReference Include="Solnet.Rpc" Version="6.1.0" />
       <PackageReference Include="TonSdk.Core" Version="0.3.9" />
       <PackageReference Include="Volo.Abp.BackgroundWorkers.Quartz" Version="8.2.0" />
       <PackageReference Include="Volo.Abp.SettingManagement.Domain" Version="8.2.0" />

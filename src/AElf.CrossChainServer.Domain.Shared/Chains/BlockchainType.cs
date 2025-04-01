@@ -4,5 +4,6 @@ public enum BlockchainType
 {
     AElf,
     Evm,
-    Tvm
+    Tvm,
+    Svm
 }

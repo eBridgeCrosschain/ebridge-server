@@ -1,9 +1,12 @@
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.Tokens;
 using Shouldly;
+using Solnet.Wallet;
 using Volo.Abp.Validation;
 using Xunit;
 
@@ -565,6 +568,69 @@ public class CrossChainTransferAppServiceTests : CrossChainServerApplicationTest
     }
     
     [Fact]
+    public async Task HeterogeneousTransfer_AELF_To_SOL_Test()
+    {
+        var tokenTransfer = await _tokenAppService.GetAsync(new GetTokenInput
+        {
+            ChainId ="MainChain_AELF",
+            Symbol = "ELF"
+        });
+
+        var input = new CrossChainTransferInput
+        {
+            TransferAmount = 100,
+            FromAddress = "FromAddress",
+            ToAddress = "ToAddress",
+            TransferTokenId = tokenTransfer.Id,
+            FromChainId = "MainChain_AELF",
+            ToChainId = "Solana",
+            TransferBlockHeight = 100,
+            TransferTime = DateTime.UtcNow.AddMinutes(-1),
+            ReceiptId = "ReceiptId",
+            TransferTransactionId = "txID",
+            TraceId = "TraceId"
+        };
+        await _crossChainTransferAppService.TransferAsync(input);
+
+        var list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
+        {
+            MaxResultCount = 100
+        });
+        list.Items.Count.ShouldBe(1);
+        list.Items[0].TransferAmount.ShouldBe(input.TransferAmount);
+        list.Items[0].ReceiveAmount.ShouldBe(0);
+        list.Items[0].Progress.ShouldBe(0);
+        list.Items[0].Status.ShouldBe(CrossChainStatus.Transferred);
+        list.Items[0].TransferToken.Id.ShouldBe(tokenTransfer.Id);
+        list.Items[0].ReceiveToken.ShouldBeNull();
+        list.Items[0].Type.ShouldBe(CrossChainType.Heterogeneous);
+        list.Items[0].FromAddress.ShouldBe(input.FromAddress);
+        list.Items[0].ToAddress.ShouldBe(input.ToAddress);
+        list.Items[0].FromChainId.ShouldBe(input.FromChainId);
+        list.Items[0].ToChainId.ShouldBe(input.ToChainId);
+        list.Items[0].TransferBlockHeight.ShouldBe(input.TransferBlockHeight);
+        list.Items[0].TransferTime.ShouldBe(DateTimeHelper.ToUnixTimeMilliseconds(input.TransferTime));
+        list.Items[0].ReceiptId.ShouldBe(input.ReceiptId);
+        list.Items[0].TraceId.ShouldBe(input.TraceId);
+
+        var status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
+        {
+            Ids = { list.Items[0].Id }
+        });
+        status.Items.Count.ShouldBe(1);
+        status.Items[0].Progress.ShouldBe(0);
+
+        await _crossChainTransferAppService.UpdateProgressAsync();
+        
+        status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
+        {
+            Ids = { list.Items[0].Id }
+        });
+        status.Items.Count.ShouldBe(1);
+        status.Items[0].Progress.ShouldBe(50);
+    }
+    
+    [Fact]
     public async Task HeterogeneousTransfer_TON_To_AELF_Test()
     {
         var tokenTransfer = await _tokenAppService.GetAsync(new GetTokenInput
@@ -630,6 +696,92 @@ public class CrossChainTransferAppServiceTests : CrossChainServerApplicationTest
         });
         status.Items.Count.ShouldBe(1);
         status.Items[0].Progress.ShouldBe(50);
+    }
+    
+    [Fact]
+    public async Task HeterogeneousTransfer_SOL_To_AELF_Test()
+    {
+        var tokenTransfer = await _tokenAppService.GetAsync(new GetTokenInput
+        {
+            ChainId ="MainChain_AELF",
+            Symbol = "ELF"
+        });
+
+        var input = new CrossChainTransferInput
+        {
+            TransferAmount = 100,
+            FromAddress = "FromAddress",
+            ToAddress = "ToAddress",
+            TransferTokenId = tokenTransfer.Id,
+            FromChainId = "Solana",
+            ToChainId = "MainChain_AELF",
+            TransferBlockHeight = 100,
+            TransferTime = DateTime.UtcNow.AddMinutes(-1),
+            ReceiptId = "ReceiptId",
+            TransferTransactionId = "txID",
+            TraceId = "TraceId"
+        };
+        await _crossChainTransferAppService.TransferAsync(input);
+
+        var list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
+        {
+            MaxResultCount = 100
+        });
+        list.Items.Count.ShouldBe(1);
+        list.Items[0].TransferAmount.ShouldBe(input.TransferAmount);
+        list.Items[0].ReceiveAmount.ShouldBe(0);
+        list.Items[0].Progress.ShouldBe(0);
+        list.Items[0].Status.ShouldBe(CrossChainStatus.Transferred);
+        list.Items[0].TransferToken.Id.ShouldBe(tokenTransfer.Id);
+        list.Items[0].ReceiveToken.ShouldBeNull();
+        list.Items[0].Type.ShouldBe(CrossChainType.Heterogeneous);
+        list.Items[0].FromAddress.ShouldBe(input.FromAddress);
+        list.Items[0].ToAddress.ShouldBe(input.ToAddress);
+        list.Items[0].FromChainId.ShouldBe(input.FromChainId);
+        list.Items[0].ToChainId.ShouldBe(input.ToChainId);
+        list.Items[0].TransferBlockHeight.ShouldBe(input.TransferBlockHeight);
+        list.Items[0].TransferTime.ShouldBe(DateTimeHelper.ToUnixTimeMilliseconds(input.TransferTime));
+        list.Items[0].ReceiptId.ShouldBe(input.ReceiptId);
+        list.Items[0].TraceId.ShouldBe(input.TraceId);
+
+        var status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
+        {
+            Ids = { list.Items[0].Id }
+        });
+        status.Items.Count.ShouldBe(1);
+        status.Items[0].Progress.ShouldBe(0);
+
+        await _crossChainTransferAppService.UpdateProgressAsync();
+        
+        status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
+        {
+            Ids = { list.Items[0].Id }
+        });
+        status.Items.Count.ShouldBe(1);
+        status.Items[0].Progress.ShouldBe(50);
+    }
+    
+    [Fact]
+    public async Task Decode_SOL_Message_Test()
+    {
+        var data = Convert.FromBase64String("L7ou/1qpEk9AQg8AAAAAAOd/GeXGierNs1uQ1nSP7AETiWjZeiOeu9viTGJ6slrYBAAAAFVTRENCAAAANjg5MDhmNmM4MzVmZTVhYjIwNDg3YmE1Mzg1ODA2N2ZhYTIxOTI0MTQ4NTNiMDg5NTAyYzkyY2ExNGM4YzQxOC4xAgCW0GW/9ySFpE/9t2ZFgm7ueswu2N6D1GPTmOlIuI+a+g==");
+        var offset = 8;
+        var amount = BinaryPrimitives.ReadUInt64LittleEndian(data.AsSpan(offset));
+        offset += 8;
+        var toAddress = ReadPublicKey(data, ref offset);
+        offset += 32;
+        var symbol = ReadString(data, ref offset);
+        var receiptId = ReadString(data, ref offset);
+        var fromChainId = BinaryPrimitives.ReadUInt16LittleEndian(data.AsSpan(offset));
+        offset += 2;
+        var tokenAddress = ReadPublicKey(data, ref offset);
+        var t = 1;
+        amount.ToString().ShouldBe("1000000");
+        toAddress.ToString().ShouldBe("Gafb3zJwGYoL1cWyu7X1h3tENGdjTA4oCvB5j4eYt9Xd");
+        symbol.ShouldBe("USDC");
+        receiptId.ShouldBe("68908f6c835fe5ab20487ba53858067faa2192414853b089502c92ca14c8c418.1");
+        fromChainId.ToString("2");
+        tokenAddress.ToString().ShouldBe("B9iTpdYXAV3vtGnTqiKdkbbRgUD49rsSpDwXV5jv32c9");
     }
 
     [Fact]
@@ -930,5 +1082,28 @@ public class CrossChainTransferAppServiceTests : CrossChainServerApplicationTest
 
         var list = await _crossChainTransferRepository.GetListAsync();
         list.Count.ShouldBe(1);
+    }
+    
+    private string ReadString(byte[] data, ref int offset)
+    {
+        var length = BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(offset));
+        offset += 4;
+        var value = Encoding.UTF8.GetString(data, offset, length);
+        offset += length;
+        return value;
+    }
+
+    private PublicKey ReadPublicKey(byte[] data, ref int offset)
+    {
+        var pubkeyBytes = new byte[32];
+        Buffer.BlockCopy(data, offset, pubkeyBytes, 0, 32);
+        return new PublicKey(pubkeyBytes);
+    }
+    
+    private int ReadByte(byte[] data, ref int offset)
+    {
+        var bytes = new byte[1];
+        Buffer.BlockCopy(data, offset, bytes, 0, 1);
+        return (int)bytes[0];
     }
 }

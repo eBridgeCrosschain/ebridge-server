@@ -32,5 +32,9 @@ public static class CrossChainServerConsts
     public const int TonCoinTokenDecimal = 9;
     public const string TonCoinTokenSymbol = "TON";
 
-
+    public const string SolanaLockInstruction = "Lock";
+    public const string SolanaReleaseInstruction = "Release";
+    public const string SolanaDailyLimitChangedInstruction = "SetDailyLimitConfig";
+    public const string SolanaLimitConsumedInstruction = "ConsumeLimit";
+    public const string SolanaRateLimitChangedInstruction = "SetRateLimitConfig";
 }

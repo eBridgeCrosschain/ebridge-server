@@ -1,4 +1,5 @@
 using System;
+using AElf.CrossChainServer.Chains;
 
 namespace AElf.CrossChainServer.CrossChain;
 
@@ -9,4 +10,5 @@ public class ConsumeCrossChainDailyLimitInput
     public CrossChainLimitType Type { get; set; }
     public decimal Amount { get; set; }
     public Guid TokenId { get; set; }
+    public BlockchainType blockchainType { get; set; }
 }

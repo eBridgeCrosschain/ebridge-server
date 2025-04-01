@@ -1,4 +1,3 @@
-using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.TokenPool;
 using AElf.CrossChainServer.Worker.EvmIndexerSync;
 using AElf.CrossChainServer.Worker.IndexerSync;
@@ -21,6 +20,7 @@ namespace AElf.CrossChainServer.Worker
             Configure<BridgeContractSyncOptions>(configuration.GetSection("BridgeContractSync"));
             Configure<TonIndexSyncOptions>(configuration.GetSection("TonIndexSync"));
             Configure<EvmContractSyncOptions>(configuration.GetSection("EvmContractSync"));
+            Configure<SolanaIndexSyncOptions>(configuration.GetSection("SolanaIndexSync"));
                         
             context.Services.AddTransient<IBridgeContractSyncProvider, BridgeContractTransferSyncProvider>();
             context.Services.AddTransient<IBridgeContractSyncProvider, BridgeContractReceiveSyncProvider>();
@@ -45,6 +45,7 @@ namespace AElf.CrossChainServer.Worker
             context.AddBackgroundWorkerAsync<CheckReceiveWorker>();
             context.AddBackgroundWorkerAsync<TonIndexSyncWorker>();
             context.AddBackgroundWorkerAsync<EvmIndexerSyncWorker>();
+            context.AddBackgroundWorkerAsync<SolanaIndexSyncWorker>();
         }
     }
 }
