@@ -106,13 +106,13 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
                 {
                     switch (outMsg.Opcode)
                     {
-                        case CrossChainServerConsts.TonTransferredOpCode:
-                            await TransferAsync(chainId, tx.McBlockSeqno, DateTimeHelper.FromUnixTimeSeconds(tx.Now),
-                                outMsg, traceId, txId);
-                            break;
                         case CrossChainServerConsts.TonReceivedOpCode:
                             await ReceiveAsync(chainId, DateTimeHelper.FromUnixTimeSeconds(tx.Now), outMsg,
                                 txId);
+                            break;
+                        case CrossChainServerConsts.TonTransferredOpCode:
+                            await TransferAsync(chainId, tx.McBlockSeqno, DateTimeHelper.FromUnixTimeSeconds(tx.Now),
+                                outMsg, traceId, txId);
                             break;
                         case CrossChainServerConsts.TonDailyLimitChangedOpCode:
                             await SetDailyLimitAsync(chainId, tokenAddress, outMsg);
@@ -120,11 +120,8 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
                         case CrossChainServerConsts.TonRateLimitChangedOpCode:
                             await SetRateLimitAsync(chainId, tokenAddress, outMsg);
                             break;
-                        case CrossChainServerConsts.TonDailyLimitConsumedOpCode:
-                            await ConsumeDailyLimitAsync(chainId, tokenAddress, outMsg);
-                            break;
-                        case CrossChainServerConsts.TonRateLimitConsumedOpCode:
-                            await ConsumeRateLimitAsync(chainId, tokenAddress, outMsg);
+                        case CrossChainServerConsts.TonLimitConsumedOpCode:
+                            await ConsumeLimitAsync(chainId, tokenAddress, outMsg);
                             break;
                         default:
                             continue;
@@ -167,7 +164,7 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         var receipt = bodySlice.LoadRef();
         var receiptSlice = receipt.Parse();
         var keyHash = receiptSlice.LoadBytes(32).ToHex();
-        var index = receiptSlice.LoadInt(256);
+        var index = receiptSlice.LoadInt(64);
         var receiptId = $"{keyHash}.{index}";
 
         var token = await _tokenAppService.GetAsync(new GetTokenInput
@@ -202,10 +199,10 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         var body = Cell.From(outMessage.MessageContent.Body);
         var bodySlice = body.Parse();
         var eventId = bodySlice.LoadUInt(32);
-        var fromChainId = (int)bodySlice.LoadInt(32);
         var toAddress = bodySlice.LoadAddress();
         var tokenAddress = bodySlice.LoadAddress();
         var amount = bodySlice.LoadCoins().ToBigInt();
+        var fromChainId = (int)bodySlice.LoadInt(32);
         var receipt = bodySlice.LoadRef();
         var receiptSlice = receipt.Parse();
         var keyHash = receiptSlice.LoadBytes(32).ToHex();
@@ -262,9 +259,9 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         });
     }
 
-    private async Task ConsumeDailyLimitAsync(string chainId, string tokenAddress, TonMessageDto outMessage)
+    private async Task ConsumeLimitAsync(string chainId, string tokenAddress, TonMessageDto outMessage)
     {
-        Log.ForContext("chainId", chainId).Debug("Start to consume daily limit:{tokenAddress}", tokenAddress);
+        Log.ForContext("chainId", chainId).Debug("Start to consume limit:{tokenAddress}", tokenAddress);
         var body = Cell.From(outMessage.MessageContent.Body);
         var bodySlice = body.Parse();
         var eventId = bodySlice.LoadUInt(32);
@@ -279,6 +276,14 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
         });
 
         await _crossChainLimitAppService.ConsumeCrossChainDailyLimitAsync(new ConsumeCrossChainDailyLimitInput
+        {
+            ChainId = chainId,
+            Type = type,
+            TargetChainId = ChainHelper.ConvertChainIdToBase58(toChainId),
+            TokenId = token.Id,
+            Amount = (decimal)((BigDecimal)amount / BigInteger.Pow(10, token.Decimals))
+        });
+        await _crossChainLimitAppService.ConsumeCrossChainRateLimitAsync(new ConsumeCrossChainRateLimitInput
         {
             ChainId = chainId,
             Type = type,
@@ -345,4 +350,5 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
             Amount = (decimal)((BigDecimal)amount / BigInteger.Pow(10, token.Decimals))
         });
     }
+    
 }
