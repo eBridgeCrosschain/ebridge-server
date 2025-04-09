@@ -33,6 +33,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
     private readonly ITokenAppService _tokenAppService;
     private readonly AutoReceiveConfigOptions _autoReceiveConfigOptions;
     private readonly IUnitOfWorkManager _unitOfWorkManager;
+    private readonly TonConfigOption _tonConfigOption;
 
     private const int PageCount = 1000;
 
@@ -44,7 +45,8 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         ICheckTransferProvider checkTransferProvider,
         IEnumerable<ICrossChainTransferProvider> crossChainTransferProviders,
         IIndexerAppService indexerAppService, ITokenAppService tokenAppService,
-        IOptionsSnapshot<AutoReceiveConfigOptions> autoReceiveConfigOptions, IUnitOfWorkManager unitOfWorkManager)
+        IOptionsSnapshot<AutoReceiveConfigOptions> autoReceiveConfigOptions, IUnitOfWorkManager unitOfWorkManager,
+        IOptionsSnapshot<TonConfigOption> tonConfigOption)
     {
         _crossChainTransferRepository = crossChainTransferRepository;
         _chainAppService = chainAppService;
@@ -57,6 +59,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         _unitOfWorkManager = unitOfWorkManager;
         _autoReceiveConfigOptions = autoReceiveConfigOptions.Value;
         _crossChainTransferProviders = crossChainTransferProviders.ToList();
+        _tonConfigOption = tonConfigOption.Value;
     }
 
     public async Task<PagedResultDto<CrossChainTransferIndexDto>> GetListAsync(GetCrossChainTransfersInput input)
@@ -75,7 +78,6 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
 
         if (!input.FromAddress.IsNullOrWhiteSpace())
         {
-        
             var shouldFromQuery = new List<Func<QueryContainerDescriptor<CrossChainTransferIndex>, QueryContainer>>();
 
             if (!Base58CheckEncoding.Verify(input.FromAddress) &&
@@ -86,9 +88,10 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
 
             if (TonAddressHelper.IsTonFriendlyAddress(input.FromAddress))
             {
-                shouldFromQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(TonAddressHelper.GetTonRawAddress(input.FromAddress))));
+                shouldFromQuery.Add(q => q.Term(i =>
+                    i.Field(f => f.FromAddress).Value(TonAddressHelper.GetTonRawAddress(input.FromAddress))));
             }
-            
+
             shouldFromQuery.Add(q => q.Term(i => i.Field(f => f.FromAddress).Value(input.FromAddress)));
 
             mustQuery.Add(q => q.Bool(bb => bb
@@ -106,10 +109,13 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
             {
                 shouldToQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(input.ToAddress.ToLower())));
             }
+
             if (TonAddressHelper.IsTonFriendlyAddress(input.ToAddress))
             {
-                shouldToQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(TonAddressHelper.GetTonRawAddress(input.ToAddress))));
+                shouldToQuery.Add(q => q.Term(i =>
+                    i.Field(f => f.ToAddress).Value(TonAddressHelper.GetTonRawAddress(input.ToAddress))));
             }
+
             shouldToQuery.Add(q => q.Term(i => i.Field(f => f.ToAddress).Value(input.ToAddress)));
 
             mustQuery.Add(q => q.Bool(bb => bb
@@ -142,7 +148,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                         s => s.Term(i => i.Field(f => f.ToAddress).Value(rawAddress))
                     )));
                 }
-                
+
 
                 shouldAddressesQuery.Add(q => q.Bool(b => b.Should(
                     s => s.Term(i => i.Field(f => f.FromAddress).Value(address)),
@@ -172,10 +178,18 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
             skip: input.SkipCount, sortExp: o => o.TransferTime, sortType: SortOrder.Descending);
         var totalCount = await _crossChainTransferIndexRepository.CountAsync(Filter);
 
+        var items = ObjectMapper.Map<List<CrossChainTransferIndex>, List<CrossChainTransferIndexDto>>(list.Item2)
+            .Select(dto => {
+                dto.FromAddress = TonAddressHelper.ConvertRawAddressToFriendly(dto.FromAddress, _tonConfigOption.IsTestOnly,_tonConfigOption.IsBounceable);
+                dto.ToAddress = TonAddressHelper.ConvertRawAddressToFriendly(dto.ToAddress, _tonConfigOption.IsTestOnly,_tonConfigOption.IsBounceable);
+                return dto;
+            })
+            .ToList();
+
         return new PagedResultDto<CrossChainTransferIndexDto>
         {
             TotalCount = totalCount.Count,
-            Items = ObjectMapper.Map<List<CrossChainTransferIndex>, List<CrossChainTransferIndexDto>>(list.Item2)
+            Items = items
         };
     }
 
@@ -635,8 +649,10 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                 var chain = await _chainAppService.GetAsync(transfer.ToChainId);
                 var crossChainTransferInfo =
                     await _indexerAppService.GetPendingTransactionAsync(
-                        ChainHelper.ConvertChainIdToBase58(chain.AElfChainId), 
-                        string.IsNullOrWhiteSpace(transfer.InlineTransferTransactionId) ? transfer.TransferTransactionId : transfer.InlineTransferTransactionId);
+                        ChainHelper.ConvertChainIdToBase58(chain.AElfChainId),
+                        string.IsNullOrWhiteSpace(transfer.InlineTransferTransactionId)
+                            ? transfer.TransferTransactionId
+                            : transfer.InlineTransferTransactionId);
                 if (crossChainTransferInfo == null)
                 {
                     Logger.LogInformation("Transaction not exist. TransferTransactionId:{id}",

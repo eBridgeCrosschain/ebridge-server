@@ -54,11 +54,7 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
             .ForMember(destination => destination.ReceiveTime,
                 opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.ReceiveTime)))
             .ForMember(destination => destination.ProgressUpdateTime,
-                opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.ProgressUpdateTime)))
-            .ForMember(destination => destination.FromAddress, opt => opt.MapFrom(source =>
-                TonAddressHelper.ConvertRawAddressToFriendly(source.FromAddress)))
-            .ForMember(destination => destination.ToAddress, opt => opt.MapFrom(source =>
-                TonAddressHelper.ConvertRawAddressToFriendly(source.ToAddress)));
+                opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.ProgressUpdateTime)));
         CreateMap<CrossChainTransferIndex, CrossChainTransferStatusDto>();
         CreateMap<CrossChainTransferEto, AddCrossChainTransferIndexInput>();
         CreateMap<CrossChainTransferEto, UpdateCrossChainTransferIndexInput>();
