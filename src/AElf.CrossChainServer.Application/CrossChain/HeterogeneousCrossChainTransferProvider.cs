@@ -62,51 +62,15 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
         {
             return 0;
         }
-        // other chain -> aelf
-        if (chain.Type == BlockchainType.AElf)
+        Log.Debug("Calculate cross chain progress {txId}",transfer.TransferTransactionId);
+        return await _aetherLinkProvider.CalculateCrossChainProgressAsync(new AetherLinkCrossChainStatusInput
         {
-            if (fromChain.Type == BlockchainType.Tvm)
-            {
-                Log.Debug("Calculate cross chain progress from ton to aelf.{traceId}",transfer.TraceId);
-                return await _aetherLinkProvider.CalculateCrossChainProgressAsync(new AetherLinkCrossChainStatusInput
-                {
-                    // SourceChainId = fromChain.AElfChainId,
-                    TraceId = transfer.TraceId
-                });
-            }
-            return await _oracleQueryInfoAppService.CalculateCrossChainProgressAsync(transfer.ToChainId,transfer.ReceiptId);
-        }
-        // aelf -> ton
-        if (chain.Type == BlockchainType.Tvm)
-        {
-            Log.Debug("Calculate cross chain progress from aelf to ton.{txId}",transfer.TransferTransactionId);
-            return await _aetherLinkProvider.CalculateCrossChainProgressAsync(new AetherLinkCrossChainStatusInput
-            {
-                // SourceChainId = fromChain.AElfChainId,
-                TransactionId = transfer.TransferTransactionId
-            });
-        }
-        // aelf ->ethereum
-        return await _reportInfoAppService.CalculateCrossChainProgressAsync(transfer.FromChainId, transfer.ReceiptId);
+            TransactionId = transfer.TransferTransactionId
+        });
     }
-    
-    // [ExceptionHandler(typeof(Exception),typeof(InvalidOperationException),typeof(WebException), Message = "Send receive transaction failed.", 
-    //     ReturnDefault = ReturnDefault.Default, LogTargets = ["transfer"])]
-    public virtual async Task<string> SendReceiveTransactionAsync(CrossChainTransfer transfer)
+
+    public Task<string> SendReceiveTransactionAsync(CrossChainTransfer transfer)
     {
-        var transferToken = await _tokenRepository.GetAsync(transfer.TransferTokenId);
-        var symbol =
-            _tokenSymbolMappingProvider.GetMappingSymbol(transfer.FromChainId, transfer.ToChainId,
-                transferToken.Symbol);
-        var swapId = await _bridgeContractAppService.GetSwapIdByTokenAsync(transfer.ToChainId, transfer.FromChainId,
-            symbol);
-        if (string.IsNullOrEmpty(swapId))
-        {
-            return "";
-        }
-        var amount = (new BigDecimal(transfer.TransferAmount)) * BigInteger.Pow(10, transferToken.Decimals);
-        return await _bridgeContractAppService.SwapTokenAsync(transfer.ToChainId, swapId, transfer.ReceiptId,
-            amount.ToString(),
-            transfer.ToAddress);
+        throw new NotImplementedException();
     }
 }

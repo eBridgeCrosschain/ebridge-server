@@ -4,7 +4,9 @@ using System.Threading.Tasks;
 using AElf.Client.Dto;
 using AElf.CrossChainServer.Tokens;
 using Microsoft.Extensions.Options;
+using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.BlockchainProcessing.BlockStorage.Entities.Mapping;
+using Nethereum.Contracts;
 using Nethereum.Contracts.Standards.ERC20.ContractDefinition;
 using Nethereum.RPC.Eth.DTOs;
 using Serilog;
@@ -101,6 +103,52 @@ namespace AElf.CrossChainServer.Chains
             {
                 Logs = logs
             };
+        }
+
+        public async Task<FilterLogsAndEventsDto<TEventDTO>> GetContractLogsAndParseAsync<TEventDTO>(string chainId, string contractAddress, long startHeight,
+            long endHeight,string logSignature) where TEventDTO : IEventDTO, new()
+        {
+            Log.Debug("Get contract logs from {startHeight} to {endHeight}", startHeight, endHeight);
+            var client = BlockchainClientFactory.GetClient(chainId);
+            var filterLogs = await client.Eth.Filters.GetLogs.SendRequestAsync(new NewFilterInput
+            {
+                Address = [contractAddress],
+                FromBlock = new BlockParameter((ulong)startHeight),
+                ToBlock = new BlockParameter((ulong)endHeight)
+            });
+            var result = new FilterLogsAndEventsDto<TEventDTO>
+            {
+                Events = []
+            };
+            foreach (var filterLog in filterLogs)
+            {
+                if (filterLog.Topics[0]?.ToString()?.Substring(2) != logSignature)
+                {
+                    continue;
+                }
+
+                var eventDto = Event<TEventDTO>.DecodeEvent(filterLog);
+                // handle eventDto
+                result.Events.Add(new EventLogs<TEventDTO>
+                {
+                    Event = eventDto.Event,
+                    Log = new FilterLog
+                    {
+                        Address = eventDto.Log.Address,
+                        BlockHash = eventDto.Log.BlockHash,
+                        BlockNumber = eventDto.Log.BlockNumber.ToLong(),
+                        Data = eventDto.Log.Data,
+                        LogIndex = eventDto.Log.LogIndex.ToLong(),
+                        Topics = eventDto.Log.Topics,
+                        TransactionHash = eventDto.Log.TransactionHash,
+                        TransactionIndex = eventDto.Log.TransactionIndex.ToLong(),
+                        Type = eventDto.Log.Type,
+                        Removed = eventDto.Log.Removed
+                    }
+                });
+            }
+
+            return result;
         }
     }
 }

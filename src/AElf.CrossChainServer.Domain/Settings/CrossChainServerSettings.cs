@@ -14,4 +14,7 @@ public static class CrossChainServerSettings
     public const string EvmPoolLiquidityIndexerSync = Prefix + ".EvmIndexerSync.PoolLiquidity";
     public const string EvmUserLiquidityIndexerSync = Prefix + ".EvmIndexerSync.UserLiquidity";
     public const string TonIndexTransactionSync = Prefix + ".TonIndex.Transaction";
+    public const string EvmNewReceiptIndexerSync = Prefix + ".EvmIndexerSync.NewReceipt";
+    public const string EvmTokenSwappedIndexerSync = Prefix + ".EvmIndexerSync.TokenSwapped";
+
 }

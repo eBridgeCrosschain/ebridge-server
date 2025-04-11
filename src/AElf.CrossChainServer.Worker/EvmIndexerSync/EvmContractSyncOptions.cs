@@ -14,4 +14,6 @@ public class EvmContractSyncOptions
 public class Contract
 {
     public string TokenPoolContract { get; set; }
+    public string BridgeInContract { get; set; } = "";
+    public string BridgeOutContract { get; set; } = "";
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Text.Json;
 using System.Threading.Tasks;
 using AElf.Client.Dto;
 using AElf.Client.Service;
@@ -102,6 +103,7 @@ public class AElfBridgeContractProvider : AElfClientProvider, IBridgeContractPro
             OriginAmount = originAmount,
             ReceiverAddress = Address.FromBase58(receiverAddress)
         };
+        Log.Information("Swap token pram: {param}", JsonSerializer.Serialize(param));
         var fromAddress = client.GetAddressFromPrivateKey(privateKey);
         var transaction = await client.GenerateTransactionAsync(fromAddress, contractAddress, "SwapToken", param);
         var txWithSign = client.SignTransaction(privateKey, transaction);

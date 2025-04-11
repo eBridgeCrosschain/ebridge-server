@@ -9,7 +9,6 @@ namespace AElf.CrossChainServer.Worker;
 public class CheckReceiveWorker : AsyncPeriodicBackgroundWorkerBase
 {
     private readonly ICrossChainTransferAppService _crossChainTransferAppService;
-
     public CheckReceiveWorker(AbpAsyncTimer timer, IServiceScopeFactory serviceScopeFactory,
         ICrossChainTransferAppService crossChainTransferAppService) : base(timer,
         serviceScopeFactory)

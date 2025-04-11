@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using AElf.Client.Dto;
 using AElf.CrossChainServer.Tokens;
+using Nethereum.ABI.FunctionEncoding.Attributes;
 
 namespace AElf.CrossChainServer.Chains
 {
@@ -14,5 +16,9 @@ namespace AElf.CrossChainServer.Chains
         Task<TransactionResultDto> GetTransactionResultAsync(string chainId, string transactionId);
         Task<MerklePathDto> GetMerklePathAsync(string chainId, string txId);
         Task<FilterLogsDto> GetContractLogsAsync(string chainId, string contractAddress, long startHeight, long endHeight);
+
+        Task<FilterLogsAndEventsDto<TEventDTO>> GetContractLogsAndParseAsync<TEventDTO>(string chainId, string contractAddress,
+            long startHeight,
+            long endHeight, string logSignature) where TEventDTO : IEventDTO, new();
     }
 }

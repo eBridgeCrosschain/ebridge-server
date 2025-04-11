@@ -483,7 +483,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         var q = await _crossChainTransferRepository.GetQueryableAsync();
         var crossChainTransfers = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Status == CrossChainStatus.Transferred &&
-                        o.ProgressUpdateTime > DateTime.UtcNow.AddDays(-3))
+                        o.ProgressUpdateTime > DateTime.UtcNow.AddDays(-1))
             .OrderBy(o => o.ProgressUpdateTime)
             .Skip(PageCount * page)
             .Take(PageCount));
@@ -549,7 +549,8 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         var q = await _crossChainTransferRepository.GetQueryableAsync();
         var crossChainTransfers = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Status == CrossChainStatus.Indexed &&
-                        o.Progress == CrossChainServerConsts.FullOfTheProgress && o.ReceiveTransactionId != null)
+                        o.Progress == CrossChainServerConsts.FullOfTheProgress && o.ReceiveTransactionId != null &&
+                        o.Type == CrossChainType.Homogeneous)
             .OrderBy(o => o.ProgressUpdateTime)
             .Skip(PageCount * page)
             .Take(PageCount));
@@ -571,7 +572,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                         "AutoReceive.TransferTransactionId:{id}", transfer.TransferTransactionId);
                 var toChain = await _chainAppService.GetAsync(transfer.ToChainId);
                 var fromChain = await _chainAppService.GetAsync(transfer.FromChainId);
-                if (toChain == null || toChain.Type != BlockchainType.AElf || fromChain.Type == BlockchainType.Tvm)
+                if (toChain == null || toChain.Type != BlockchainType.AElf)
                 {
                     continue;
                 }
@@ -590,20 +591,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                     toUpdate.Add(transfer);
                     continue;
                 }
-
-                // Heterogeneous:check limit.
-                if (transfer.Type == CrossChainType.Heterogeneous &&
-                    !await _checkTransferProvider.CheckTransferAsync(
-                        transfer.FromChainId,
-                        transfer.ToChainId, transfer.TransferTokenId, transfer.TransferAmount))
-                {
-                    Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId)
-                        .Warning(
-                            "Incorrect chain or check limit failed, from chain:{fromChainId}, to chain:{toChainId}, Id: {transferId}, transfer amount:{amount}",
-                            transfer.FromChainId, transfer.ToChainId, transfer.Id, transfer.TransferAmount);
-                    continue;
-                }
-
+                
                 var provider = GetCrossChainTransferProvider(transfer.Type);
                 var txId = await provider.SendReceiveTransactionAsync(transfer);
                 if (string.IsNullOrWhiteSpace(txId))
@@ -712,7 +700,8 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         var q = await _crossChainTransferRepository.GetQueryableAsync();
         var crossChainTransfers = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Progress == CrossChainServerConsts.FullOfTheProgress && o.ReceiveTransactionId == null &&
-                        o.ReceiveTransactionAttemptTimes < _autoReceiveConfigOptions.ReceiveRetryTimes)
+                        o.ReceiveTransactionAttemptTimes < _autoReceiveConfigOptions.ReceiveRetryTimes &&
+                        o.Type == CrossChainType.Homogeneous)
             .OrderBy(o => o.ProgressUpdateTime)
             .Skip(PageCount * page)
             .Take(PageCount));
