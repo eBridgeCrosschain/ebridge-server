@@ -65,9 +65,30 @@ namespace AElf.CrossChainServer.Chains
             };
         }
 
-        public Task<TransactionResultDto> GetTransactionResultAsync(string chainId, string transactionId)
+        public async Task<TransactionResultDto> GetTransactionResultAsync(string chainId, string transactionId)
         {
-            throw new NotImplementedException();
+            var client = BlockchainClientFactory.GetClient(chainId);
+            try
+            {
+                var transaction = await client.Eth.Transactions.GetTransactionReceipt.SendRequestAsync(transactionId);
+                if (transaction == null)
+                {
+                    return null;
+                }
+                return new TransactionResultDto
+                {
+                    ChainId = chainId,
+                    IsMined = transaction.Status.Value == 1,
+                    IsFailed = transaction.Status.Value == 0,
+                    BlockHash = transaction.BlockHash,
+                    BlockHeight = transaction.BlockNumber.ToLong(),
+                };
+            }
+            catch (Exception e)
+            {
+                Log.Error("Error getting transaction result: {error}", e.Message);
+                return new TransactionResultDto();
+            }
         }
 
         public Task<MerklePathDto> GetMerklePathAsync(string chainId, string txId)

@@ -29,7 +29,7 @@ public class PoolLiquidityIndexerSyncProvider : IndexerSyncProviderBase
         _tokenAppService = tokenAppService;
         _evmContractSyncOptions = evmContractSyncOptions.Value;
     }
-    public override bool IsConfirmEnabled { get; set; } = false;
+    public override bool RequiresRealTime { get; set; } = false;
     protected override string SyncType { get; } = CrossChainServerSettings.PoolLiquidityIndexerSync;
 
     protected override async Task<long> HandleDataAsync(string aelfChainId, long startHeight, long endHeight)

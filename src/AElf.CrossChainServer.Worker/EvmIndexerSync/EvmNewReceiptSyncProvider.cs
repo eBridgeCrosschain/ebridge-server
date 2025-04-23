@@ -32,7 +32,7 @@ public class EvmNewReceiptSyncProvider(
         Log.ForContext("chainId", chainId).Debug(
             "Start to sync new receipt info {chainId} from {StartHeight} to {EndHeight}",
             chainId, startHeight, endHeight);
-        var bridgeInContract = _evmContractSyncOptions.ContractAddresses[chainId].BridgeInContract;
+        var bridgeInContract = _evmContractSyncOptions.IndexerInfos[chainId].BridgeInContract;
         var filterLogsAndEventsDto = await GetContractLogsAndParseAsync<NewReceiptEvent>(chainId, bridgeInContract,
             startHeight,
             endHeight, NewReceiptEventSignature);
@@ -73,7 +73,8 @@ public class EvmNewReceiptSyncProvider(
                 FromChainId = chainId,
                 ToChainId = events.TargetChainId,
                 TransferBlockHeight = log.BlockNumber,
-                TransferTokenId = token.Id
+                TransferTokenId = token.Id,
+                TransferStatus = ReceiptStatus.Pending
             });
         }
     }

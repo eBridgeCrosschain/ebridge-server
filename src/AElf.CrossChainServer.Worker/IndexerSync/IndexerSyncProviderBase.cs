@@ -25,13 +25,13 @@ public abstract class IndexerSyncProviderBase : IIndexerSyncProvider, ITransient
     protected IndexerSyncProviderBase(IGraphQLClientFactory graphQlClientFactory, ISettingManager settingManager,
         IJsonSerializer jsonSerializer, IIndexerAppService indexerAppService, IChainAppService chainAppService)
     {
-        GraphQlClient = graphQlClientFactory.GetClient(GraphQLClientEnum.CrossChainServerClient);
+        GraphQlClient = graphQlClientFactory.GetClient(GraphQLClientEnum.CrossChainClient);
         SettingManager = settingManager;
         JsonSerializer = jsonSerializer;
         IndexerAppService = indexerAppService;
         ChainAppService = chainAppService;
     }
-    public virtual bool IsConfirmEnabled { get; set; } = true;
+    public virtual bool RequiresRealTime { get; set; } = true;
     
     public async Task ExecuteAsync(string chainId, int syncDelayHeight = 0, string typePrefix = null)
     {

@@ -176,8 +176,19 @@ public class BridgeContractAppService : CrossChainServerAppService, IBridgeContr
         {
             return new DailyLimitDto();
         }
-        return await provider.GetDailyLimitAsync(chainId,
+        return await provider.GetReceiptDailyLimitAsync(chainId,
             _bridgeContractOptions.ContractAddresses[chainId].LimiterContract, tokenId, targetChainId);
+    }
+    
+    public async Task<DailyLimitDto> GetSwapDailyLimitAsync(string chainId, string swapId)
+    {
+        var provider = await _bridgeContractProviderFactory.GetBridgeContractProviderAsync(chainId);
+        if (provider == null)
+        {
+            return new DailyLimitDto();
+        }
+        return await provider.GetSwapDailyLimitAsync(chainId,
+            _bridgeContractOptions.ContractAddresses[chainId].LimiterContract, swapId);
     }
 
     public async Task<List<TokenBucketDto>> GetCurrentReceiptTokenBucketStatesAsync(string chainId, List<Guid> tokenIds,

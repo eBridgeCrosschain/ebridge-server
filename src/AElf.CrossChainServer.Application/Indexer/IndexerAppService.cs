@@ -30,7 +30,7 @@ public class IndexerAppService : CrossChainServerAppService, IIndexerAppService
         IHttpProvider httpProvider,
         IOptionsSnapshot<SyncStateServiceOption> syncStateServiceOption)
     {
-        _graphQlClient = graphQlClientFactory.GetClient(GraphQLClientEnum.CrossChainServerClient);
+        _graphQlClient = graphQlClientFactory.GetClient(GraphQLClientEnum.CrossChainClient);
         _chainAppService = chainAppService;
         _httpProvider = httpProvider;
         _syncStateServiceOption = syncStateServiceOption.Value;
@@ -56,7 +56,7 @@ public class IndexerAppService : CrossChainServerAppService, IIndexerAppService
         return blockHeight ?? 0;
     }
 
-    public async Task<CrossChainTransferInfoDto> GetPendingTransactionAsync(string chainId,
+    public async Task<(bool, CrossChainTransferInfoDto)> GetPendingTransactionAsync(string chainId,
         string transferTransactionId)
     {
         var data = await QueryDataAsync<GraphQLResponse<CrossChainTransferInfoDto>>(GetRequest(chainId,
@@ -66,15 +66,53 @@ public class IndexerAppService : CrossChainServerAppService, IIndexerAppService
             Logger.LogInformation(
                 "Get pending transaction failed. chainId: {chainId}, transferTransactionId: {transferTransactionId}",
                 chainId, transferTransactionId);
-            return null;
+            return (false, null);
         }
 
         Log.ForContext("chainId", chainId).Information(
             "Get pending transaction success. chainId: {chainId}, transferTransactionId: {transferTransactionId}, data: {data}",
             chainId, transferTransactionId, JsonConvert.SerializeObject(data.Data));
-        return data.Data;
+        return (true, data.Data);
     }
-    
+
+    public async Task<(bool, CrossChainTransferInfoDto)> GetPendingReceiveTransactionAsync(string chainId,
+        string receiveTransactionId)
+    {
+        var data = await QueryDataAsync<GraphQLResponse<CrossChainTransferInfoDto>>(GetPendingReceiveTransactionRequest(
+            chainId,
+            receiveTransactionId));
+        if (data == null)
+        {
+            Log.Debug(
+                "Get pending receive transaction failed. chainId: {chainId}, receiveTransactionId: {receiveTransactionId}",
+                chainId, receiveTransactionId);
+            return (false, null);
+
+        }
+
+        Log.ForContext("chainId", chainId).Information(
+            "Get pending receive transaction success. chainId: {chainId}, receiveTransactionId: {receiveTransactionId}, data: {data}",
+            chainId, receiveTransactionId, JsonConvert.SerializeObject(data.Data));
+        return (true, data.Data);
+    }
+
+    public async Task<(bool, CrossChainTransferInfoDto)> GetPendingReceiptAsync(string chainId, string receiptId)
+    {
+        var data = await QueryDataAsync<GraphQLResponse<CrossChainTransferInfoDto>>(GetPendingReceiptRequest(chainId,
+            receiptId));
+        if (data == null)
+        {
+            Log.Debug("Get pending receipt failed. chainId: {chainId}, receiptId: {receiptId}",
+                chainId, receiptId);
+            return (false, null);
+        }
+
+        Log.ForContext("chainId", chainId).Information(
+            "Get pending receipt success. chainId: {chainId}, receiptId: {receiptId}, data: {data}",
+            chainId, receiptId, JsonConvert.SerializeObject(data.Data));
+        return (true, data.Data);
+    }
+
     private GraphQLRequest GetRequest(string chainId, string transactionId)
     {
         return new GraphQLRequest
@@ -109,13 +147,107 @@ public class IndexerAppService : CrossChainServerAppService, IIndexerAppService
                     receiveAmount,
                     receiveTime,
                     receiveTransactionId,
-                    receiptId
+                    receiptId,
+                    receiveBlockHeight
             }
         }",
             Variables = new
             {
                 chainId = chainId,
                 transactionId = transactionId
+            }
+        };
+    }
+
+    private GraphQLRequest GetPendingReceiveTransactionRequest(string chainId, string transactionId)
+    {
+        return new GraphQLRequest
+        {
+            Query =
+                @"query(
+                    $chainId:String,
+                    $transactionId:String
+                ) {
+                    data:homogeneousCrossChainReceiveInfo(
+                        input: {
+                            chainId:$chainId,
+                            transactionId:$transactionId
+                        }
+                    ){
+                    id,
+                    chainId,
+                    blockHash,
+                    blockHeight,
+                    blockTime,
+                    crossChainType,
+                    transferType,
+                    fromChainId,
+                    toChainId,
+                    transferTokenSymbol,
+                    transferAmount,
+                    transferTime,
+                    transferTransactionId,
+                    fromAddress,
+                    toAddress,
+                    receiveTokenSymbol,
+                    receiveAmount,
+                    receiveTime,
+                    receiveTransactionId,
+                    receiptId,
+                    receiveBlockHeight
+            }
+        }",
+            Variables = new
+            {
+                chainId = chainId,
+                transactionId = transactionId
+            }
+        };
+    }
+
+
+    private GraphQLRequest GetPendingReceiptRequest(string chainId, string receiptId)
+    {
+        return new GraphQLRequest
+        {
+            Query =
+                @"query(
+                    $chainId:String,
+                    $receiptId:String
+                ) {
+                    data:queryCrossChainTransferInfoByReceiptId(
+                        input: {
+                            chainId:$chainId,
+                            receiptId:$receiptId
+                        }
+                    ){
+                    id,
+                    chainId,
+                    blockHash,
+                    blockHeight,
+                    blockTime,
+                    crossChainType,
+                    transferType,
+                    fromChainId,
+                    toChainId,
+                    transferTokenSymbol,
+                    transferAmount,
+                    transferTime,
+                    transferTransactionId,
+                    fromAddress,
+                    toAddress,
+                    receiveTokenSymbol,
+                    receiveAmount,
+                    receiveTime,
+                    receiveTransactionId,
+                    receiptId,
+                    receiveBlockHeight
+            }
+        }",
+            Variables = new
+            {
+                chainId = chainId,
+                receiptId = receiptId
             }
         };
     }

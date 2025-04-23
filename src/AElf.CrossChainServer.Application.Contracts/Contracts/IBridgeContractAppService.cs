@@ -22,6 +22,7 @@ public interface IBridgeContractAppService
         string receiverAddress);
 
     Task<DailyLimitDto> GetDailyLimitAsync(string chainId, Guid tokenId, string targetChainId);
+    Task<DailyLimitDto> GetSwapDailyLimitAsync(string chainId, string swapId);
 
     Task<List<TokenBucketDto>> GetCurrentReceiptTokenBucketStatesAsync(string chainId, List<Guid> tokenIds, List<string> targetChainIds);
     Task<List<TokenBucketDto>> GetCurrentSwapTokenBucketStatesAsync(string chainId, List<Guid> tokenIds, List<string> fromChainIds);

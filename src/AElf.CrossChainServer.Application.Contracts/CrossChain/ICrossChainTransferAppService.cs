@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
 
@@ -12,7 +13,12 @@ public interface ICrossChainTransferAppService
     Task UpdateProgressAsync();
     Task AddIndexAsync(AddCrossChainTransferIndexInput input);
     Task UpdateIndexAsync(UpdateCrossChainTransferIndexInput input);
+    Task DeleteIndexAsync(Guid id);
     Task UpdateReceiveTransactionAsync();
     Task AutoReceiveAsync();
     Task CheckReceiveTransactionAsync();
+    Task CheckTransferTransactionConfirmedAsync(string chainId);
+    Task CheckReceiveTransactionConfirmedAsync(string chainId);
+    Task CheckEvmTransferTransactionConfirmedAsync(string chainId);
+    Task CheckEvmReceiveTransactionConfirmedAsync(string chainId);
 }

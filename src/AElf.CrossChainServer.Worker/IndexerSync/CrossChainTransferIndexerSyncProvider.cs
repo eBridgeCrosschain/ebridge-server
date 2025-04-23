@@ -94,7 +94,8 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
                     TransferBlockHeight = transfer.BlockHeight,
                     TransferTime = transfer.TransferTime,
                     TransferTransactionId = transfer.TransferTransactionId,
-                    ReceiptId = transfer.ReceiptId
+                    ReceiptId = transfer.ReceiptId,
+                    TransferStatus = ReceiptStatus.Pending
                 });
                 break;
             case TransferType.Receive:
@@ -125,7 +126,8 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
                     ReceiveTokenId = receiveToken.Id,
                     FromAddress = transfer.FromAddress,
                     ToAddress = transfer.ToAddress,
-                    ReceiptId = transfer.ReceiptId
+                    ReceiptId = transfer.ReceiptId,
+                    ReceiveStatus = ReceiptStatus.Pending
                 });
                 break;
         }

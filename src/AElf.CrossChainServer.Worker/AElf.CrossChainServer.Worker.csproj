@@ -7,6 +7,7 @@
     <ItemGroup>
       <ProjectReference Include="..\AElf.CrossChainServer.Application.Contracts\AElf.CrossChainServer.Application.Contracts.csproj" />
       <ProjectReference Include="..\AElf.CrossChainServer.Domain\AElf.CrossChainServer.Domain.csproj" />
+      <ProjectReference Include="..\AElf.CrossChainServer.EvmIndexer\AElf.CrossChainServer.EvmIndexer.csproj" />
     </ItemGroup>
 
     <ItemGroup>

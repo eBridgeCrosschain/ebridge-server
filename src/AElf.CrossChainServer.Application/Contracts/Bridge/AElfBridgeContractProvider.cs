@@ -116,8 +116,13 @@ public class AElfBridgeContractProvider : AElfClientProvider, IBridgeContractPro
         return result.TransactionId;
     }
 
-    public Task<DailyLimitDto> GetDailyLimitAsync(string chainId, string contractAddress, Guid tokenId,
+    public Task<DailyLimitDto> GetReceiptDailyLimitAsync(string chainId, string contractAddress, Guid tokenId,
         string targetChainId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<DailyLimitDto> GetSwapDailyLimitAsync(string chainId, string contractAddress, string swapId)
     {
         throw new NotImplementedException();
     }

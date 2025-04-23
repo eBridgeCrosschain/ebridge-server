@@ -70,6 +70,7 @@ public class CrossChainServerApplicationModule : AbpModule
         Configure<LarkNotifyTemplateOptions>(configuration.GetSection("LarkNotifyTemplate"));
         Configure<ChainIdMapOptions>(configuration.GetSection("ChainIdMap"));
         Configure<TonConfigOption>(configuration.GetSection("TonConfig"));
+        Configure<LimitSyncOptions>(configuration.GetSection("LimitSync"));
         
         context.Services.AddSingleton<IBlockchainClientFactory<AElfClient>, AElfClientFactory>();
         context.Services.AddSingleton<IBlockchainClientFactory<Nethereum.Web3.Web3>, EvmClientFactory>();

@@ -32,7 +32,7 @@ public class EvmTokenSwapSyncProvider(
         Log.ForContext("chainId", chainId).Debug(
             "Start to sync token swap info {chainId} from {StartHeight} to {EndHeight}",
             chainId, startHeight, endHeight);
-        var bridgeOutContract = _evmContractSyncOptions.ContractAddresses[chainId].BridgeOutContract;
+        var bridgeOutContract = _evmContractSyncOptions.IndexerInfos[chainId].BridgeOutContract;
         var filterLogsAndEventsDto = await GetContractLogsAndParseAsync<TokenSwappedEvent>(chainId, bridgeOutContract,
             startHeight,
             endHeight, TokenSwappedEventSignature);
@@ -73,6 +73,8 @@ public class EvmTokenSwapSyncProvider(
                 ReceiveAmount = (decimal)((BigDecimal)events.Amount / BigInteger.Pow(10, token.Decimals)),
                 ReceiveTime = DateTimeHelper.FromUnixTimeMilliseconds((long)events.BlockTime * 1000),
                 ReceiveTokenId = token.Id,
+                ReceiveStatus = ReceiptStatus.Pending,
+                ReceiveBlockHeight = log.BlockNumber
             });
         }
     }

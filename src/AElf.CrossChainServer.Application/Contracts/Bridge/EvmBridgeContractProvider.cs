@@ -196,7 +196,7 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
         throw new NotImplementedException();
     }
 
-    public async Task<DailyLimitDto> GetDailyLimitAsync(string chainId, string contractAddress, Guid tokenId,
+    public async Task<DailyLimitDto> GetReceiptDailyLimitAsync(string chainId, string contractAddress, Guid tokenId,
         string targetChainId)
     {
         var token = await _tokenAppService.GetAsync(tokenId);
@@ -218,6 +218,31 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
                     (decimal)((BigDecimal)receiptDailyLimit.DailyLimit / BigInteger.Pow(10, token.Decimals)),
                 CurrentDailyLimit = (decimal)((BigDecimal)receiptDailyLimit.CurrentTokenAmount /
                                               BigInteger.Pow(10, token.Decimals))
+            };
+        }
+
+        return new DailyLimitDto();
+    }
+    
+    public async Task<DailyLimitDto> GetSwapDailyLimitAsync(string chainId, string contractAddress, string swapId)
+    {
+        var web3 = BlockchainClientFactory.GetClient(chainId);
+        var contractHandler = web3.Eth.GetContractHandler(contractAddress);
+        var swapDailyLimit = await contractHandler
+            .QueryDeserializingToObjectAsync<GetSwapDailyLimitFunctionMessage, SwapDailyLimitDto>(
+                new GetSwapDailyLimitFunctionMessage
+                {
+                    SwapId = ByteStringHelper.FromHexString(swapId).ToByteArray()
+                });
+        if (swapDailyLimit != null && swapDailyLimit.DailyLimit > 0)
+        {
+            return new DailyLimitDto
+            {
+                RefreshTime = swapDailyLimit.RefreshTime,
+                DefaultDailyLimit =
+                    (decimal)((BigDecimal)swapDailyLimit.DailyLimit / BigInteger.Pow(10, 18)),
+                CurrentDailyLimit = (decimal)((BigDecimal)swapDailyLimit.CurrentTokenAmount /
+                                              BigInteger.Pow(10, 18))
             };
         }
 
@@ -251,7 +276,7 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
                     TargetChainId = targetChainIds
                 });
         var tokenBuckets = receiptTokenBucket.TokenBuckets.Select((t, i) =>
-            GetTokenBuckets(t.TokenCapacity, t.Rate, tokenDecimals[i])).ToList();
+            GetTokenBuckets(t.TokenCapacity, t.Rate,t.IsEnabled,t.LastUpdatedTime,t.CurrentTokenAmount, tokenDecimals[i])).ToList();
         return tokenBuckets;
     }
 
@@ -281,7 +306,7 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
                     FromChainId = fromChainIds
                 });
         var tokenBuckets = swapTokenBucket.SwapTokenBuckets.Select((t, i) =>
-            GetTokenBuckets(t.TokenCapacity, t.Rate, tokenDecimals[i])).ToList();
+            GetTokenBuckets(t.TokenCapacity, t.Rate,t.IsEnabled,t.LastUpdatedTime,t.CurrentTokenAmount, tokenDecimals[i])).ToList();
         return tokenBuckets;
     }
 
@@ -308,7 +333,7 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
         return result;
     }
 
-    private TokenBucketDto GetTokenBuckets(BigInteger capacity, BigInteger rate, int tokenDecimal)
+    private TokenBucketDto GetTokenBuckets(BigInteger capacity, BigInteger rate, bool isEnabled,long lastUpdatedTime, BigInteger currentTokenAmount,int tokenDecimal)
     {
         if (capacity == 0 || rate == 0)
         {
@@ -317,13 +342,17 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
 
         var tokenCapacity = (decimal)(new BigDecimal(capacity) / BigInteger.Pow(10, tokenDecimal));
         var refillRate = (decimal)(new BigDecimal(rate) / BigInteger.Pow(10, tokenDecimal));
+        var currentAmount = (decimal)(new BigDecimal(currentTokenAmount) / BigInteger.Pow(10, tokenDecimal));
         var maximumTimeConsumed =
             (int)Math.Ceiling(tokenCapacity / refillRate / CrossChainServerConsts.DefaultRateLimitSeconds);
         return new TokenBucketDto
         {
             Capacity = tokenCapacity,
             RefillRate = refillRate,
-            MaximumTimeConsumed = maximumTimeConsumed
+            MaximumTimeConsumed = maximumTimeConsumed,
+            CurrentTokenAmount = currentAmount,
+            IsEnabled = isEnabled,
+            LastUpdatedTime = lastUpdatedTime
         };
     }
 }

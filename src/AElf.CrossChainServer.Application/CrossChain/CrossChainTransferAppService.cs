@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.Tokens;
+using AElf.CSharp.Core;
 using AElf.ExceptionHandler;
 using AElf.Indexing.Elasticsearch;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +35,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
     private readonly AutoReceiveConfigOptions _autoReceiveConfigOptions;
     private readonly IUnitOfWorkManager _unitOfWorkManager;
     private readonly TonConfigOption _tonConfigOption;
+    private readonly SyncStateServiceOption _syncStateServiceOption;
 
     private const int PageCount = 1000;
 
@@ -46,7 +48,8 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         IEnumerable<ICrossChainTransferProvider> crossChainTransferProviders,
         IIndexerAppService indexerAppService, ITokenAppService tokenAppService,
         IOptionsSnapshot<AutoReceiveConfigOptions> autoReceiveConfigOptions, IUnitOfWorkManager unitOfWorkManager,
-        IOptionsSnapshot<TonConfigOption> tonConfigOption)
+        IOptionsSnapshot<TonConfigOption> tonConfigOption,
+        IOptionsSnapshot<SyncStateServiceOption> syncStateServiceOption)
     {
         _crossChainTransferRepository = crossChainTransferRepository;
         _chainAppService = chainAppService;
@@ -60,6 +63,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         _autoReceiveConfigOptions = autoReceiveConfigOptions.Value;
         _crossChainTransferProviders = crossChainTransferProviders.ToList();
         _tonConfigOption = tonConfigOption.Value;
+        _syncStateServiceOption = syncStateServiceOption.Value;
     }
 
     public async Task<PagedResultDto<CrossChainTransferIndexDto>> GetListAsync(GetCrossChainTransfersInput input)
@@ -179,9 +183,12 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         var totalCount = await _crossChainTransferIndexRepository.CountAsync(Filter);
 
         var items = ObjectMapper.Map<List<CrossChainTransferIndex>, List<CrossChainTransferIndexDto>>(list.Item2)
-            .Select(dto => {
-                dto.FromAddress = TonAddressHelper.ConvertRawAddressToFriendly(dto.FromAddress, _tonConfigOption.IsTestOnly,_tonConfigOption.IsBounceable);
-                dto.ToAddress = TonAddressHelper.ConvertRawAddressToFriendly(dto.ToAddress, _tonConfigOption.IsTestOnly,_tonConfigOption.IsBounceable);
+            .Select(dto =>
+            {
+                dto.FromAddress = TonAddressHelper.ConvertRawAddressToFriendly(dto.FromAddress,
+                    _tonConfigOption.IsTestOnly, _tonConfigOption.IsBounceable);
+                dto.ToAddress = TonAddressHelper.ConvertRawAddressToFriendly(dto.ToAddress, _tonConfigOption.IsTestOnly,
+                    _tonConfigOption.IsBounceable);
                 return dto;
             })
             .ToList();
@@ -219,6 +226,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                 "New transfer {transferTxId},{receiptId}", input.TransferTransactionId, input.ReceiptId);
             isTransferExist = false;
             transfer = ObjectMapper.Map<CrossChainTransferInput, CrossChainTransfer>(input);
+            transfer.ReceiveStatus = ReceiptStatus.Initializing;
             transfer.Type = await GetCrossChainTypeAsync(input.FromChainId, input.ToChainId);
             transfer.Progress = 0;
             transfer.ProgressUpdateTime = input.TransferTime;
@@ -306,8 +314,14 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                     transfer.ReceiveTime = receiveInput.ReceiveTime;
                     transfer.ReceiveAmount = receiveInput.ReceiveAmount;
 
-                    transfer.Status = CrossChainStatus.Received;
-                    transfer.Progress = CrossChainServerConsts.FullOfTheProgress;
+                    transfer.ReceiveBlockHeight = receiveInput.ReceiveBlockHeight;
+                    transfer.ReceiveStatus = receiveInput.ReceiveStatus;
+                    if (receiveInput.ReceiveStatus == ReceiptStatus.Confirmed)
+                    {
+                        transfer.Status = CrossChainStatus.Received;
+                        transfer.Progress = CrossChainServerConsts.FullOfTheProgress;
+                    }
+
                     transfer.ProgressUpdateTime = receiveInput.ReceiveTime;
 
                     await _crossChainTransferRepository.UpdateAsync(transfer);
@@ -346,6 +360,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
             isTransferExist = false;
             transfer = ObjectMapper.Map<CrossChainReceiveInput, CrossChainTransfer>(input);
             transfer.Type = await GetCrossChainTypeAsync(input.FromChainId, input.ToChainId);
+            transfer.TransferStatus = ReceiptStatus.Confirmed;
         }
         else
         {
@@ -355,11 +370,17 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
             transfer.ReceiveTokenId = input.ReceiveTokenId;
             transfer.ReceiveTransactionId = input.ReceiveTransactionId;
             transfer.ReceiveTime = input.ReceiveTime;
-            transfer.ReceiveAmount = input.ReceiveAmount;
         }
 
-        transfer.Status = CrossChainStatus.Received;
-        transfer.Progress = CrossChainServerConsts.FullOfTheProgress;
+        transfer.ReceiveAmount = input.ReceiveAmount;
+        transfer.ReceiveBlockHeight = input.ReceiveBlockHeight;
+        transfer.ReceiveStatus = input.ReceiveStatus;
+        if (input.ReceiveStatus == ReceiptStatus.Confirmed)
+        {
+            transfer.Status = CrossChainStatus.Received;
+            transfer.Progress = CrossChainServerConsts.FullOfTheProgress;
+        }
+
         transfer.ProgressUpdateTime = input.ReceiveTime;
         if (isTransferExist)
         {
@@ -368,6 +389,19 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         else
         {
             await InsertCrossChainTransferAsync(transfer);
+        }
+    }
+
+    public async Task DeleteCrossChainTransferAsync(string fromChainId, string toChainId, string transferTransactionId,
+        string receiptId)
+    {
+        var transfer = await FindCrossChainTransferAsync(fromChainId, toChainId,
+            transferTransactionId, receiptId);
+        if (transfer != null)
+        {
+            Log.Debug("Delete transfer {transferTxId},{receiptId}", transfer.TransferTransactionId,
+                transfer.ReceiptId);
+            await _crossChainTransferRepository.DeleteAsync(transfer);
         }
     }
 
@@ -414,6 +448,11 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         }
 
         await _crossChainTransferIndexRepository.UpdateAsync(index);
+    }
+    
+    public async Task DeleteIndexAsync(Guid id)
+    {
+        await _crossChainTransferIndexRepository.DeleteAsync(id);
     }
 
     public async Task UpdateProgressAsync()
@@ -591,7 +630,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                     toUpdate.Add(transfer);
                     continue;
                 }
-                
+
                 var provider = GetCrossChainTransferProvider(transfer.Type);
                 var txId = await provider.SendReceiveTransactionAsync(transfer);
                 if (string.IsNullOrWhiteSpace(txId))
@@ -635,12 +674,17 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                 Logger.LogInformation("Check if the transaction has been received. TransferTransactionId:{id}",
                     transfer.TransferTransactionId);
                 var chain = await _chainAppService.GetAsync(transfer.ToChainId);
-                var crossChainTransferInfo =
+                var (success, crossChainTransferInfo) =
                     await _indexerAppService.GetPendingTransactionAsync(
                         ChainHelper.ConvertChainIdToBase58(chain.AElfChainId),
                         string.IsNullOrWhiteSpace(transfer.InlineTransferTransactionId)
                             ? transfer.TransferTransactionId
                             : transfer.InlineTransferTransactionId);
+                if (!success)
+                {
+                    continue;
+                }
+
                 if (crossChainTransferInfo == null)
                 {
                     Logger.LogInformation("Transaction not exist. TransferTransactionId:{id}",
@@ -678,6 +722,358 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         {
             await _crossChainTransferRepository.UpdateManyAsync(toUpdate);
         }
+    }
+
+    public async Task CheckTransferTransactionConfirmedAsync(string chainId)
+    {
+        Log.Information("Start to check transfer transaction confirmed. ChainId:{ChainId}", chainId);
+        var page = 0;
+        var toUpdate = new List<CrossChainTransfer>();
+        var currentLib = await _indexerAppService.GetLatestIndexHeightAsync(chainId);
+        var crossChainTransfers = await GetPendingTransferTransactionAsync(chainId, currentLib, page);
+        Log.Debug("Check transfer transaction confirmed. Count:{count}", crossChainTransfers.Count);
+        while (crossChainTransfers.Count != 0)
+        {
+            foreach (var transfer in crossChainTransfers)
+            {
+                Log.Debug(
+                    "Check if the transaction has been confirmed. TransferTransactionId:{id}, receiptId:{receiptId}",
+                    transfer.TransferTransactionId, transfer.ReceiptId);
+                var chain = await _chainAppService.GetAsync(transfer.ToChainId);
+                bool success;
+                CrossChainTransferInfoDto crossChainTransferInfo;
+                if (transfer.Type == CrossChainType.Heterogeneous)
+                {
+                    (success, crossChainTransferInfo) =
+                        await _indexerAppService.GetPendingReceiptAsync(
+                            ChainHelper.ConvertChainIdToBase58(chain.AElfChainId),
+                            transfer.ReceiptId);
+                }
+                else
+                {
+                    (success, crossChainTransferInfo) = await _indexerAppService.GetPendingTransactionAsync(
+                        ChainHelper.ConvertChainIdToBase58(chain.AElfChainId),
+                        transfer.TransferTransactionId);
+                }
+
+                if (!success)
+                {
+                    Log.Warning("Query aefinder failed, retry. TransferTransactionId:{id}, receiptId:{receiptId}",
+                        transfer.TransferTransactionId, transfer.ReceiptId);
+                    continue;
+                }
+
+                if (success && crossChainTransferInfo == null)
+                {
+                    Log.Warning(
+                        "Transaction not exist from aefinder, delete. TransferTransactionId:{id}, receiptId:{receiptId}",
+                        transfer.TransferTransactionId, transfer.ReceiptId);
+                    await DeleteCrossChainTransferAsync(transfer.FromChainId, transfer.ToChainId,
+                        transfer.TransferTransactionId, transfer.ReceiptId);
+                    continue;
+                }
+
+                Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId)
+                    .Debug(
+                        "Update transfer {transferTxId},{receiptId}", transfer.TransferTransactionId,
+                        transfer.ReceiptId);
+                var token = await _tokenAppService.GetAsync(new GetTokenInput
+                {
+                    ChainId = transfer.FromChainId,
+                    Symbol = crossChainTransferInfo.TransferTokenSymbol
+                });
+                transfer.FromAddress = crossChainTransferInfo.FromAddress;
+                transfer.TransferTokenId = token.Id;
+                transfer.TransferTransactionId = crossChainTransferInfo.TransferTransactionId;
+                transfer.TransferAmount = crossChainTransferInfo.TransferAmount;
+                transfer.TransferTime = crossChainTransferInfo.TransferTime;
+                transfer.TransferBlockHeight = crossChainTransferInfo.TransferBlockHeight;
+                transfer.TransferStatus = ReceiptStatus.Confirmed;
+                toUpdate.Add(transfer);
+            }
+
+            page++;
+            crossChainTransfers = await GetPendingTransferTransactionAsync(chainId, currentLib, page);
+        }
+
+        if (toUpdate.Count > 0)
+        {
+            await _crossChainTransferRepository.UpdateManyAsync(toUpdate);
+        }
+    }
+
+    public async Task CheckReceiveTransactionConfirmedAsync(string chainId)
+    {
+        Log.Information("Start to check receive transaction confirmed. ChainId:{ChainId}", chainId);
+        var page = 0;
+        var toUpdate = new List<CrossChainTransfer>();
+        var currentLib = await _indexerAppService.GetLatestIndexHeightAsync(chainId);
+        var crossChainTransfers = await GetPendingReceiveTransactionAsync(chainId, currentLib, page);
+        Log.Debug("Check receive transaction confirmed. Count:{count}", crossChainTransfers.Count);
+        while (crossChainTransfers.Count != 0)
+        {
+            foreach (var transfer in crossChainTransfers)
+            {
+                Log.Debug(
+                    "Check if the transaction has been confirmed. ReceiveTransactionId:{id}, receiptId:{receiptId}",
+                    transfer.TransferTransactionId, transfer.ReceiptId);
+                var chain = await _chainAppService.GetAsync(transfer.ToChainId);
+                bool success;
+                CrossChainTransferInfoDto crossChainTransferInfo;
+                if (transfer.Type == CrossChainType.Heterogeneous)
+                {
+                    (success, crossChainTransferInfo) =
+                        await _indexerAppService.GetPendingReceiptAsync(
+                            ChainHelper.ConvertChainIdToBase58(chain.AElfChainId),
+                            transfer.ReceiptId);
+                }
+                else
+                {
+                    (success, crossChainTransferInfo) = await _indexerAppService.GetPendingReceiveTransactionAsync(
+                        ChainHelper.ConvertChainIdToBase58(chain.AElfChainId),
+                        transfer.ReceiveTransactionId);
+                }
+
+                if (!success)
+                {
+                    Log.Warning("Query aefinder failed, retry. ReceiveTransactionId:{id}, receiptId:{receiptId}",
+                        transfer.ReceiveTransactionId, transfer.ReceiptId);
+                    continue;
+                }
+
+                if (success && crossChainTransferInfo == null)
+                {
+                    Log.Warning(
+                        "Transaction not exist from aefinder, delete. ReceiveTransactionId:{id}, receiptId:{receiptId}",
+                        transfer.ReceiveTransactionId, transfer.ReceiptId);
+                    continue;
+                }
+
+                Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId)
+                    .Debug(
+                        "Update receive {receiveTransactionId},{receiptId}", transfer.ReceiveTransactionId,
+                        transfer.ReceiptId);
+                var token = await _tokenAppService.GetAsync(new GetTokenInput
+                {
+                    ChainId = transfer.FromChainId,
+                    Symbol = crossChainTransferInfo.ReceiveTokenSymbol
+                });
+                transfer.ReceiveTokenId = token.Id;
+                transfer.ReceiveTransactionId = crossChainTransferInfo.ReceiveTransactionId;
+                transfer.ReceiveTime = crossChainTransferInfo.ReceiveTime;
+
+                transfer.ReceiveAmount = crossChainTransferInfo.ReceiveAmount;
+                transfer.ReceiveBlockHeight = crossChainTransferInfo.ReceiveBlockHeight;
+                transfer.ReceiveStatus = ReceiptStatus.Confirmed;
+                transfer.Status = CrossChainStatus.Received;
+                transfer.Progress = CrossChainServerConsts.FullOfTheProgress;
+                transfer.ProgressUpdateTime = crossChainTransferInfo.ReceiveTime;
+                transfer.TransferStatus = ReceiptStatus.Confirmed;
+
+                toUpdate.Add(transfer);
+            }
+
+            page++;
+            crossChainTransfers = await GetPendingReceiveTransactionAsync(chainId, currentLib, page);
+        }
+
+        if (toUpdate.Count > 0)
+        {
+            await _crossChainTransferRepository.UpdateManyAsync(toUpdate);
+        }
+    }
+
+    public async Task CheckEvmTransferTransactionConfirmedAsync(string chainId)
+    {
+        Log.Information("Start to check evm transfer transaction confirmed. ChainId:{ChainId}", chainId);
+        var page = 0;
+        var toUpdate = new List<CrossChainTransfer>();
+        var currentChainStatus = await _blockchainAppService.GetChainStatusAsync(chainId);
+        var crossChainTransfers =
+            await GetPendingTransferTransactionAsync(chainId, currentChainStatus.ConfirmedBlockHeight, page);
+        Log.Debug("Check evm transfer transaction confirmed. Count:{count}", crossChainTransfers.Count);
+        while (crossChainTransfers.Count != 0)
+        {
+            foreach (var transfer in crossChainTransfers)
+            {
+                Log.Debug(
+                    "Check if the evm transaction has been confirmed. TransferTransactionId:{id}, receiptId:{receiptId}",
+                    transfer.TransferTransactionId, transfer.ReceiptId);
+                var txResult =
+                    await GetTransactionResultWithRetryAsync(chainId,
+                        transfer.TransferTransactionId);
+                if (txResult == null)
+                {
+                    Log.Error("Transaction {TransactionId} not found on chain {ChainId}",
+                        transfer.TransferTransactionId,
+                        chainId);
+                    await DeleteCrossChainTransferAsync(transfer.FromChainId, transfer.ToChainId,
+                        transfer.TransferTransactionId, transfer.ReceiptId);
+                }
+
+                if (txResult.IsMined && txResult.BlockHeight == transfer.TransferBlockHeight)
+                {
+                    Log.Debug("Transaction {TransactionId} is mined on chain {ChainId}", transfer.TransferTransactionId,
+                        chainId);
+                    Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId)
+                        .Debug(
+                            "Update transfer {transferTxId},{receiptId}", transfer.TransferTransactionId,
+                            transfer.ReceiptId);
+                    transfer.TransferStatus = ReceiptStatus.Confirmed;
+                    toUpdate.Add(transfer);
+                }
+                else if (txResult.IsFailed)
+                {
+                    Log.Debug("Transaction {TransactionId} failed on chain {ChainId}", transfer.TransferTransactionId,
+                        chainId);
+                    await DeleteCrossChainTransferAsync(transfer.FromChainId, transfer.ToChainId,
+                        transfer.TransferTransactionId, transfer.ReceiptId);
+                }
+                else
+                {
+                    Log.Debug("Query from {ChainId} failed. {TransactionId}",
+                        chainId, transfer.TransferTransactionId);
+                    // retry
+                }
+            }
+
+            page++;
+            crossChainTransfers =
+                await GetPendingTransferTransactionAsync(chainId, currentChainStatus.ConfirmedBlockHeight, page);
+        }
+
+        if (toUpdate.Count > 0)
+        {
+            await _crossChainTransferRepository.UpdateManyAsync(toUpdate);
+        }
+    }
+
+    public async Task CheckEvmReceiveTransactionConfirmedAsync(string chainId)
+    {
+        Log.Information("Start to check evm receive transaction confirmed. ChainId:{ChainId}", chainId);
+        var page = 0;
+        var toUpdate = new List<CrossChainTransfer>();
+        var currentChainStatus = await _blockchainAppService.GetChainStatusAsync(chainId);
+        var crossChainTransfers =
+            await GetPendingReceiveTransactionAsync(chainId, currentChainStatus.ConfirmedBlockHeight, page);
+        Log.Debug("Check evm receive transaction confirmed. Count:{count}", crossChainTransfers.Count);
+        while (crossChainTransfers.Count != 0)
+        {
+            foreach (var transfer in crossChainTransfers)
+            {
+                Log.Debug(
+                    "Check if the evm transaction has been confirmed. receiveTransactionId:{id}, receiptId:{receiptId}",
+                    transfer.ReceiveTransactionId, transfer.ReceiptId);
+                var txResult =
+                    await GetTransactionResultWithRetryAsync(chainId,
+                        transfer.ReceiveTransactionId);
+                if (txResult == null)
+                {
+                    Log.Error("Transaction {TransactionId} not found on chain {ChainId}",
+                        transfer.ReceiveTransactionId,
+                        chainId);
+                    transfer.ReceiveTransactionId = null;
+                    toUpdate.Add(transfer);
+                }
+
+                else if (txResult.IsMined && txResult.BlockHeight == transfer.TransferBlockHeight)
+                {
+                    Log.Debug("Transaction {TransactionId} is mined on chain {ChainId}", transfer.ReceiveTransactionId,
+                        chainId);
+
+                    Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId)
+                        .Debug(
+                            "Update transfer {transferTxId},{receiptId}", transfer.ReceiveTransactionId,
+                            transfer.ReceiptId);
+                    transfer.TransferStatus = ReceiptStatus.Confirmed;
+                    transfer.ReceiveStatus = ReceiptStatus.Confirmed;
+                    toUpdate.Add(transfer);
+                }
+                else if (txResult.IsFailed)
+                {
+                    Log.Debug("Transaction {TransactionId} failed on chain {ChainId}", transfer.ReceiveTransactionId,
+                        chainId);
+                    transfer.ReceiveTransactionId = null;
+                    toUpdate.Add(transfer);
+                }
+                else
+                {
+                    Log.Debug("Query from {ChainId} failed. {TransactionId}",
+                        chainId, transfer.ReceiveTransactionId);
+                    // retry
+                }
+            }
+
+            page++;
+            crossChainTransfers =
+                await GetPendingReceiveTransactionAsync(chainId, currentChainStatus.ConfirmedBlockHeight, page);
+        }
+
+        if (toUpdate.Count > 0)
+        {
+            await _crossChainTransferRepository.UpdateManyAsync(toUpdate);
+        }
+    }
+
+    private async Task<TransactionResultDto> GetTransactionResultWithRetryAsync(string chainId, string txId)
+    {
+        const int maxRetries = 3;
+        const int delayMilliseconds = 500;
+
+        for (var i = 1; i <= maxRetries; i++)
+        {
+            var res = await _blockchainAppService.GetTransactionResultAsync(chainId, txId);
+            if (res != null && res.ChainId == null)
+            {
+                Log.Warning("Retry {Retry}/{MaxRetry} failed to query transaction {TxId} on chain {ChainId}",
+                    i, maxRetries, txId, chainId);
+                if (i == maxRetries)
+                {
+                    Log.Error("Max retry reached. Failed to query transaction {TxId} on chain {ChainId}", txId,
+                        chainId);
+                    return new TransactionResultDto();
+                }
+
+                await Task.Delay(delayMilliseconds * (int)Math.Pow(2, i - 1));
+            }
+            else
+            {
+                return res;
+            }
+        }
+
+        return new TransactionResultDto();
+    }
+
+    private async Task<List<CrossChainTransfer>> GetPendingTransferTransactionAsync(string chainId, long lib,
+        int page)
+    {
+        using var uow = _unitOfWorkManager.Begin();
+        var q = await _crossChainTransferRepository.GetQueryableAsync();
+        var crossChainTransfers = await AsyncExecuter.ToListAsync(q
+            .Where(o => o.TransferStatus == ReceiptStatus.Pending && o.FromChainId == chainId &&
+                        o.TransferBlockHeight <= lib)
+            .OrderBy(o => o.TransferBlockHeight)
+            .Skip(PageCount * page)
+            .Take(PageCount));
+        await uow.CompleteAsync();
+        return crossChainTransfers;
+    }
+
+    private async Task<List<CrossChainTransfer>> GetPendingReceiveTransactionAsync(string chainId, long lib,
+        int page)
+    {
+        using var uow = _unitOfWorkManager.Begin();
+        var q = await _crossChainTransferRepository.GetQueryableAsync();
+        var crossChainTransfers = await AsyncExecuter.ToListAsync(q
+            .Where(o => o.ReceiveStatus == ReceiptStatus.Pending && o.ToChainId == chainId &&
+                        o.ReceiveBlockHeight > 0 &&
+                        o.ReceiveBlockHeight <= lib)
+            .OrderBy(o => o.ReceiveTime)
+            .Skip(PageCount * page)
+            .Take(PageCount));
+        await uow.CompleteAsync();
+        return crossChainTransfers;
     }
 
     private async Task<List<CrossChainTransfer>> GetToCheckReceivedTransactionAsync(int page)

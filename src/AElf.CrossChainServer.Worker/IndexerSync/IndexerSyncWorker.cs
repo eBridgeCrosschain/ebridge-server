@@ -38,13 +38,14 @@ public class IndexerSyncWorker : AsyncPeriodicBackgroundWorkerBase
         Log.Debug("Start to sync chain.");
         var tasks = 
             chains.Items.Select(o => o.Id).SelectMany(chainId =>
-            _indexerSyncProviders.Select(async provider => await provider.ExecuteAsync(chainId, _bridgeContractSyncOptions.SyncDelayHeight)));
+            _indexerSyncProviders
+                .Where(provider => provider.RequiresRealTime)
+                .Select(async provider => await provider.ExecuteAsync(chainId, _bridgeContractSyncOptions.SyncDelayHeight)));
         
         await Task.WhenAll(tasks);
 
         var confirmTasks = chains.Items.Select(o => o.Id).SelectMany(chainId =>
             _indexerSyncProviders
-                .Where(provider => provider.IsConfirmEnabled)
                 .Select(async provider => await provider.ExecuteAsync(chainId,
                     _bridgeContractSyncOptions.ConfirmedSyncDelayHeight,
                     _bridgeContractSyncOptions.ConfirmedSyncKeyPrefix)));
