@@ -983,10 +983,12 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
 
                     Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId)
                         .Debug(
-                            "Update transfer {transferTxId},{receiptId}", transfer.ReceiveTransactionId,
+                            "Update receive {transferTxId},{receiptId}", transfer.ReceiveTransactionId,
                             transfer.ReceiptId);
                     transfer.TransferStatus = ReceiptStatus.Confirmed;
                     transfer.ReceiveStatus = ReceiptStatus.Confirmed;
+                    transfer.Status = CrossChainStatus.Received;
+                    transfer.Progress = CrossChainServerConsts.FullOfTheProgress;
                     toUpdate.Add(transfer);
                 }
                 else if (txResult.IsFailed)
