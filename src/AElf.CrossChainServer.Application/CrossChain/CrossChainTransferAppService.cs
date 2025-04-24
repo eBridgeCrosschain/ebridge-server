@@ -783,7 +783,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                 transfer.FromAddress = crossChainTransferInfo.FromAddress;
                 transfer.TransferTokenId = token.Id;
                 transfer.TransferTransactionId = crossChainTransferInfo.TransferTransactionId;
-                transfer.TransferAmount = crossChainTransferInfo.TransferAmount;
+                transfer.TransferAmount = crossChainTransferInfo.TransferAmount / (decimal)Math.Pow(10, token.Decimals);
                 transfer.TransferTime = crossChainTransferInfo.TransferTime;
                 transfer.TransferBlockHeight = crossChainTransferInfo.TransferBlockHeight;
                 transfer.TransferStatus = ReceiptStatus.Confirmed;
