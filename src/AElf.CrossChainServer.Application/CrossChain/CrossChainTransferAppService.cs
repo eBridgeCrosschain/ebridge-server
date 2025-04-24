@@ -319,9 +319,8 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                     if (receiveInput.ReceiveStatus == ReceiptStatus.Confirmed)
                     {
                         transfer.Status = CrossChainStatus.Received;
-                        transfer.Progress = CrossChainServerConsts.FullOfTheProgress;
                     }
-
+                    transfer.Progress = CrossChainServerConsts.FullOfTheProgress;
                     transfer.ProgressUpdateTime = receiveInput.ReceiveTime;
 
                     await _crossChainTransferRepository.UpdateAsync(transfer);
@@ -378,9 +377,8 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         if (input.ReceiveStatus == ReceiptStatus.Confirmed)
         {
             transfer.Status = CrossChainStatus.Received;
-            transfer.Progress = CrossChainServerConsts.FullOfTheProgress;
         }
-
+        transfer.Progress = CrossChainServerConsts.FullOfTheProgress;
         transfer.ProgressUpdateTime = input.ReceiveTime;
         if (isTransferExist)
         {
