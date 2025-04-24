@@ -976,7 +976,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                     toUpdate.Add(transfer);
                 }
 
-                else if (txResult.IsMined && txResult.BlockHeight == transfer.TransferBlockHeight)
+                else if (txResult.IsMined && txResult.BlockHeight == transfer.ReceiveBlockHeight)
                 {
                     Log.Debug("Transaction {TransactionId} is mined on chain {ChainId}", transfer.ReceiveTransactionId,
                         chainId);
