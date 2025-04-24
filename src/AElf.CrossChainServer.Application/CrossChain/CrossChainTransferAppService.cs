@@ -860,7 +860,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                 transfer.ReceiveTransactionId = crossChainTransferInfo.ReceiveTransactionId;
                 transfer.ReceiveTime = crossChainTransferInfo.ReceiveTime;
 
-                transfer.ReceiveAmount = crossChainTransferInfo.ReceiveAmount;
+                transfer.ReceiveAmount = crossChainTransferInfo.ReceiveAmount / (decimal)Math.Pow(10, token.Decimals);
                 transfer.ReceiveBlockHeight = crossChainTransferInfo.ReceiveBlockHeight;
                 transfer.ReceiveStatus = ReceiptStatus.Confirmed;
                 transfer.Status = CrossChainStatus.Received;
