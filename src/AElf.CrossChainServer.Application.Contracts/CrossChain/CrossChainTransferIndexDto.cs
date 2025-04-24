@@ -34,4 +34,7 @@ public class CrossChainTransferIndexDto: EntityDto<Guid>
 
     public bool TransferNeedToBeApproved { get; set; }
     public string TraceId { get; set; }
+    public ReceiptStatus TransferStatus { get; set; }
+    public ReceiptStatus ReceiveStatus { get; set; }
+    public long ReceiveBlockHeight { get; set; }
 }

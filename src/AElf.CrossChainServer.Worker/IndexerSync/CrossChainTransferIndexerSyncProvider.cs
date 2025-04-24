@@ -127,7 +127,8 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
                     FromAddress = transfer.FromAddress,
                     ToAddress = transfer.ToAddress,
                     ReceiptId = transfer.ReceiptId,
-                    ReceiveStatus = ReceiptStatus.Pending
+                    ReceiveStatus = ReceiptStatus.Pending,
+                    ReceiveBlockHeight = transfer.ReceiveBlockHeight
                 });
                 break;
         }
@@ -179,7 +180,8 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
                     receiveAmount,
                     receiveTime,
                     receiveTransactionId,
-                    receiptId
+                    receiptId,
+                    receiveBlockHeight
             }
         }",
             Variables = new
@@ -216,6 +218,7 @@ public class CrossChainTransferInfo : GraphQLDto
     public string ReceiveTokenSymbol { get; set; }
     public TransferType TransferType { get; set; }
     public CrossChainType CrossChainType { get; set; }
+    public long ReceiveBlockHeight { get; set; }
 }
 
 public enum TransferType
