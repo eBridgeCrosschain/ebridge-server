@@ -55,6 +55,26 @@ public class IndexerAppService : CrossChainServerAppService, IIndexerAppService
             blockHeight);
         return blockHeight ?? 0;
     }
+    
+    [ExceptionHandler(typeof(Exception), Message = "Query swap syncState error",
+        TargetType = typeof(ExceptionHandlingService),
+        MethodName = nameof(ExceptionHandlingService.HandleExceptionReturnLong))]
+    public virtual async Task<long> GetLatestIndexBestHeightAsync(string chainId)
+    {
+        var chain = await _chainAppService.GetAsync(chainId);
+        if (chain == null)
+        {
+            return 0;
+        }
+
+        var aelfChainId = ChainHelper.ConvertChainIdToBase58(chain.AElfChainId);
+        var res = await _httpProvider.InvokeAsync<SyncStateResponse>(_syncStateServiceOption.BaseUrl, _syncStateUri);
+        var blockHeight = res.CurrentVersion.Items.FirstOrDefault(i => i.ChainId == aelfChainId)
+            ?.BestChainHeight;
+        Logger.LogInformation("Get latest best index height. chainId: {chainId}, height: {height}", aelfChainId,
+            blockHeight);
+        return blockHeight ?? 0;
+    }
 
     public async Task<(bool, CrossChainTransferInfoDto)> GetPendingTransactionAsync(string chainId,
         string transferTransactionId)

@@ -71,7 +71,7 @@ public abstract class IndexerSyncProviderBase : IIndexerSyncProvider, ITransient
 
     private async Task<long> GetIndexBlockHeightAsync(string chainId)
     {
-        return await IndexerAppService.GetLatestIndexHeightAsync(chainId);
+        return await IndexerAppService.GetLatestIndexBestHeightAsync(chainId);
     }
 
     private async Task<long> GetSyncHeightAsync(string chainId, string typePrefix)
