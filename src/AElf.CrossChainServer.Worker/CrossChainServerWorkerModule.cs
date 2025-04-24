@@ -90,6 +90,7 @@ namespace AElf.CrossChainServer.Worker
             context.AddBackgroundWorkerAsync<TonIndexSyncWorker>();
             context.AddBackgroundWorkerAsync<EvmIndexerSyncWorker>();
             context.AddBackgroundWorkerAsync<CheckEvmTransactionConfirmedWorker>();
+            context.AddBackgroundWorkerAsync<CheckAElfConfirmedTransactionWorker>();
         }
     }
 }
