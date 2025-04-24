@@ -364,7 +364,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         else
         {
             Log.ForContext("fromChainId", input.FromChainId).ForContext("toChainId", input.ToChainId).Information(
-                "Update receive {transferTxId},{receiptId},{receiveTxId}", input.TransferTransactionId, input.ReceiptId,
+                "Update receive {transferTxId},{receiptId},{receiveTxId}", transfer.TransferTransactionId, input.ReceiptId,
                 input.ReceiveTransactionId);
             transfer.ReceiveTokenId = input.ReceiveTokenId;
             transfer.ReceiveTransactionId = input.ReceiveTransactionId;
@@ -737,7 +737,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                 Log.Debug(
                     "Check if the transaction has been confirmed. TransferTransactionId:{id}, receiptId:{receiptId}",
                     transfer.TransferTransactionId, transfer.ReceiptId);
-                var chain = await _chainAppService.GetAsync(transfer.ToChainId);
+                var chain = await _chainAppService.GetAsync(transfer.FromChainId);
                 bool success;
                 CrossChainTransferInfoDto crossChainTransferInfo;
                 if (transfer.Type == CrossChainType.Heterogeneous)
