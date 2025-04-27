@@ -12,6 +12,11 @@ public class MockIndexerAppService: CrossChainServerAppService, IIndexerAppServi
         return 100;
     }
 
+    public Task<long> GetLatestIndexBestHeightAsync(string chainId)
+    {
+        throw new System.NotImplementedException();
+    }
+
     Task<(bool, CrossChainTransferInfoDto)> IIndexerAppService.GetPendingTransactionAsync(string chainId, string transferTransactionId)
     {
         throw new System.NotImplementedException();
