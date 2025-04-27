@@ -378,6 +378,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         transfer.ReceiveAmount = input.ReceiveAmount;
         transfer.ReceiveBlockHeight = input.ReceiveBlockHeight;
         transfer.ReceiveStatus = input.ReceiveStatus;
+        transfer.Status = CrossChainStatus.Indexed;
         if (input.ReceiveStatus == ReceiptStatus.Confirmed)
         {
             transfer.Status = CrossChainStatus.Received;
@@ -525,7 +526,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         var q = await _crossChainTransferRepository.GetQueryableAsync();
         var crossChainTransfers = await AsyncExecuter.ToListAsync(q
             .Where(o => o.Status == CrossChainStatus.Transferred && o.TransferStatus == ReceiptStatus.Confirmed && 
-                        o.ProgressUpdateTime > DateTime.UtcNow.AddDays(-1))
+                        o.Progress != CrossChainServerConsts.FullOfTheProgress && o.ProgressUpdateTime > DateTime.UtcNow.AddDays(-1))
             .OrderBy(o => o.ProgressUpdateTime)
             .Skip(PageCount * page)
             .Take(PageCount));

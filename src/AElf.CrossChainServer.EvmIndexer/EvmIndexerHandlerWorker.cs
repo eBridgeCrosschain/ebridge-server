@@ -64,6 +64,7 @@ public class EvmIndexerHandlerWorker
             catch (Exception ex)
             {
                 Log.Error(ex, $"[EvmIndexerHandlerWorker]{chainId} Ping failed, attempting reconnection...");
+                await client.StopAsync();
                 await InitializeWebSocketAsync(chainId, _evmContractSyncOptions.IndexerInfos[chainId]);
             }
         }
