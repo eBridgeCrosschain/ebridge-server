@@ -74,7 +74,7 @@ public class EvmNewReceiptSyncProvider(
                 ToChainId = events.TargetChainId,
                 TransferBlockHeight = log.BlockNumber,
                 TransferTokenId = token.Id,
-                TransferStatus = ReceiptStatus.Pending
+                TransferStatus = ReceiptStatus.Confirmed
             });
         }
     }

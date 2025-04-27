@@ -48,7 +48,7 @@ public class IndexerSyncWorker : AsyncPeriodicBackgroundWorkerBase
             _indexerSyncProviders
                 .Select(async provider => await provider.ExecuteAsync(chainId,
                     _bridgeContractSyncOptions.ConfirmedSyncDelayHeight,
-                    _bridgeContractSyncOptions.ConfirmedSyncKeyPrefix)));
+                    _bridgeContractSyncOptions.ConfirmedSyncKeyPrefix,true)));
 
         await Task.WhenAll(confirmTasks);
     }

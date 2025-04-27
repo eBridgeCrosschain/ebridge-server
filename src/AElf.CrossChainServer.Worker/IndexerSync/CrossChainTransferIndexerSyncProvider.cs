@@ -33,10 +33,12 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
 
     protected override string SyncType { get; } = CrossChainServerSettings.CrossChainTransferIndexerSync;
 
-    protected override async Task<long> HandleDataAsync(string aelfChainId, long startHeight, long endHeight)
+    protected override async Task<long> HandleDataAsync(string aelfChainId, long startHeight, long endHeight,
+        bool isConfirmed)
     {
-        Log.ForContext("chainId", aelfChainId).Debug("Start to sync cross chain transfer info {chainId} from {StartHeight} to {EndHeight}",
-            aelfChainId, startHeight, endHeight);
+        Log.ForContext("chainId", aelfChainId).Debug(
+            "Start to sync cross chain transfer info {chainId} from {StartHeight} to {EndHeight}, isConfirmed:{isConfirmed}",
+            aelfChainId, startHeight, endHeight, isConfirmed);
         var data = await QueryDataAsync<CrossChainTransferInfoDto>(GetRequest(aelfChainId, startHeight, endHeight));
         if (data == null || data.CrossChainTransferInfo.Count == 0)
         {
@@ -50,13 +52,13 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
                 crossChainTransfer.ChainId, crossChainTransfer.TransferTokenSymbol,
                 crossChainTransfer.TransferType == TransferType.Transfer ? "Transfer" : "Receive",
                 crossChainTransfer.CrossChainType == CrossChainType.Heterogeneous ? "Heterogeneous" : "Homogeneous");
-            await HandleDataAsync(crossChainTransfer);
+            await HandleDataAsync(crossChainTransfer,isConfirmed);
         }
 
         return endHeight;
     }
 
-    private async Task HandleDataAsync(CrossChainTransferInfo transfer)
+    private async Task HandleDataAsync(CrossChainTransferInfo transfer,bool isConfirmed)
     {
         var chain = await ChainAppService.GetByAElfChainIdAsync(ChainHelper.ConvertBase58ToChainId(transfer.ChainId));
 
@@ -75,7 +77,7 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
                 {
                     toAddress = TonAddressHelper.GetTonRawAddress(transfer.ToAddress);
                 }
-                
+
                 var transferToken = await _tokenAppService.GetAsync(new GetTokenInput
                 {
                     ChainId = chain.Id,
@@ -95,12 +97,14 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
                     TransferTime = transfer.TransferTime,
                     TransferTransactionId = transfer.TransferTransactionId,
                     ReceiptId = transfer.ReceiptId,
-                    TransferStatus = ReceiptStatus.Pending
+                    TransferStatus = isConfirmed
+                        ? ReceiptStatus.Confirmed
+                        : ReceiptStatus.Pending,
                 });
                 break;
             case TransferType.Receive:
-                var formChainId = await GetChainIdAsync(transfer.FromChainId, transfer.CrossChainType);
-                if (formChainId == null)
+                var fromChainId = await GetChainIdAsync(transfer.FromChainId, transfer.CrossChainType);
+                if (fromChainId == null)
                 {
                     return;
                 }
@@ -111,15 +115,15 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
                     Symbol = transfer.ReceiveTokenSymbol
                 });
 
-                Log.ForContext("fromChainId", formChainId).ForContext("toChainId", chain.Id).Information(
+                Log.ForContext("fromChainId", fromChainId).ForContext("toChainId", chain.Id).Information(
                     "Start to receive token {symbol} from {fromChainId} to {toChainId}",
-                    transfer.ReceiveTokenSymbol, formChainId, chain.Id);
+                    transfer.ReceiveTokenSymbol, fromChainId, chain.Id);
 
                 await _crossChainTransferAppService.ReceiveAsync(new CrossChainReceiveInput()
                 {
                     ReceiveAmount = transfer.ReceiveAmount / (decimal)Math.Pow(10, receiveToken.Decimals),
                     ReceiveTime = transfer.ReceiveTime,
-                    FromChainId = formChainId,
+                    FromChainId = fromChainId,
                     ReceiveTransactionId = transfer.ReceiveTransactionId,
                     ToChainId = chain.Id,
                     TransferTransactionId = transfer.TransferTransactionId,
@@ -127,7 +131,9 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
                     FromAddress = transfer.FromAddress,
                     ToAddress = transfer.ToAddress,
                     ReceiptId = transfer.ReceiptId,
-                    ReceiveStatus = ReceiptStatus.Pending,
+                    ReceiveStatus = isConfirmed
+                        ? ReceiptStatus.Confirmed
+                        : ReceiptStatus.Pending,
                     ReceiveBlockHeight = transfer.ReceiveBlockHeight
                 });
                 break;
@@ -141,6 +147,7 @@ public class CrossChainTransferIndexerSyncProvider : IndexerSyncProviderBase
         {
             return chainId;
         }
+
         Log.Debug("Start to get chain id by {originalChainId}", originalChainId);
         var toChain =
             await ChainAppService.GetByAElfChainIdAsync(

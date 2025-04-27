@@ -73,7 +73,7 @@ public class EvmTokenSwapSyncProvider(
                 ReceiveAmount = (decimal)((BigDecimal)events.Amount / BigInteger.Pow(10, token.Decimals)),
                 ReceiveTime = DateTimeHelper.FromUnixTimeMilliseconds((long)events.BlockTime * 1000),
                 ReceiveTokenId = token.Id,
-                ReceiveStatus = ReceiptStatus.Pending,
+                ReceiveStatus = ReceiptStatus.Confirmed,
                 ReceiveBlockHeight = log.BlockNumber
             });
         }

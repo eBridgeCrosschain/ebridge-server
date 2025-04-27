@@ -33,8 +33,11 @@ public class UserLiquidityIndexerSyncProvider : IndexerSyncProviderBase
     public override bool RequiresRealTime { get; set; } = false;
     protected override string SyncType { get; } = CrossChainServerSettings.UserLiquidityIndexerSync;
 
-    protected override async Task<long> HandleDataAsync(string aelfChainId, long startHeight, long endHeight)
+    protected override async Task<long> HandleDataAsync(string aelfChainId, long startHeight, long endHeight,bool isConfirmed)
     {
+        Log.Debug(
+            "Start to sync user liquidity info {chainId} from {StartHeight} to {EndHeight}, isConfirmed:{isConfirmed}",
+            aelfChainId, startHeight, endHeight, isConfirmed);
         if (!_evmContractSyncOptions.Enabled)
         {
             return 0;

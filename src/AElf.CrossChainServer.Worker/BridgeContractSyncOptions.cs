@@ -11,7 +11,7 @@ public class BridgeContractSyncOptions
     public Dictionary<string, Dictionary<TransferType, List<TokenInfo>>> Tokens { get; set; } = new();
     public int SyncDelayHeight { get; set; } = 10;
     public string ConfirmedSyncKeyPrefix { get; set; } = "Confirmed";
-    public int ConfirmedSyncDelayHeight { get; set; } = 200;
+    public int ConfirmedSyncDelayHeight { get; set; } = 20;
     public bool EnableSyncHeight { get; set; } = false;
     
 }
