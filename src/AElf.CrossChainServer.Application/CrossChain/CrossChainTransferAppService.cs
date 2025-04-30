@@ -858,6 +858,11 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                     Log.Warning(
                         "[CheckReceiveTransactionConfirmedAsync] Transaction not exist from aefinder, delete. ReceiveTransactionId:{id}, receiptId:{receiptId}",
                         transfer.ReceiveTransactionId, transfer.ReceiptId);
+                    transfer.ReceiveTransactionId = null;
+                    transfer.ReceiveStatus = ReceiptStatus.Initializing;
+                    transfer.ReceiveBlockHeight = 0;
+                    transfer.ReceiveTime = new DateTime();
+                    transfer.ReceiveAmount = 0;
                     continue;
                 }
 
