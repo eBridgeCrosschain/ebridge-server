@@ -863,6 +863,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                     transfer.ReceiveBlockHeight = 0;
                     transfer.ReceiveTime = new DateTime();
                     transfer.ReceiveAmount = 0;
+                    toUpdate.Add(transfer);
                     continue;
                 }
 
