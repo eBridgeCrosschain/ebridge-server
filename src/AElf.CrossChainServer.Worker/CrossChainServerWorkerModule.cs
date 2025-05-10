@@ -86,7 +86,7 @@ namespace AElf.CrossChainServer.Worker
             context.AddBackgroundWorkerAsync<CrossChainIndexingCleanWorker>();
             context.AddBackgroundWorkerAsync<TransferAutoReceiveWorker>();
             context.AddBackgroundWorkerAsync<IndexerSyncWorker>();
-            context.AddBackgroundWorkerAsync<CheckReceiveWorker>();
+            // context.AddBackgroundWorkerAsync<CheckReceiveWorker>();
             context.AddBackgroundWorkerAsync<TonIndexSyncWorker>();
             context.AddBackgroundWorkerAsync<EvmIndexerSyncWorker>();
             context.AddBackgroundWorkerAsync<CheckEvmTransactionConfirmedWorker>();
