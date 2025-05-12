@@ -557,11 +557,19 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
 
                 if (txResult.IsFailed)
                 {
+                    Log.Debug("[UpdateReceiveTransactionAsync] Transaction failed. TransferTransactionId:{id}, ReceiveTransactionId:{txId}",
+                        transfer.TransferTransactionId,transfer.ReceiveTransactionId);
                     transfer.ReceiveTransactionId = null;
+                    transfer.ReceiveStatus = ReceiptStatus.Initializing;
+                    transfer.ReceiveBlockHeight = 0;
+                    transfer.ReceiveTime = new DateTime();
+                    transfer.ReceiveAmount = 0;
                     toUpdate.Add(transfer);
                 }
                 else if (txResult.IsMined)
                 {
+                    Log.Debug("[UpdateReceiveTransactionAsync] Transaction mined. TransferTransactionId:{id}, ReceiveTransactionId:{txId}",
+                        transfer.TransferTransactionId,transfer.ReceiveTransactionId);
                     var chainStatus = await _blockchainAppService.GetChainStatusAsync(transfer.ToChainId);
                     if (chainStatus.ConfirmedBlockHeight >= txResult.BlockHeight)
                     {
@@ -1006,6 +1014,10 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                         transfer.ReceiveTransactionId,
                         chainId);
                     transfer.ReceiveTransactionId = null;
+                    transfer.ReceiveStatus = ReceiptStatus.Initializing;
+                    transfer.ReceiveBlockHeight = 0;
+                    transfer.ReceiveTime = new DateTime();
+                    transfer.ReceiveAmount = 0;
                     toUpdate.Add(transfer);
                 }
 
