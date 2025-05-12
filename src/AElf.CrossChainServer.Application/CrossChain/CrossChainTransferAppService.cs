@@ -558,7 +558,6 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                 if (txResult.IsFailed)
                 {
                     transfer.ReceiveTransactionId = null;
-                    transfer.ReceiveTransactionAttemptTimes = 0;
                     toUpdate.Add(transfer);
                 }
                 else if (txResult.IsMined)
