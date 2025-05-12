@@ -852,7 +852,6 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                         ChainHelper.ConvertChainIdToBase58(chain.AElfChainId),
                         transfer.ReceiveTransactionId);
                 }
-
                 if (!success)
                 {
                     Log.Warning(
