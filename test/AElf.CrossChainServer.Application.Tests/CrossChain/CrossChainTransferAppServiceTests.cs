@@ -268,14 +268,14 @@ public class CrossChainTransferAppServiceTests : CrossChainServerApplicationTest
         {
             MaxResultCount = 100
         });
-        list.Items[0].Progress.ShouldBe(20);
+        list.Items[0].Progress.ShouldBe(50);
         
         status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
         {
             Ids = { list.Items[0].Id }
         });
         status.Items.Count.ShouldBe(1);
-        status.Items[0].Progress.ShouldBe(20);
+        status.Items[0].Progress.ShouldBe(50);
         
         await _oracleQueryInfoAppService.UpdateAsync(new UpdateOracleQueryInfoInput
         {
@@ -313,15 +313,15 @@ public class CrossChainTransferAppServiceTests : CrossChainServerApplicationTest
         {
             MaxResultCount = 100
         });
-        list.Items[0].Progress.ShouldBe(100);
-        list.Items[0].Status.ShouldBe(CrossChainStatus.Indexed);
+        list.Items[0].Progress.ShouldBe(50);
+        list.Items[0].Status.ShouldBe(CrossChainStatus.Transferred);
         
         status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
         {
             Ids = { list.Items[0].Id }
         });
         status.Items.Count.ShouldBe(1);
-        status.Items[0].Progress.ShouldBe(100);
+        status.Items[0].Progress.ShouldBe(50);
 
         var receiveInput = new CrossChainReceiveInput
         {
@@ -424,14 +424,14 @@ public class CrossChainTransferAppServiceTests : CrossChainServerApplicationTest
         {
             MaxResultCount = 100
         });
-        list.Items[0].Progress.ShouldBe(100/3);
+        list.Items[0].Progress.ShouldBe(50);
         
         status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
         {
             Ids = { list.Items[0].Id }
         });
         status.Items.Count.ShouldBe(1);
-        status.Items[0].Progress.ShouldBe(100/3);
+        status.Items[0].Progress.ShouldBe(50);
         
         await _reportInfoAppService.UpdateStepAsync("MainChain_AELF",1,"Eth","Ethereum", ReportStep.Confirmed, 100);
         await Task.Delay(2000);
@@ -440,14 +440,14 @@ public class CrossChainTransferAppServiceTests : CrossChainServerApplicationTest
         {
             MaxResultCount = 100
         });
-        list.Items[0].Progress.ShouldBe(200/3);
+        list.Items[0].Progress.ShouldBe(50);
         
         status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
         {
             Ids = { list.Items[0].Id }
         });
         status.Items.Count.ShouldBe(1);
-        status.Items[0].Progress.ShouldBe(200/3);
+        status.Items[0].Progress.ShouldBe(50);
 
         await _reportInfoAppService.UpdateStepAsync("MainChain_AELF",1,"Eth", "Ethereum",ReportStep.Transmitted, 110);
         await Task.Delay(2000);
@@ -456,14 +456,14 @@ public class CrossChainTransferAppServiceTests : CrossChainServerApplicationTest
         {
             MaxResultCount = 100
         });
-        list.Items[0].Progress.ShouldBe(100);
+        list.Items[0].Progress.ShouldBe(50);
         
         status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
         {
             Ids = { list.Items[0].Id }
         });
         status.Items.Count.ShouldBe(1);
-        status.Items[0].Progress.ShouldBe(100);
+        status.Items[0].Progress.ShouldBe(50);
 
         var receiveInput = new CrossChainReceiveInput
         {

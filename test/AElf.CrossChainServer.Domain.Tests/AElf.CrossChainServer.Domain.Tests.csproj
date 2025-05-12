@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\AElf.CrossChainServer.Application.Contracts\AElf.CrossChainServer.Application.Contracts.csproj" />
     <ProjectReference Include="..\AElf.CrossChainServer.EntityFrameworkCore.Tests\AElf.CrossChainServer.EntityFrameworkCore.Tests.csproj" />
   </ItemGroup>
 

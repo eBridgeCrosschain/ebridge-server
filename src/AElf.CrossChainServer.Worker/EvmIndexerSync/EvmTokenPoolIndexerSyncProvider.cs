@@ -12,12 +12,15 @@ using Serilog;
 
 namespace AElf.CrossChainServer.Worker.EvmIndexerSync;
 
-public class EvmTokenPoolIndexerSyncProvider : EvmIndexerSyncProviderBase
+public class EvmTokenPoolIndexerSyncProvider(
+    ISettingManager settingManager,
+    IOptionsSnapshot<EvmContractSyncOptions> evmContractSyncOptions,
+    IPoolLiquidityInfoAppService poolLiquidityInfoAppService,
+    ITokenAppService tokenAppService,
+    IUserLiquidityInfoAppService userLiquidityInfoAppService)
+    : EvmIndexerSyncProviderBase(settingManager)
 {
-    private readonly EvmContractSyncOptions _evmContractSyncOptions;
-    private readonly IPoolLiquidityInfoAppService _poolLiquidityInfoAppService;
-    private readonly IUserLiquidityInfoAppService _userLiquidityInfoAppService;
-    private readonly ITokenAppService _tokenAppService;
+    private readonly EvmContractSyncOptions _evmContractSyncOptions = evmContractSyncOptions.Value;
 
     private const string LockedEvent = "Locked(address,address,string,uint256)";
     private const string ReleasedEvent = "Released(address,address,string,uint256)";
@@ -27,17 +30,6 @@ public class EvmTokenPoolIndexerSyncProvider : EvmIndexerSyncProviderBase
     private static string ReleasedEventSignature => ReleasedEvent.GetEventSignature();
     private static string LiquidityAddedEventSignature => LiquidityAddedEvent.GetEventSignature();
     private static string LiquidityRemovedEventSignature => LiquidityRemovedEvent.GetEventSignature();
-
-    public EvmTokenPoolIndexerSyncProvider(ISettingManager settingManager,
-        IOptionsSnapshot<EvmContractSyncOptions> evmContractSyncOptions,
-        IPoolLiquidityInfoAppService poolLiquidityInfoAppService, ITokenAppService tokenAppService,
-        IUserLiquidityInfoAppService userLiquidityInfoAppService) : base(settingManager)
-    {
-        _poolLiquidityInfoAppService = poolLiquidityInfoAppService;
-        _tokenAppService = tokenAppService;
-        _userLiquidityInfoAppService = userLiquidityInfoAppService;
-        _evmContractSyncOptions = evmContractSyncOptions.Value;
-    }
 
     protected override string SyncType { get; } = CrossChainServerSettings.EvmPoolLiquidityIndexerSync;
 
@@ -107,7 +99,7 @@ public class EvmTokenPoolIndexerSyncProvider : EvmIndexerSyncProviderBase
             logType, chainId, address, tokenAddress, amount);
 
         // Retrieve token details
-        var token = await _tokenAppService.GetAsync(new GetTokenInput
+        var token = await tokenAppService.GetAsync(new GetTokenInput
         {
             ChainId = chainId,
             Address = tokenAddress
@@ -146,7 +138,7 @@ public class EvmTokenPoolIndexerSyncProvider : EvmIndexerSyncProviderBase
             chainId,
             log,
             "locked",
-            _poolLiquidityInfoAppService.AddLiquidityAsync
+            poolLiquidityInfoAppService.AddLiquidityAsync
         );
     }
 
@@ -156,7 +148,7 @@ public class EvmTokenPoolIndexerSyncProvider : EvmIndexerSyncProviderBase
             chainId,
             log,
             "released",
-            _poolLiquidityInfoAppService.RemoveLiquidityAsync
+            poolLiquidityInfoAppService.RemoveLiquidityAsync
         );
     }
 
@@ -166,8 +158,8 @@ public class EvmTokenPoolIndexerSyncProvider : EvmIndexerSyncProviderBase
             chainId,
             log,
             "liquidity added",
-            _poolLiquidityInfoAppService.AddLiquidityAsync,
-            _userLiquidityInfoAppService.AddUserLiquidityAsync
+            poolLiquidityInfoAppService.AddLiquidityAsync,
+            userLiquidityInfoAppService.AddUserLiquidityAsync
         );
     }
 
@@ -177,8 +169,8 @@ public class EvmTokenPoolIndexerSyncProvider : EvmIndexerSyncProviderBase
             chainId,
             log,
             "liquidity removed",
-            _poolLiquidityInfoAppService.RemoveLiquidityAsync,
-            _userLiquidityInfoAppService.RemoveUserLiquidityAsync
+            poolLiquidityInfoAppService.RemoveLiquidityAsync,
+            userLiquidityInfoAppService.RemoveUserLiquidityAsync
         );
     }
     

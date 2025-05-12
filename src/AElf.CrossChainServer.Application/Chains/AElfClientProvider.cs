@@ -6,6 +6,7 @@ using AElf.CrossChainServer.Tokens;
 using AElf.Types;
 using Google.Protobuf;
 using Microsoft.Extensions.Options;
+using Nethereum.ABI.FunctionEncoding.Attributes;
 using GetTokenInfoInput = AElf.Client.MultiToken.GetTokenInfoInput;
 
 namespace AElf.CrossChainServer.Chains
@@ -144,6 +145,12 @@ namespace AElf.CrossChainServer.Chains
         }
 
         public Task<FilterLogsDto> GetContractLogsAsync(string chainId, string contractAddress, long startHeight, long endHeight)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<FilterLogsAndEventsDto<TEventDTO>> GetContractLogsAndParseAsync<TEventDTO>(string chainId, string contractAddress, long startHeight, long endHeight,
+            string logSignature) where TEventDTO : IEventDTO, new()
         {
             throw new NotImplementedException();
         }
