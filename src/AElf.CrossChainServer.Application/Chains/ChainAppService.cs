@@ -40,7 +40,10 @@ namespace AElf.CrossChainServer.Chains
             return ObjectMapper.Map<Chain, ChainDto>(chain);
         }
 
-        public async Task<ChainDto> GetByAElfChainIdAsync(int aelfChainId)
+        [ExceptionHandler(typeof(Exception), typeof(EntityNotFoundException),
+            Message = "Chain not found.", ReturnDefault = ReturnDefault.Default,
+            LogTargets = new[] {"id"})]
+        public virtual async Task<ChainDto> GetByAElfChainIdAsync(int aelfChainId)
         {
             var chain = await _chainRepository.FindAsync(o => o.AElfChainId == aelfChainId);
             return ObjectMapper.Map<Chain, ChainDto>(chain);

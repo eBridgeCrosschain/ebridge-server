@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using AElf.Client.Dto;
 using AElf.CrossChainServer.Tokens;
+using Nethereum.ABI.FunctionEncoding.Attributes;
 
 namespace AElf.CrossChainServer.Chains;
 
@@ -44,6 +45,12 @@ public class MockEvmClientProvider : IBlockchainClientProvider
     }
 
     public Task<FilterLogsDto> GetContractLogsAsync(string chainId, string contractAddress, long startHeight, long endHeight)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public Task<FilterLogsAndEventsDto<TEventDTO>> GetContractLogsAndParseAsync<TEventDTO>(string chainId, string contractAddress, long startHeight, long endHeight,
+        string logSignature) where TEventDTO : IEventDTO, new()
     {
         throw new System.NotImplementedException();
     }

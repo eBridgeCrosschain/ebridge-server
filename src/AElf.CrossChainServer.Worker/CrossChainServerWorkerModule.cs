@@ -1,4 +1,3 @@
-using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.TokenPool;
 using AElf.CrossChainServer.Worker.EvmIndexerSync;
 using AElf.CrossChainServer.Worker.IndexerSync;
@@ -22,9 +21,9 @@ namespace AElf.CrossChainServer.Worker
             Configure<TonIndexSyncOptions>(configuration.GetSection("TonIndexSync"));
             Configure<EvmContractSyncOptions>(configuration.GetSection("EvmContractSync"));
                         
-            context.Services.AddTransient<IBridgeContractSyncProvider, BridgeContractTransferSyncProvider>();
-            context.Services.AddTransient<IBridgeContractSyncProvider, BridgeContractReceiveSyncProvider>();
             context.Services.AddTransient<IEvmSyncProvider, EvmTokenPoolIndexerSyncProvider>();
+            context.Services.AddTransient<IEvmSyncProvider, EvmNewReceiptSyncProvider>();
+            context.Services.AddTransient<IEvmSyncProvider, EvmTokenSwapSyncProvider>();
         }
 
         public override void OnApplicationInitialization(ApplicationInitializationContext context)
@@ -37,9 +36,6 @@ namespace AElf.CrossChainServer.Worker
             }
             context.AddBackgroundWorkerAsync<TransferProgressUpdateWorker>();
             context.AddBackgroundWorkerAsync<CrossChainIndexingCleanWorker>();
-            context.AddBackgroundWorkerAsync<BridgeContractSyncWorker>();
-            context.AddBackgroundWorkerAsync<TransmitCheckWorker>();
-            context.AddBackgroundWorkerAsync<ReportCheckWorker>();
             context.AddBackgroundWorkerAsync<TransferAutoReceiveWorker>();
             context.AddBackgroundWorkerAsync<IndexerSyncWorker>();
             context.AddBackgroundWorkerAsync<CheckReceiveWorker>();
