@@ -881,7 +881,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                         transfer.ReceiptId);
                 var token = await _tokenAppService.GetAsync(new GetTokenInput
                 {
-                    ChainId = transfer.FromChainId,
+                    ChainId = transfer.ToChainId,
                     Symbol = crossChainTransferInfo.ReceiveTokenSymbol
                 });
                 transfer.ReceiveTokenId = token.Id;
