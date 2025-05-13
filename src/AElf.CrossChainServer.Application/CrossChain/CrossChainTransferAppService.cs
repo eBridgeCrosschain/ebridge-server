@@ -955,6 +955,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                     transfer.TransferStatus = ReceiptStatus.Confirmed;
                     toUpdate.Add(transfer);
                 }
+                
                 else if (txResult.IsFailed)
                 {
                     Log.Debug(
@@ -1045,6 +1046,10 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                         transfer.ReceiveTransactionId,
                         chainId);
                     transfer.ReceiveTransactionId = null;
+                    transfer.ReceiveStatus = ReceiptStatus.Initializing;
+                    transfer.ReceiveBlockHeight = 0;
+                    transfer.ReceiveTime = new DateTime();
+                    transfer.ReceiveAmount = 0;
                     toUpdate.Add(transfer);
                 }
                 else
