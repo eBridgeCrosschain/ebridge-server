@@ -23,8 +23,12 @@ public abstract class EvmIndexerSyncProviderBase(ISettingManager settingManager)
         var endHeight = Math.Min(syncHeight + MaxRequestCount, currentIndexHeight);
         if (endHeight <= syncHeight)
         {
+            Log.ForContext("chainId", chainId).Debug(
+                "No need to sync chain {chainId} from {SyncHeight} to {EndHeight}, current index height {CurrentIndexHeight}",
+                chainId, syncHeight, endHeight, currentIndexHeight);
             return;
         }
+
         Log.ForContext("chainId", chainId).Debug("Start to sync chain {chainId} from {SyncHeight} to {EndHeight}",
             chainId, syncHeight + 1, endHeight);
 
@@ -51,13 +55,15 @@ public abstract class EvmIndexerSyncProviderBase(ISettingManager settingManager)
         var setting = await SettingManager.GetOrNullAsync(chainId, settingKey);
         return setting == null ? 0 : long.Parse(setting);
     }
+
     private async Task SetSyncHeightAsync(string chainId, string typePrefix, long height)
     {
         var settingKey = GetSettingKey(typePrefix);
         await SettingManager.SetAsync(chainId, settingKey, height.ToString());
     }
-    
-    protected async Task<FilterLogsDto> GetContractLogsAsync(string chainId, string contractAddress, long startHeight, long endHeight)
+
+    protected async Task<FilterLogsDto> GetContractLogsAsync(string chainId, string contractAddress, long startHeight,
+        long endHeight)
     {
         var logs = await BlockchainAppService.GetContractLogsAsync(chainId, contractAddress, startHeight, endHeight);
         return logs;
@@ -67,7 +73,8 @@ public abstract class EvmIndexerSyncProviderBase(ISettingManager settingManager)
         string contractAddress, long startHeight, long endHeight, string logSignature)
         where TEventDTO : IEventDTO, new()
     {
-        var logs = await BlockchainAppService.GetContractLogsAndParseAsync<TEventDTO>(chainId, contractAddress, startHeight, endHeight,logSignature);
+        var logs = await BlockchainAppService.GetContractLogsAndParseAsync<TEventDTO>(chainId, contractAddress,
+            startHeight, endHeight, logSignature);
         return logs;
     }
 
