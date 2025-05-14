@@ -56,8 +56,8 @@ public class EvmDailyLimitSetSyncProvider(
         {
             var log = dailyLimitSet.Log;
             var events = dailyLimitSet.Event;
-            Log.Debug("Sync daily limit set log event, chainId: {chainId}, log: {log}", chainId,
-                JsonSerializer.Serialize(events)
+            Log.Debug("Sync daily limit set log event, chainId: {chainId}, log: {log}, dailyLimitId: {Id}", chainId,
+                JsonSerializer.Serialize(events),events.DailyLimitId.ToHex()
             );
             var swapInfo = _tokenLimitSwapInfoOptions.SwapTokenInfos[events.DailyLimitId.ToHex()];
             if (swapInfo == null)

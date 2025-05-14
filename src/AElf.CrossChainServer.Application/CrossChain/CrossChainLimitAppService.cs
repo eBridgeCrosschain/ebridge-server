@@ -231,6 +231,8 @@ public class CrossChainLimitAppService : CrossChainServerAppService, ICrossChain
 
     public async Task ConsumeCrossChainDailyLimitAsync(ConsumeCrossChainDailyLimitInput input)
     {
+        Log.Debug("ConsumeCrossChainDailyLimitAsync, chainId: {chainId}, targetChainId: {targetChainId}, tokenId: {tokenId}, type: {type}, amount: {amount}",
+            input.ChainId, input.TargetChainId, input.TokenId, input.Type, input.Amount);
         var limit = await _crossChainDailyLimitRepository.GetAsync(o =>
             o.ChainId == input.ChainId && o.TargetChainId == input.TargetChainId && o.TokenId == input.TokenId &&
             o.Type == input.Type);
