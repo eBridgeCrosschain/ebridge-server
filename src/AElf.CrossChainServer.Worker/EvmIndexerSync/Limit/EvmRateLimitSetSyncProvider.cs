@@ -66,7 +66,6 @@ public class EvmRateLimitSetSyncProvider(
                 Log.Error("ConfigChangedEventProcessor: SwapInfo not found for id: {Id}", events.BucketId.ToHex());
                 return;
             }
-
             var token = await tokenAppService.GetAsync(new GetTokenInput
             {
                 ChainId = chainId,
