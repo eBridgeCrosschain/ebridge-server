@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.CrossChain;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Serilog;
 using Volo.Abp.BackgroundWorkers;
 using Volo.Abp.Threading;
@@ -15,10 +16,11 @@ public class CheckEvmTransactionConfirmedWorker : AsyncPeriodicBackgroundWorkerB
     private readonly IChainAppService _chainAppService;
 
     public CheckEvmTransactionConfirmedWorker(AbpAsyncTimer timer, IServiceScopeFactory serviceScopeFactory,
-        ICrossChainTransferAppService crossChainTransferAppService, IChainAppService chainAppService) : base(timer,
+        ICrossChainTransferAppService crossChainTransferAppService, IChainAppService chainAppService,
+        IOptionsSnapshot<WorkerSyncPeriodOptions> workerSyncPeriodOptions) : base(timer,
         serviceScopeFactory)
     {
-        Timer.Period = 1000 * 60;
+        Timer.Period = workerSyncPeriodOptions.Value.CheckEvmConfirmedTransactionPeriod;
         _crossChainTransferAppService = crossChainTransferAppService;
         _chainAppService = chainAppService;
     }

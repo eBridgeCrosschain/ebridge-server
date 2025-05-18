@@ -1,7 +1,5 @@
-using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.CrossChain;
 using AElf.CrossChainServer.EvmIndexer;
-using AElf.CrossChainServer.Settings;
 using AElf.CrossChainServer.TokenPool;
 using AElf.CrossChainServer.Worker.EvmIndexerSync;
 using AElf.CrossChainServer.Worker.EvmIndexerSync.Limit;
@@ -26,6 +24,7 @@ namespace AElf.CrossChainServer.Worker
             Configure<TonIndexSyncOptions>(configuration.GetSection("TonIndexSync"));
             Configure<EvmContractSyncOptions>(configuration.GetSection("EvmContractSync"));
             Configure<TokenLimitSwapInfoOptions>(configuration.GetSection("TokenLimitSwapInfo"));
+            Configure<WorkerSyncPeriodOptions>(configuration.GetSection("WorkerSyncPeriod"));
 
             context.Services.AddTransient<IEvmSyncProvider, EvmTokenPoolIndexerSyncProvider>();
             context.Services.AddTransient<IEvmSyncProvider, EvmNewReceiptSyncProvider>();
@@ -52,35 +51,6 @@ namespace AElf.CrossChainServer.Worker
             {
                 var service = context.ServiceProvider.GetRequiredService<ICrossChainLimitAppService>();
                 AsyncHelper.RunSync(async () => await service.InitLimitAsync());
-            }
-            {
-                var bridgeContractSyncOptions = context.ServiceProvider
-                    .GetRequiredService<IOptionsSnapshot<BridgeContractSyncOptions>>();
-                if (bridgeContractSyncOptions.Value.EnableSyncHeight)
-                {
-                    var service = context.ServiceProvider.GetRequiredService<ISettingManager>();
-                    var chainService = context.ServiceProvider.GetRequiredService<IChainAppService>();
-                    AsyncHelper.RunSync(async () =>
-                    {
-                        var chains = await chainService.GetListAsync(new GetChainsInput
-                        {
-                            Type = BlockchainType.AElf
-                        });
-                        foreach (var chain in chains.Items)
-                        {
-                            var syncDelayHeight = await service.GetOrNullAsync(chain.Id,
-                                CrossChainServerSettings.PoolLiquidityIndexerSync);
-                            await service.SetAsync(chain.Id,
-                                $"{bridgeContractSyncOptions.Value.ConfirmedSyncKeyPrefix}-{CrossChainServerSettings.PoolLiquidityIndexerSync}",
-                                syncDelayHeight);
-                            var syncDelayHeightUserLiq = await service.GetOrNullAsync(chain.Id,
-                                CrossChainServerSettings.UserLiquidityIndexerSync);
-                            await service.SetAsync(chain.Id,
-                                $"{bridgeContractSyncOptions.Value.ConfirmedSyncKeyPrefix}-{CrossChainServerSettings.UserLiquidityIndexerSync}",
-                                syncDelayHeightUserLiq);
-                        }
-                    });
-                }
             }
             context.AddBackgroundWorkerAsync<TransferProgressUpdateWorker>();
             context.AddBackgroundWorkerAsync<CrossChainIndexingCleanWorker>();

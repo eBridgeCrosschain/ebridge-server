@@ -52,14 +52,6 @@ public class CrossChainServerApplicationTestModule : AbpModule
                 }
             };
         });
-
-        Configure<ReportJobCategoryOptions>(o =>
-        {
-            o.Mapping = new Dictionary<string, string>
-            {
-                { "MainChain_AELF", "CrossChain" }
-            };
-        });
         
         Configure<TokenSymbolMappingOptions>(o =>
         {

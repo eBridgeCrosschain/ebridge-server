@@ -557,7 +557,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
 
                 if (txResult.IsFailed)
                 {
-                    Log.Debug("[UpdateReceiveTransactionAsync] Transaction failed. TransferTransactionId:{id}, ReceiveTransactionId:{txId}",
+                    Log.Information("[UpdateReceiveTransactionAsync] Transaction failed. TransferTransactionId:{id}, ReceiveTransactionId:{txId}",
                         transfer.TransferTransactionId,transfer.ReceiveTransactionId);
                     transfer.ReceiveTransactionId = null;
                     transfer.ReceiveStatus = ReceiptStatus.Initializing;
@@ -568,7 +568,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                 }
                 else if (txResult.IsMined)
                 {
-                    Log.Debug("[UpdateReceiveTransactionAsync] Transaction mined. TransferTransactionId:{id}, ReceiveTransactionId:{txId}",
+                    Log.Information("[UpdateReceiveTransactionAsync] Transaction mined. TransferTransactionId:{id}, ReceiveTransactionId:{txId}",
                         transfer.TransferTransactionId,transfer.ReceiveTransactionId);
                     var chainStatus = await _blockchainAppService.GetChainStatusAsync(transfer.ToChainId);
                     if (chainStatus.ConfirmedBlockHeight >= txResult.BlockHeight)
@@ -630,7 +630,7 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                 }
 
                 Log.ForContext("fromChainId", transfer.FromChainId).ForContext("toChainId", transfer.ToChainId)
-                    .Debug(
+                    .Information(
                         "Start to auto receive, transferTransactionId:{id}", transfer.TransferTransactionId);
 
                 if (!await _checkTransferProvider.CheckTokenExistAsync(transfer.FromChainId, transfer.ToChainId,

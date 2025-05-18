@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using AElf.CrossChainServer.CrossChain;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Volo.Abp.BackgroundWorkers;
 using Volo.Abp.Threading;
 
@@ -12,10 +13,10 @@ public class CrossChainIndexingCleanWorker : AsyncPeriodicBackgroundWorkerBase
     private readonly ICrossChainIndexingInfoAppService _crossChainIndexingInfoAppService;
 
     public CrossChainIndexingCleanWorker(AbpAsyncTimer timer, IServiceScopeFactory serviceScopeFactory,
-        ICrossChainIndexingInfoAppService crossChainIndexingInfoAppService) : base(timer, serviceScopeFactory)
+        ICrossChainIndexingInfoAppService crossChainIndexingInfoAppService,IOptionsSnapshot<WorkerSyncPeriodOptions> workerSyncPeriodOptions) : base(timer, serviceScopeFactory)
     {
         _crossChainIndexingInfoAppService = crossChainIndexingInfoAppService;
-        Timer.Period = 1000 * 60 * 60;
+        Timer.Period = workerSyncPeriodOptions.Value.CrossChainIndexingCleanPeriod;
     }
 
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)

@@ -51,7 +51,7 @@ public class IndexerAppService : CrossChainServerAppService, IIndexerAppService
         var res = await _httpProvider.InvokeAsync<SyncStateResponse>(_syncStateServiceOption.BaseUrl, _syncStateUri);
         var blockHeight = res.CurrentVersion.Items.FirstOrDefault(i => i.ChainId == aelfChainId)
             ?.LastIrreversibleBlockHeight;
-        Logger.LogInformation("Get latest index height. chainId: {chainId}, height: {height}", aelfChainId,
+        Logger.LogDebug("Get latest index height. chainId: {chainId}, height: {height}", aelfChainId,
             blockHeight);
         return blockHeight ?? 0;
     }
@@ -284,21 +284,4 @@ public class IndexerAppService : CrossChainServerAppService, IIndexerAppService
             string.Join(",", data.Errors.Select(e => e.Message).ToList()));
         return default;
     }
-}
-
-public class ConfirmedBlockHeight
-{
-    public SyncState SyncState { get; set; }
-}
-
-public class SyncState
-{
-    public long ConfirmedBlockHeight { get; set; }
-}
-
-public enum BlockFilterType
-{
-    BLOCK,
-    TRANSACTION,
-    LOG_EVENT
 }

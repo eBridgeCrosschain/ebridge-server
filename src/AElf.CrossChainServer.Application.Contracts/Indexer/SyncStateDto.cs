@@ -2,18 +2,6 @@ using System.Collections.Generic;
 
 namespace AElf.CrossChainServer.Indexer;
 
-public class SyncStateDto
-{
-    public long ConfirmedBlockHeight { get; set; }
-}
-
-public enum BlockFilterType
-{
-    BLOCK,
-    TRANSACTION,
-    LOG_EVENT
-}
-
 public class SyncStateResponse
 {
     public SyncStateItems CurrentVersion { get; set; }

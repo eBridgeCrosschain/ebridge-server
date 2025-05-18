@@ -15,10 +15,7 @@ public class GraphQLClientFactoryTest : CrossChainServerApplicationTestBase
     [Fact]
     public void GetClientTest()
     {
-        var client = _graphQlClientFactory.GetClient(GraphQLClientEnum.CrossChainServerClient);
-        client.ShouldNotBeNull();
-
-        client = _graphQlClientFactory.GetClient(GraphQLClientEnum.CrossChainClient);
+        var client = _graphQlClientFactory.GetClient(GraphQLClientEnum.CrossChainClient);
         client.ShouldNotBeNull();
     }
 }

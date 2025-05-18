@@ -4,7 +4,6 @@ using AElf.CrossChainServer.Chains;
 using AElf.CrossChainServer.Chains.Ton;
 using AElf.CrossChainServer.Contracts.Bridge;
 using AElf.CrossChainServer.Contracts.CrossChain;
-using AElf.CrossChainServer.Contracts.Report;
 using AElf.CrossChainServer.Contracts.Token;
 using AElf.CrossChainServer.CrossChain;
 using AElf.CrossChainServer.HttpClient;
@@ -47,10 +46,8 @@ public class CrossChainServerApplicationModule : AbpModule
         var configuration = context.Services.GetConfiguration();
         Configure<ChainApiOptions>(configuration.GetSection("ChainApi"));
         Configure<BridgeContractOptions>(configuration.GetSection("BridgeContract"));
-        Configure<ReportContractOptions>(configuration.GetSection("ReportContract"));
         Configure<BlockConfirmationOptions>(configuration.GetSection("BlockConfirmation"));
         Configure<AccountOptions>(configuration.GetSection("Account"));
-        Configure<ReportJobCategoryOptions>(configuration.GetSection("ReportJobCategory"));
         Configure<TokenContractOptions>(configuration.GetSection("TokenContract"));
         Configure<CrossChainContractOptions>(configuration.GetSection("CrossChainContract"));
         Configure<TokenSymbolMappingOptions>(configuration.GetSection("TokenSymbolMapping"));
@@ -58,7 +55,6 @@ public class CrossChainServerApplicationModule : AbpModule
         Configure<GraphQLClientOptions>(configuration.GetSection("GraphQLClients"));
         Configure<EvmTokensOptions>(configuration.GetSection("EvmTokens"));
         Configure<CrossChainLimitsOptions>(configuration.GetSection("CrossChainLimits"));
-        Configure<ReportQueryTimesOptions>(configuration.GetSection("ReportQueryTimes"));
         Configure<AutoReceiveConfigOptions>(configuration.GetSection("AutoReceiveConfig"));
         Configure<SyncStateServiceOption>(configuration.GetSection("SyncStateService"));
         Configure<TokenPriceIdMappingOptions>(configuration.GetSection("TokenPriceIdMapping"));
@@ -81,7 +77,6 @@ public class CrossChainServerApplicationModule : AbpModule
         
         context.Services.AddTransient<IBridgeContractProvider, EvmBridgeContractProvider>();
         context.Services.AddTransient<IBridgeContractProvider, AElfBridgeContractProvider>();
-        context.Services.AddTransient<IReportContractProvider, AElfReportContractProvider>();
         context.Services.AddTransient<ICrossChainContractProvider, AElfCrossChainContractProvider>();
         context.Services.AddTransient<ITokenContractProvider, AElfTokenContractProvider>();
         context.Services.AddTransient<ICheckTransferProvider, CheckTransferProvider>();
