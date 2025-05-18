@@ -43,7 +43,6 @@ public class CrossChainLimitInfoAppServiceTest
 
         _service = new CrossChainLimitInfoAppService(
             _mockIndexerCrossChainLimitInfoService,
-            _mockBridgeContractAppService,
             _mockEvmTokensOptions,
             _mockTokenAppService,
             _mockChainAppService,

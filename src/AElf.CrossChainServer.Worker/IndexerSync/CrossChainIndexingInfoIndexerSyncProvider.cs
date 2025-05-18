@@ -30,7 +30,7 @@ public class CrossChainIndexingInfoIndexerSyncProvider : IndexerSyncProviderBase
 
     protected override string SyncType { get; } = CrossChainServerSettings.CrossChainIndexingIndexerSync;
 
-    protected override async Task<long> HandleDataAsync(string aelfChainId, long startHeight, long endHeight)
+    protected override async Task<long> HandleDataAsync(string aelfChainId, long startHeight, long endHeight,bool isConfirmed)
     {
         Log.ForContext("chainId", aelfChainId).Debug("Start to sync cross chain indexing info {ChainId} from {StartHeight} to {EndHeight}",
             aelfChainId, startHeight, endHeight);

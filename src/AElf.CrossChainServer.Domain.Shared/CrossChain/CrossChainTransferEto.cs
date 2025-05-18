@@ -25,6 +25,9 @@ public class CrossChainTransferEto
     public string ReceiptId { get; set; }
     public double Progress { get; set; }
     public DateTime ProgressUpdateTime { get; set; }
-    public bool TransferNeedToBeApproved { get; set; }
     public string TraceId { get; set; }
+    public ReceiptStatus TransferStatus { get; set; }
+    public ReceiptStatus ReceiveStatus { get; set; }
+    public long ReceiveBlockHeight { get; set; }
+
 }

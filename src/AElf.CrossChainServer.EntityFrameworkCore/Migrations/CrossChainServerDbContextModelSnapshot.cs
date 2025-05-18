@@ -213,6 +213,12 @@ namespace AElf.CrossChainServer.Migrations
                     b.Property<decimal>("ReceiveAmount")
                         .HasColumnType("decimal(65,30)");
 
+                    b.Property<long>("ReceiveBlockHeight")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("ReceiveStatus")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("ReceiveTime")
                         .HasColumnType("datetime(6)");
 
@@ -243,8 +249,8 @@ namespace AElf.CrossChainServer.Migrations
                     b.Property<long>("TransferBlockHeight")
                         .HasColumnType("bigint");
 
-                    b.Property<bool>("TransferNeedToBeApproved")
-                        .HasColumnType("tinyint(1)");
+                    b.Property<int>("TransferStatus")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("TransferTime")
                         .HasColumnType("datetime(6)");

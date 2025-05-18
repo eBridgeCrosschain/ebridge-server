@@ -20,6 +20,7 @@ public class CrossChainTransferInfoDto : GraphQLDto
     public string ReceiveTokenSymbol { get; set; }
     public TransferType TransferType { get; set; }
     public CrossChainType CrossChainType { get; set; }
+    public long ReceiveBlockHeight { get; set; }
 }
 
 public enum TransferType

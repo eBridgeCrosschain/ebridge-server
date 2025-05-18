@@ -15,8 +15,6 @@ public class CrossChainTransferAppServiceTests : CrossChainServerApplicationTest
     private readonly ICrossChainTransferAppService _crossChainTransferAppService;
     private readonly ITokenAppService _tokenAppService;
     private readonly ICrossChainIndexingInfoAppService _crossChainIndexingInfoAppService;
-    private readonly IOracleQueryInfoAppService _oracleQueryInfoAppService;
-    private readonly IReportInfoAppService _reportInfoAppService;
     private readonly IAetherLinkProvider _aetherLinkProvider;
 
     public CrossChainTransferAppServiceTests()
@@ -25,8 +23,6 @@ public class CrossChainTransferAppServiceTests : CrossChainServerApplicationTest
         _crossChainTransferAppService = GetRequiredService<ICrossChainTransferAppService>();
         _tokenAppService = GetRequiredService<ITokenAppService>();
         _crossChainIndexingInfoAppService = GetRequiredService<ICrossChainIndexingInfoAppService>();
-        _oracleQueryInfoAppService = GetRequiredService<IOracleQueryInfoAppService>();
-        _reportInfoAppService = GetRequiredService<IReportInfoAppService>();
         _aetherLinkProvider = GetRequiredService<IAetherLinkProvider>();
     }
 
@@ -198,303 +194,303 @@ public class CrossChainTransferAppServiceTests : CrossChainServerApplicationTest
         status.Items[0].Progress.ShouldBe(100);
     }
     
-    [Fact]
-    public async Task HeterogeneousTransfer_ETH_To_AELF_Test()
-    {
-        var tokenTransfer = await _tokenAppService.GetAsync(new GetTokenInput
-        {
-            ChainId ="Ethereum",
-            Symbol = "ELF"
-        });
-        var tokenReceived = await _tokenAppService.GetAsync(new GetTokenInput
-        {
-            ChainId ="MainChain_AELF",
-            Symbol = "ELF"
-        });
-
-        var input = new CrossChainTransferInput
-        {
-            TransferAmount = 100,
-            FromAddress = "FromAddress",
-            ToAddress = "ToAddress",
-            TransferTokenId = tokenTransfer.Id,
-            FromChainId = "Ethereum",
-            ToChainId = "MainChain_AELF",
-            TransferBlockHeight = 100,
-            TransferTime = DateTime.UtcNow.AddMinutes(-1),
-            ReceiptId = "ReceiptId"
-        };
-        await _crossChainTransferAppService.TransferAsync(input);
-
-        var list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
-        {
-            MaxResultCount = 100
-        });
-        list.Items.Count.ShouldBe(1);
-        list.Items[0].TransferAmount.ShouldBe(input.TransferAmount);
-        list.Items[0].ReceiveAmount.ShouldBe(0);
-        list.Items[0].Progress.ShouldBe(0);
-        list.Items[0].Status.ShouldBe(CrossChainStatus.Transferred);
-        list.Items[0].TransferToken.Id.ShouldBe(tokenTransfer.Id);
-        list.Items[0].ReceiveToken.ShouldBeNull();
-        list.Items[0].Type.ShouldBe(CrossChainType.Heterogeneous);
-        list.Items[0].FromAddress.ShouldBe(input.FromAddress);
-        list.Items[0].ToAddress.ShouldBe(input.ToAddress);
-        list.Items[0].FromChainId.ShouldBe(input.FromChainId);
-        list.Items[0].ToChainId.ShouldBe(input.ToChainId);
-        list.Items[0].TransferBlockHeight.ShouldBe(input.TransferBlockHeight);
-        list.Items[0].TransferTime.ShouldBe(DateTimeHelper.ToUnixTimeMilliseconds(input.TransferTime));
-        list.Items[0].ReceiptId.ShouldBe(input.ReceiptId);
-
-        var status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
-        {
-            Ids = { list.Items[0].Id }
-        });
-        status.Items.Count.ShouldBe(1);
-        status.Items[0].Progress.ShouldBe(0);
-        
-        await _oracleQueryInfoAppService.CreateAsync(new CreateOracleQueryInfoInput
-        {
-            Option = "ReceiptId",
-            Step = OracleStep.QueryCreated,
-            ChainId = "MainChain_AELF",
-            QueryId = "QueryId",
-            LastUpdateHeight = 100
-        });
-
-        await _crossChainTransferAppService.UpdateProgressAsync();
-        
-        list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
-        {
-            MaxResultCount = 100
-        });
-        list.Items[0].Progress.ShouldBe(50);
-        
-        status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
-        {
-            Ids = { list.Items[0].Id }
-        });
-        status.Items.Count.ShouldBe(1);
-        status.Items[0].Progress.ShouldBe(50);
-        
-        await _oracleQueryInfoAppService.UpdateAsync(new UpdateOracleQueryInfoInput
-        {
-            Step = OracleStep.Committed,
-            ChainId = "MainChain_AELF",
-            QueryId = "QueryId",
-            LastUpdateHeight = 100
-        });
-        await _oracleQueryInfoAppService.UpdateAsync(new UpdateOracleQueryInfoInput
-        {
-            Step = OracleStep.SufficientCommitmentsCollected,
-            ChainId = "MainChain_AELF",
-            QueryId = "QueryId",
-            LastUpdateHeight = 100
-        });
-        await _oracleQueryInfoAppService.UpdateAsync(new UpdateOracleQueryInfoInput
-        {
-            Step = OracleStep.CommitmentRevealed,
-            ChainId = "MainChain_AELF",
-            QueryId = "QueryId",
-            LastUpdateHeight = 100
-        });
-        await _oracleQueryInfoAppService.UpdateAsync(new UpdateOracleQueryInfoInput
-        {
-            Step = OracleStep.QueryCompleted,
-            ChainId = "MainChain_AELF",
-            QueryId = "QueryId",
-            LastUpdateHeight = 100
-        });
-
-        await Task.Delay(1000);
-        await _crossChainTransferAppService.UpdateProgressAsync();
-        
-        list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
-        {
-            MaxResultCount = 100
-        });
-        list.Items[0].Progress.ShouldBe(50);
-        list.Items[0].Status.ShouldBe(CrossChainStatus.Transferred);
-        
-        status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
-        {
-            Ids = { list.Items[0].Id }
-        });
-        status.Items.Count.ShouldBe(1);
-        status.Items[0].Progress.ShouldBe(50);
-
-        var receiveInput = new CrossChainReceiveInput
-        {
-            ReceiveTime = DateTime.UtcNow,
-            FromChainId = "Ethereum",
-            ToChainId = "MainChain_AELF",
-            ReceiveTransactionId = "ReceiveTransactionId",
-            ReceiptId = "ReceiptId",
-            ReceiveAmount = 100,
-            ReceiveTokenId = tokenReceived.Id
-        };
-        await _crossChainTransferAppService.ReceiveAsync(receiveInput);
-        
-        list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
-        {
-            MaxResultCount = 100
-        });
-        list.Items[0].Progress.ShouldBe(100);
-        list.Items[0].ReceiveTime.ShouldBe(DateTimeHelper.ToUnixTimeMilliseconds(receiveInput.ReceiveTime));
-        list.Items[0].ReceiveTransactionId.ShouldBe(receiveInput.ReceiveTransactionId);
-        list.Items[0].Status.ShouldBe(CrossChainStatus.Received);
-        list.Items[0].ReceiveToken.Id.ShouldBe(tokenReceived.Id);
-        list.Items[0].ReceiveAmount.ShouldBe(receiveInput.ReceiveAmount);
-        
-        status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
-        {
-            Ids = { list.Items[0].Id }
-        });
-        status.Items.Count.ShouldBe(1);
-        status.Items[0].Progress.ShouldBe(100);
-    }
-    
-    [Fact]
-    public async Task HeterogeneousTransfer_AELF_To_ETH_Test()
-    {
-        var tokenTransfer = await _tokenAppService.GetAsync(new GetTokenInput
-        {
-            ChainId ="MainChain_AELF",
-            Symbol = "ELF"
-        });
-        var tokenReceived = await _tokenAppService.GetAsync(new GetTokenInput
-        {
-            ChainId ="Ethereum",
-            Symbol = "ELF"
-        });
-
-        var input = new CrossChainTransferInput
-        {
-            TransferAmount = 100,
-            FromAddress = "FromAddress",
-            ToAddress = "ToAddress",
-            TransferTokenId = tokenTransfer.Id,
-            FromChainId = "MainChain_AELF",
-            ToChainId = "Ethereum",
-            TransferBlockHeight = 100,
-            TransferTime = DateTime.UtcNow.AddMinutes(-1),
-            ReceiptId = "ReceiptId"
-        };
-        await _crossChainTransferAppService.TransferAsync(input);
-
-        var list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
-        {
-            MaxResultCount = 100
-        });
-        list.Items.Count.ShouldBe(1);
-        list.Items[0].TransferAmount.ShouldBe(input.TransferAmount);
-        list.Items[0].ReceiveAmount.ShouldBe(0);
-        list.Items[0].Progress.ShouldBe(0);
-        list.Items[0].Status.ShouldBe(CrossChainStatus.Transferred);
-        list.Items[0].TransferToken.Id.ShouldBe(tokenTransfer.Id);
-        list.Items[0].ReceiveToken.ShouldBeNull();
-        list.Items[0].Type.ShouldBe(CrossChainType.Heterogeneous);
-        list.Items[0].FromAddress.ShouldBe(input.FromAddress);
-        list.Items[0].ToAddress.ShouldBe(input.ToAddress);
-        list.Items[0].FromChainId.ShouldBe(input.FromChainId);
-        list.Items[0].ToChainId.ShouldBe(input.ToChainId);
-        list.Items[0].TransferBlockHeight.ShouldBe(input.TransferBlockHeight);
-        list.Items[0].TransferTime.ShouldBe(DateTimeHelper.ToUnixTimeMilliseconds(input.TransferTime));
-        list.Items[0].ReceiptId.ShouldBe(input.ReceiptId);
-
-        var status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
-        {
-            Ids = { list.Items[0].Id }
-        });
-        status.Items.Count.ShouldBe(1);
-        status.Items[0].Progress.ShouldBe(0);
-        
-        await _reportInfoAppService.CreateAsync(new CreateReportInfoInput()
-        {
-            ChainId = "MainChain_AELF",
-            RoundId = 1,
-            Token = "Eth",
-            ReceiptHash = "ReceiptHash",
-            ReceiptId = "ReceiptId",
-            TargetChainId = "Ethereum"
-        });
-
-        await _crossChainTransferAppService.UpdateProgressAsync();
-        list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
-        {
-            MaxResultCount = 100
-        });
-        list.Items[0].Progress.ShouldBe(50);
-        
-        status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
-        {
-            Ids = { list.Items[0].Id }
-        });
-        status.Items.Count.ShouldBe(1);
-        status.Items[0].Progress.ShouldBe(50);
-        
-        await _reportInfoAppService.UpdateStepAsync("MainChain_AELF",1,"Eth","Ethereum", ReportStep.Confirmed, 100);
-        await Task.Delay(2000);
-        await _crossChainTransferAppService.UpdateProgressAsync();
-        list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
-        {
-            MaxResultCount = 100
-        });
-        list.Items[0].Progress.ShouldBe(50);
-        
-        status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
-        {
-            Ids = { list.Items[0].Id }
-        });
-        status.Items.Count.ShouldBe(1);
-        status.Items[0].Progress.ShouldBe(50);
-
-        await _reportInfoAppService.UpdateStepAsync("MainChain_AELF",1,"Eth", "Ethereum",ReportStep.Transmitted, 110);
-        await Task.Delay(2000);
-        await _crossChainTransferAppService.UpdateProgressAsync();
-        list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
-        {
-            MaxResultCount = 100
-        });
-        list.Items[0].Progress.ShouldBe(50);
-        
-        status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
-        {
-            Ids = { list.Items[0].Id }
-        });
-        status.Items.Count.ShouldBe(1);
-        status.Items[0].Progress.ShouldBe(50);
-
-        var receiveInput = new CrossChainReceiveInput
-        {
-            ReceiveTime = DateTime.UtcNow,
-            FromChainId = "MainChain_AELF",
-            ToChainId = "Ethereum",
-            ReceiveTransactionId = "ReceiveTransactionId",
-            ReceiptId = "ReceiptId",
-            ReceiveAmount = 100,
-            ReceiveTokenId = tokenReceived.Id
-        };
-        await _crossChainTransferAppService.ReceiveAsync(receiveInput);
-        
-        list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
-        {
-            MaxResultCount = 100
-        });
-        list.Items[0].Progress.ShouldBe(100);
-        list.Items[0].ReceiveTime.ShouldBe(DateTimeHelper.ToUnixTimeMilliseconds(receiveInput.ReceiveTime));
-        list.Items[0].ReceiveTransactionId.ShouldBe(receiveInput.ReceiveTransactionId);
-        list.Items[0].Status.ShouldBe(CrossChainStatus.Received);
-        list.Items[0].ReceiveToken.Id.ShouldBe(tokenReceived.Id);
-        list.Items[0].ReceiveAmount.ShouldBe(receiveInput.ReceiveAmount);
-        
-        status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
-        {
-            Ids = { list.Items[0].Id }
-        });
-        status.Items.Count.ShouldBe(1);
-        status.Items[0].Progress.ShouldBe(100);
-    }
+    // [Fact]
+    // public async Task HeterogeneousTransfer_ETH_To_AELF_Test()
+    // {
+    //     var tokenTransfer = await _tokenAppService.GetAsync(new GetTokenInput
+    //     {
+    //         ChainId ="Ethereum",
+    //         Symbol = "ELF"
+    //     });
+    //     var tokenReceived = await _tokenAppService.GetAsync(new GetTokenInput
+    //     {
+    //         ChainId ="MainChain_AELF",
+    //         Symbol = "ELF"
+    //     });
+    //
+    //     var input = new CrossChainTransferInput
+    //     {
+    //         TransferAmount = 100,
+    //         FromAddress = "FromAddress",
+    //         ToAddress = "ToAddress",
+    //         TransferTokenId = tokenTransfer.Id,
+    //         FromChainId = "Ethereum",
+    //         ToChainId = "MainChain_AELF",
+    //         TransferBlockHeight = 100,
+    //         TransferTime = DateTime.UtcNow.AddMinutes(-1),
+    //         ReceiptId = "ReceiptId"
+    //     };
+    //     await _crossChainTransferAppService.TransferAsync(input);
+    //
+    //     var list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
+    //     {
+    //         MaxResultCount = 100
+    //     });
+    //     list.Items.Count.ShouldBe(1);
+    //     list.Items[0].TransferAmount.ShouldBe(input.TransferAmount);
+    //     list.Items[0].ReceiveAmount.ShouldBe(0);
+    //     list.Items[0].Progress.ShouldBe(0);
+    //     list.Items[0].Status.ShouldBe(CrossChainStatus.Transferred);
+    //     list.Items[0].TransferToken.Id.ShouldBe(tokenTransfer.Id);
+    //     list.Items[0].ReceiveToken.ShouldBeNull();
+    //     list.Items[0].Type.ShouldBe(CrossChainType.Heterogeneous);
+    //     list.Items[0].FromAddress.ShouldBe(input.FromAddress);
+    //     list.Items[0].ToAddress.ShouldBe(input.ToAddress);
+    //     list.Items[0].FromChainId.ShouldBe(input.FromChainId);
+    //     list.Items[0].ToChainId.ShouldBe(input.ToChainId);
+    //     list.Items[0].TransferBlockHeight.ShouldBe(input.TransferBlockHeight);
+    //     list.Items[0].TransferTime.ShouldBe(DateTimeHelper.ToUnixTimeMilliseconds(input.TransferTime));
+    //     list.Items[0].ReceiptId.ShouldBe(input.ReceiptId);
+    //
+    //     var status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
+    //     {
+    //         Ids = { list.Items[0].Id }
+    //     });
+    //     status.Items.Count.ShouldBe(1);
+    //     status.Items[0].Progress.ShouldBe(0);
+    //     
+    //     await _oracleQueryInfoAppService.CreateAsync(new CreateOracleQueryInfoInput
+    //     {
+    //         Option = "ReceiptId",
+    //         Step = OracleStep.QueryCreated,
+    //         ChainId = "MainChain_AELF",
+    //         QueryId = "QueryId",
+    //         LastUpdateHeight = 100
+    //     });
+    //
+    //     await _crossChainTransferAppService.UpdateProgressAsync();
+    //     
+    //     list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
+    //     {
+    //         MaxResultCount = 100
+    //     });
+    //     list.Items[0].Progress.ShouldBe(20);
+    //     
+    //     status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
+    //     {
+    //         Ids = { list.Items[0].Id }
+    //     });
+    //     status.Items.Count.ShouldBe(1);
+    //     status.Items[0].Progress.ShouldBe(20);
+    //     
+    //     await _oracleQueryInfoAppService.UpdateAsync(new UpdateOracleQueryInfoInput
+    //     {
+    //         Step = OracleStep.Committed,
+    //         ChainId = "MainChain_AELF",
+    //         QueryId = "QueryId",
+    //         LastUpdateHeight = 100
+    //     });
+    //     await _oracleQueryInfoAppService.UpdateAsync(new UpdateOracleQueryInfoInput
+    //     {
+    //         Step = OracleStep.SufficientCommitmentsCollected,
+    //         ChainId = "MainChain_AELF",
+    //         QueryId = "QueryId",
+    //         LastUpdateHeight = 100
+    //     });
+    //     await _oracleQueryInfoAppService.UpdateAsync(new UpdateOracleQueryInfoInput
+    //     {
+    //         Step = OracleStep.CommitmentRevealed,
+    //         ChainId = "MainChain_AELF",
+    //         QueryId = "QueryId",
+    //         LastUpdateHeight = 100
+    //     });
+    //     await _oracleQueryInfoAppService.UpdateAsync(new UpdateOracleQueryInfoInput
+    //     {
+    //         Step = OracleStep.QueryCompleted,
+    //         ChainId = "MainChain_AELF",
+    //         QueryId = "QueryId",
+    //         LastUpdateHeight = 100
+    //     });
+    //
+    //     await Task.Delay(1000);
+    //     await _crossChainTransferAppService.UpdateProgressAsync();
+    //     
+    //     list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
+    //     {
+    //         MaxResultCount = 100
+    //     });
+    //     list.Items[0].Progress.ShouldBe(100);
+    //     list.Items[0].Status.ShouldBe(CrossChainStatus.Indexed);
+    //     
+    //     status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
+    //     {
+    //         Ids = { list.Items[0].Id }
+    //     });
+    //     status.Items.Count.ShouldBe(1);
+    //     status.Items[0].Progress.ShouldBe(100);
+    //
+    //     var receiveInput = new CrossChainReceiveInput
+    //     {
+    //         ReceiveTime = DateTime.UtcNow,
+    //         FromChainId = "Ethereum",
+    //         ToChainId = "MainChain_AELF",
+    //         ReceiveTransactionId = "ReceiveTransactionId",
+    //         ReceiptId = "ReceiptId",
+    //         ReceiveAmount = 100,
+    //         ReceiveTokenId = tokenReceived.Id
+    //     };
+    //     await _crossChainTransferAppService.ReceiveAsync(receiveInput);
+    //     
+    //     list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
+    //     {
+    //         MaxResultCount = 100
+    //     });
+    //     list.Items[0].Progress.ShouldBe(100);
+    //     list.Items[0].ReceiveTime.ShouldBe(DateTimeHelper.ToUnixTimeMilliseconds(receiveInput.ReceiveTime));
+    //     list.Items[0].ReceiveTransactionId.ShouldBe(receiveInput.ReceiveTransactionId);
+    //     list.Items[0].Status.ShouldBe(CrossChainStatus.Received);
+    //     list.Items[0].ReceiveToken.Id.ShouldBe(tokenReceived.Id);
+    //     list.Items[0].ReceiveAmount.ShouldBe(receiveInput.ReceiveAmount);
+    //     
+    //     status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
+    //     {
+    //         Ids = { list.Items[0].Id }
+    //     });
+    //     status.Items.Count.ShouldBe(1);
+    //     status.Items[0].Progress.ShouldBe(100);
+    // }
+    //
+    // [Fact]
+    // public async Task HeterogeneousTransfer_AELF_To_ETH_Test()
+    // {
+    //     var tokenTransfer = await _tokenAppService.GetAsync(new GetTokenInput
+    //     {
+    //         ChainId ="MainChain_AELF",
+    //         Symbol = "ELF"
+    //     });
+    //     var tokenReceived = await _tokenAppService.GetAsync(new GetTokenInput
+    //     {
+    //         ChainId ="Ethereum",
+    //         Symbol = "ELF"
+    //     });
+    //
+    //     var input = new CrossChainTransferInput
+    //     {
+    //         TransferAmount = 100,
+    //         FromAddress = "FromAddress",
+    //         ToAddress = "ToAddress",
+    //         TransferTokenId = tokenTransfer.Id,
+    //         FromChainId = "MainChain_AELF",
+    //         ToChainId = "Ethereum",
+    //         TransferBlockHeight = 100,
+    //         TransferTime = DateTime.UtcNow.AddMinutes(-1),
+    //         ReceiptId = "ReceiptId"
+    //     };
+    //     await _crossChainTransferAppService.TransferAsync(input);
+    //
+    //     var list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
+    //     {
+    //         MaxResultCount = 100
+    //     });
+    //     list.Items.Count.ShouldBe(1);
+    //     list.Items[0].TransferAmount.ShouldBe(input.TransferAmount);
+    //     list.Items[0].ReceiveAmount.ShouldBe(0);
+    //     list.Items[0].Progress.ShouldBe(0);
+    //     list.Items[0].Status.ShouldBe(CrossChainStatus.Transferred);
+    //     list.Items[0].TransferToken.Id.ShouldBe(tokenTransfer.Id);
+    //     list.Items[0].ReceiveToken.ShouldBeNull();
+    //     list.Items[0].Type.ShouldBe(CrossChainType.Heterogeneous);
+    //     list.Items[0].FromAddress.ShouldBe(input.FromAddress);
+    //     list.Items[0].ToAddress.ShouldBe(input.ToAddress);
+    //     list.Items[0].FromChainId.ShouldBe(input.FromChainId);
+    //     list.Items[0].ToChainId.ShouldBe(input.ToChainId);
+    //     list.Items[0].TransferBlockHeight.ShouldBe(input.TransferBlockHeight);
+    //     list.Items[0].TransferTime.ShouldBe(DateTimeHelper.ToUnixTimeMilliseconds(input.TransferTime));
+    //     list.Items[0].ReceiptId.ShouldBe(input.ReceiptId);
+    //
+    //     var status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
+    //     {
+    //         Ids = { list.Items[0].Id }
+    //     });
+    //     status.Items.Count.ShouldBe(1);
+    //     status.Items[0].Progress.ShouldBe(0);
+    //     
+    //     await _reportInfoAppService.CreateAsync(new CreateReportInfoInput()
+    //     {
+    //         ChainId = "MainChain_AELF",
+    //         RoundId = 1,
+    //         Token = "Eth",
+    //         ReceiptHash = "ReceiptHash",
+    //         ReceiptId = "ReceiptId",
+    //         TargetChainId = "Ethereum"
+    //     });
+    //
+    //     await _crossChainTransferAppService.UpdateProgressAsync();
+    //     list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
+    //     {
+    //         MaxResultCount = 100
+    //     });
+    //     list.Items[0].Progress.ShouldBe(100/3);
+    //     
+    //     status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
+    //     {
+    //         Ids = { list.Items[0].Id }
+    //     });
+    //     status.Items.Count.ShouldBe(1);
+    //     status.Items[0].Progress.ShouldBe(100/3);
+    //     
+    //     await _reportInfoAppService.UpdateStepAsync("MainChain_AELF",1,"Eth","Ethereum", ReportStep.Confirmed, 100);
+    //     await Task.Delay(2000);
+    //     await _crossChainTransferAppService.UpdateProgressAsync();
+    //     list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
+    //     {
+    //         MaxResultCount = 100
+    //     });
+    //     list.Items[0].Progress.ShouldBe(200/3);
+    //     
+    //     status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
+    //     {
+    //         Ids = { list.Items[0].Id }
+    //     });
+    //     status.Items.Count.ShouldBe(1);
+    //     status.Items[0].Progress.ShouldBe(200/3);
+    //
+    //     await _reportInfoAppService.UpdateStepAsync("MainChain_AELF",1,"Eth", "Ethereum",ReportStep.Transmitted, 110);
+    //     await Task.Delay(2000);
+    //     await _crossChainTransferAppService.UpdateProgressAsync();
+    //     list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
+    //     {
+    //         MaxResultCount = 100
+    //     });
+    //     list.Items[0].Progress.ShouldBe(100);
+    //     
+    //     status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
+    //     {
+    //         Ids = { list.Items[0].Id }
+    //     });
+    //     status.Items.Count.ShouldBe(1);
+    //     status.Items[0].Progress.ShouldBe(100);
+    //
+    //     var receiveInput = new CrossChainReceiveInput
+    //     {
+    //         ReceiveTime = DateTime.UtcNow,
+    //         FromChainId = "MainChain_AELF",
+    //         ToChainId = "Ethereum",
+    //         ReceiveTransactionId = "ReceiveTransactionId",
+    //         ReceiptId = "ReceiptId",
+    //         ReceiveAmount = 100,
+    //         ReceiveTokenId = tokenReceived.Id
+    //     };
+    //     await _crossChainTransferAppService.ReceiveAsync(receiveInput);
+    //     
+    //     list = await _crossChainTransferAppService.GetListAsync(new GetCrossChainTransfersInput
+    //     {
+    //         MaxResultCount = 100
+    //     });
+    //     list.Items[0].Progress.ShouldBe(100);
+    //     list.Items[0].ReceiveTime.ShouldBe(DateTimeHelper.ToUnixTimeMilliseconds(receiveInput.ReceiveTime));
+    //     list.Items[0].ReceiveTransactionId.ShouldBe(receiveInput.ReceiveTransactionId);
+    //     list.Items[0].Status.ShouldBe(CrossChainStatus.Received);
+    //     list.Items[0].ReceiveToken.Id.ShouldBe(tokenReceived.Id);
+    //     list.Items[0].ReceiveAmount.ShouldBe(receiveInput.ReceiveAmount);
+    //     
+    //     status = await _crossChainTransferAppService.GetStatusAsync(new GetCrossChainTransferStatusInput
+    //     {
+    //         Ids = { list.Items[0].Id }
+    //     });
+    //     status.Items.Count.ShouldBe(1);
+    //     status.Items[0].Progress.ShouldBe(100);
+    // }
     
     [Fact]
     public async Task HeterogeneousTransfer_AELF_To_TON_Test()

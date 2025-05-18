@@ -24,179 +24,7 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
         _tokenAppService = tokenAppService;
     }
 
-    [ExceptionHandler(typeof(Exception), Message = "[Evm bridge contract] Get send receipt infos failed.",
-        ReturnDefault = ReturnDefault.New,
-        LogTargets = new[] { "chainId", "contractAddress", "targetChainId", "tokenId", "fromIndex", "endIndex" })]
-    public async Task<List<ReceiptInfoDto>> GetSendReceiptInfosAsync(string chainId, string contractAddress,
-        string targetChainId, Guid tokenId,
-        long fromIndex, long endIndex)
-    {
-        var token = await _tokenAppService.GetAsync(tokenId);
-        var web3 = BlockchainClientFactory.GetClient(chainId);
-        var contractHandler = web3.Eth.GetContractHandler(contractAddress);
-
-        var evmGetReceiptInfos = await contractHandler
-            .QueryDeserializingToObjectAsync<GetReceiptInfosFunctionMessage, GetReceiptInfosDto>(
-                new GetReceiptInfosFunctionMessage
-                {
-                    Token = token.Address,
-                    TargetChainId = targetChainId,
-                    FromIndex = fromIndex,
-                    EndIndex = endIndex
-                });
-
-        var result = new List<ReceiptInfoDto>();
-        foreach (var receipt in evmGetReceiptInfos.Receipts)
-        {
-            var receiptInfo = new ReceiptInfoDto();
-            receiptInfo.ReceiptId = receipt.ReceiptId;
-            receiptInfo.TokenId = tokenId;
-            receiptInfo.FromAddress = receipt.Owner;
-            receiptInfo.ToChainId = receipt.TargetChainId;
-            receiptInfo.ToAddress = receipt.TargetAddress;
-            receiptInfo.Amount = (decimal)((BigDecimal)receipt.Amount / BigInteger.Pow(10, token.Decimals));
-            receiptInfo.BlockHeight = (long)receipt.BlockHeight;
-            receiptInfo.BlockTime = DateTimeHelper.FromUnixTimeMilliseconds((long)receipt.BlockTime * 1000);
-
-            result.Add(receiptInfo);
-        }
-
-        return result;
-    }
-
-    [ExceptionHandler(typeof(Exception), Message = "[Evm bridge contract] Get received receipt info failed.",
-        ReturnDefault = ReturnDefault.New,
-        LogTargets = new[] { "chainId", "contractAddress", "fromChainId", "tokenId", "fromIndex", "endIndex" })]
-    public virtual async Task<List<ReceivedReceiptInfoDto>> GetReceivedReceiptInfosAsync(string chainId,
-        string contractAddress,
-        string fromChainId, Guid tokenId,
-        long fromIndex, long endIndex)
-    {
-        var token = await _tokenAppService.GetAsync(tokenId);
-        var web3 = BlockchainClientFactory.GetClient(chainId);
-        var contractHandler = web3.Eth.GetContractHandler(contractAddress);
-
-        var evmGetReceiptInfos = await contractHandler
-            .QueryDeserializingToObjectAsync<GetReceivedReceiptInfosFunctionMessage, GetReceivedReceiptInfosDto>(
-                new GetReceivedReceiptInfosFunctionMessage
-                {
-                    Token = token.Address,
-                    FromChainId = fromChainId,
-                    FromIndex = fromIndex,
-                    EndIndex = endIndex
-                });
-
-        var result = new List<ReceivedReceiptInfoDto>();
-        foreach (var receipt in evmGetReceiptInfos.Receipts)
-        {
-            var receiptInfo = new ReceivedReceiptInfoDto();
-            receiptInfo.ReceiptId = receipt.ReceiptId;
-            receiptInfo.TokenId = tokenId;
-            //receiptInfo.FromAddress = receipt.Owner;
-            receiptInfo.FromChainId = receipt.FromChainId;
-            receiptInfo.ToAddress = receipt.TargetAddress;
-            receiptInfo.Amount = (decimal)((BigDecimal)receipt.Amount / BigInteger.Pow(10, token.Decimals));
-            receiptInfo.BlockHeight = (long)receipt.BlockHeight;
-            receiptInfo.BlockTime = DateTimeHelper.FromUnixTimeMilliseconds((long)receipt.BlockTime * 1000);
-
-            result.Add(receiptInfo);
-        }
-
-        return result;
-    }
-
-    [ExceptionHandler(typeof(Exception), Message = "[Evm bridge contract] Get transfer receipt index failed.",
-        ReturnDefault = ReturnDefault.New,
-        LogTargets = new[] { "chainId", "contractAddress", "tokenIds", "targetChainIds" })]
-    public virtual async Task<List<ReceiptIndexDto>> GetTransferReceiptIndexAsync(string chainId,
-        string contractAddress,
-        List<Guid> tokenIds, List<string> targetChainIds)
-    {
-        var tokenAddress = new List<string>();
-        foreach (var tokenId in tokenIds)
-        {
-            var token = await _tokenAppService.GetAsync(tokenId);
-            tokenAddress.Add(token.Address);
-        }
-
-        var web3 = BlockchainClientFactory.GetClient(chainId);
-        var contractHandler = web3.Eth.GetContractHandler(contractAddress);
-
-        var indexes = await contractHandler
-            .QueryDeserializingToObjectAsync<GetSendReceiptIndexFunctionMessage, GetSendReceiptIndexDto>(
-                new GetSendReceiptIndexFunctionMessage
-                {
-                    Tokens = tokenAddress,
-                    TargetChainIds = targetChainIds
-                });
-
-        return indexes.Indexes.Select((t, i) => new ReceiptIndexDto
-        {
-            TargetChainId = targetChainIds[i],
-            TokenId = tokenIds[i],
-            Index = (long)t
-        }).ToList();
-    }
-
-    [ExceptionHandler(typeof(Exception), Message = "[Evm bridge contract] Get receive receipt index failed.",
-        ReturnDefault = ReturnDefault.New,
-        LogTargets = new[] { "chainId", "contractAddress", "tokenIds", "fromChainIds" })]
-    public async Task<List<ReceiptIndexDto>> GetReceiveReceiptIndexAsync(string chainId, string contractAddress,
-        List<Guid> tokenIds, List<string> fromChainIds)
-    {
-        var tokenAddress = new List<string>();
-        foreach (var tokenId in tokenIds)
-        {
-            var token = await _tokenAppService.GetAsync(tokenId);
-            tokenAddress.Add(token.Address);
-        }
-
-        var web3 = BlockchainClientFactory.GetClient(chainId);
-        var contractHandler = web3.Eth.GetContractHandler(contractAddress);
-
-        var indexes = await contractHandler
-            .QueryDeserializingToObjectAsync<GetReceiveReceiptIndexFunctionMessage, GetReceiveReceiptIndexDto>(
-                new GetReceiveReceiptIndexFunctionMessage
-                {
-                    Tokens = tokenAddress,
-                    FromChainIds = fromChainIds
-                });
-
-        return indexes.Indexes.Select((t, i) => new ReceiptIndexDto
-        {
-            TargetChainId = fromChainIds[i],
-            TokenId = tokenIds[i],
-            Index = (long)t
-        }).ToList();
-    }
-
-    public async Task<bool> CheckTransmitAsync(string chainId, string contractAddress, string receiptHash)
-    {
-        var web3 = BlockchainClientFactory.GetClient(chainId);
-        var contractHandler = web3.Eth.GetContractHandler(contractAddress);
-        var isTransmit = await contractHandler
-            .QueryDeserializingToObjectAsync<IsReceiptRecordedFunctionMessage, IsReceiptRecordedDto>(
-                new IsReceiptRecordedFunctionMessage
-                {
-                    ReceiptHash = ByteArrayHelper.HexStringToByteArray(receiptHash)
-                });
-
-        return isTransmit.IsReceiptRecorded;
-    }
-
-    public Task<string> GetSwapIdByTokenAsync(string chainId, string contractAddress, string fromChainId, string symbol)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<string> SwapTokenAsync(string chainId, string contractAddress, string privateKey, string swapId,
-        string receiptId, string originAmount,
-        string receiverAddress)
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task<DailyLimitDto> GetDailyLimitAsync(string chainId, string contractAddress, Guid tokenId,
+    public async Task<DailyLimitDto> GetReceiptDailyLimitAsync(string chainId, string contractAddress, Guid tokenId,
         string targetChainId)
     {
         var token = await _tokenAppService.GetAsync(tokenId);
@@ -218,6 +46,31 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
                     (decimal)((BigDecimal)receiptDailyLimit.DailyLimit / BigInteger.Pow(10, token.Decimals)),
                 CurrentDailyLimit = (decimal)((BigDecimal)receiptDailyLimit.CurrentTokenAmount /
                                               BigInteger.Pow(10, token.Decimals))
+            };
+        }
+
+        return new DailyLimitDto();
+    }
+    
+    public async Task<DailyLimitDto> GetSwapDailyLimitAsync(string chainId, string contractAddress, string swapId)
+    {
+        var web3 = BlockchainClientFactory.GetClient(chainId);
+        var contractHandler = web3.Eth.GetContractHandler(contractAddress);
+        var swapDailyLimit = await contractHandler
+            .QueryDeserializingToObjectAsync<GetSwapDailyLimitFunctionMessage, SwapDailyLimitDto>(
+                new GetSwapDailyLimitFunctionMessage
+                {
+                    SwapId = ByteStringHelper.FromHexString(swapId).ToByteArray()
+                });
+        if (swapDailyLimit != null && swapDailyLimit.DailyLimit > 0)
+        {
+            return new DailyLimitDto
+            {
+                RefreshTime = swapDailyLimit.RefreshTime,
+                DefaultDailyLimit =
+                    (decimal)((BigDecimal)swapDailyLimit.DailyLimit / BigInteger.Pow(10, 18)),
+                CurrentDailyLimit = (decimal)((BigDecimal)swapDailyLimit.CurrentTokenAmount /
+                                              BigInteger.Pow(10, 18))
             };
         }
 
@@ -251,7 +104,7 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
                     TargetChainId = targetChainIds
                 });
         var tokenBuckets = receiptTokenBucket.TokenBuckets.Select((t, i) =>
-            GetTokenBuckets(t.TokenCapacity, t.Rate, tokenDecimals[i])).ToList();
+            GetTokenBuckets(t.TokenCapacity, t.Rate,t.IsEnabled,t.LastUpdatedTime,t.CurrentTokenAmount, tokenDecimals[i])).ToList();
         return tokenBuckets;
     }
 
@@ -281,7 +134,7 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
                     FromChainId = fromChainIds
                 });
         var tokenBuckets = swapTokenBucket.SwapTokenBuckets.Select((t, i) =>
-            GetTokenBuckets(t.TokenCapacity, t.Rate, tokenDecimals[i])).ToList();
+            GetTokenBuckets(t.TokenCapacity, t.Rate,t.IsEnabled,t.LastUpdatedTime,t.CurrentTokenAmount, tokenDecimals[i])).ToList();
         return tokenBuckets;
     }
 
@@ -308,7 +161,7 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
         return result;
     }
 
-    private TokenBucketDto GetTokenBuckets(BigInteger capacity, BigInteger rate, int tokenDecimal)
+    private TokenBucketDto GetTokenBuckets(BigInteger capacity, BigInteger rate, bool isEnabled,long lastUpdatedTime, BigInteger currentTokenAmount,int tokenDecimal)
     {
         if (capacity == 0 || rate == 0)
         {
@@ -317,13 +170,17 @@ public class EvmBridgeContractProvider : EvmClientProvider, IBridgeContractProvi
 
         var tokenCapacity = (decimal)(new BigDecimal(capacity) / BigInteger.Pow(10, tokenDecimal));
         var refillRate = (decimal)(new BigDecimal(rate) / BigInteger.Pow(10, tokenDecimal));
+        var currentAmount = (decimal)(new BigDecimal(currentTokenAmount) / BigInteger.Pow(10, tokenDecimal));
         var maximumTimeConsumed =
             (int)Math.Ceiling(tokenCapacity / refillRate / CrossChainServerConsts.DefaultRateLimitSeconds);
         return new TokenBucketDto
         {
             Capacity = tokenCapacity,
             RefillRate = refillRate,
-            MaximumTimeConsumed = maximumTimeConsumed
+            MaximumTimeConsumed = maximumTimeConsumed,
+            CurrentTokenAmount = currentAmount,
+            IsEnabled = isEnabled,
+            LastUpdatedTime = lastUpdatedTime
         };
     }
 }

@@ -16,4 +16,5 @@ public class CrossChainTransferInput
     public string ReceiptId { get; set; }
     // For ton trace
     public string TraceId { get; set; }
+    public ReceiptStatus TransferStatus { get; set; }
 }
