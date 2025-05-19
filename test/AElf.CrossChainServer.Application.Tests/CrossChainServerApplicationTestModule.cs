@@ -5,6 +5,8 @@ using AElf.CrossChainServer.Contracts.Bridge;
 using AElf.CrossChainServer.CrossChain;
 using AElf.CrossChainServer.EntityHandler.Core;
 using AElf.CrossChainServer.Indexer;
+using AElf.CrossChainServer.TokenAccess;
+using AElf.CrossChainServer.TokenPool;
 using AElf.CrossChainServer.Tokens;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -22,14 +24,21 @@ public class CrossChainServerApplicationTestModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         context.Services.RemoveAll<IBlockchainClientProvider>();
+        context.Services.RemoveAll<IScanProvider>();
 
         context.Services.AddTransient<IBlockchainClientProvider, MockAElfClientProvider>();
         context.Services.AddTransient<IBlockchainClientProvider, MockEvmClientProvider>();
         context.Services.AddTransient<ICheckTransferProvider, MockCheckTransferProvider>();
         context.Services.AddTransient<IAetherLinkProvider, MockAetherLinkProvider>();
         context.Services.AddTransient<IIndexerAppService, MockIndexerAppService>();
-        
+        context.Services.AddTransient<ITokenLiquidityMonitorProvider, MockTokenLiquidityMonitorProvider>();
         context.Services.AddTransient<IBlockchainClientProvider, TonClientProvider>();
+        context.Services.AddTransient<IScanProvider, MockScanProvider>();
+        context.Services.AddTransient<IAggregatePriceProvider, MockAggregatePriceProvider>();
+        context.Services.AddTransient<IAwakenProvider, MockAwakenProvider>();
+        context.Services.AddTransient<ILarkRobotNotifyProvider, MockLarkProvider>();
+        context.Services.AddTransient<ITokenImageProvider, MockTokenImageProvider>();
+        context.Services.AddTransient<ITokenInvokeProvider, MockTokenInvokeProvider>();
         
         Configure<ChainApiOptions>(o =>
         {
@@ -70,7 +79,8 @@ public class CrossChainServerApplicationTestModule : AbpModule
             o.Mapping = new Dictionary<string, string>
             {
                 { "CrossChainServerClient", "http://192.168.67.84:8083/AElfIndexer_DApp/CrossChainServerIndexerCASchema/graphql" },
-                { "CrossChainClient", "http://192.168.67.84:8083/AElfIndexer_DApp/CrossChainIndexerCASchema/graphql" }
+                { "CrossChainClient", "http://192.168.67.84:8083/AElfIndexer_DApp/CrossChainIndexerCASchema/graphql" },
+                { "ScanClient", "http://localhost:8080/graphql" }
             };
         });
     }
