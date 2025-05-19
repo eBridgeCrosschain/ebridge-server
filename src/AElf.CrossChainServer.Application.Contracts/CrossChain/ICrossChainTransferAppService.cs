@@ -16,7 +16,6 @@ public interface ICrossChainTransferAppService
     Task DeleteIndexAsync(Guid id);
     Task UpdateReceiveTransactionAsync();
     Task AutoReceiveAsync();
-    Task CheckReceiveTransactionAsync();
     Task CheckTransferTransactionConfirmedAsync(string chainId);
     Task CheckReceiveTransactionConfirmedAsync(string chainId);
     Task CheckEvmTransferTransactionConfirmedAsync(string chainId);

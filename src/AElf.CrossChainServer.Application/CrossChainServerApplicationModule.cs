@@ -51,7 +51,6 @@ public class CrossChainServerApplicationModule : AbpModule
         Configure<TokenContractOptions>(configuration.GetSection("TokenContract"));
         Configure<CrossChainContractOptions>(configuration.GetSection("CrossChainContract"));
         Configure<TokenSymbolMappingOptions>(configuration.GetSection("TokenSymbolMapping"));
-        Configure<CrossChainOptions>(configuration.GetSection("CrossChain"));
         Configure<GraphQLClientOptions>(configuration.GetSection("GraphQLClients"));
         Configure<CrossChainLimitsOptions>(configuration.GetSection("CrossChainLimits"));
         Configure<AutoReceiveConfigOptions>(configuration.GetSection("AutoReceiveConfig"));

@@ -673,70 +673,6 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
         }
     }
 
-    public async Task CheckReceiveTransactionAsync()
-    {
-        Logger.LogInformation("Start to check receive transaction.");
-        var page = 0;
-        var toUpdate = new List<CrossChainTransfer>();
-        var crossChainTransfers = await GetHomogeneousToCheckReceivedTransactionAsync(page);
-        Logger.LogInformation("Check receive transaction. Count:{count}", crossChainTransfers.Count);
-        while (crossChainTransfers.Count != 0)
-        {
-            foreach (var transfer in crossChainTransfers)
-            {
-                Logger.LogInformation("Check if the transaction has been received. TransferTransactionId:{id}",
-                    transfer.TransferTransactionId);
-                var chain = await _chainAppService.GetAsync(transfer.ToChainId);
-                var (success, crossChainTransferInfo) =
-                    await _indexerAppService.GetPendingTransactionAsync(
-                        ChainHelper.ConvertChainIdToBase58(chain.AElfChainId),
-                        string.IsNullOrWhiteSpace(transfer.InlineTransferTransactionId)
-                            ? transfer.TransferTransactionId
-                            : transfer.InlineTransferTransactionId);
-                if (!success)
-                {
-                    continue;
-                }
-
-                if (crossChainTransferInfo == null)
-                {
-                    Logger.LogInformation("Transaction not exist. TransferTransactionId:{id}",
-                        transfer.TransferTransactionId);
-                    continue;
-                }
-
-                if (crossChainTransferInfo.ReceiveTransactionId == null)
-                {
-                    Logger.LogInformation("Transaction was not received. TransferTransactionId:{id}",
-                        transfer.TransferTransactionId);
-                    continue;
-                }
-
-                Logger.LogInformation("Transaction exist. TransferTransactionId:{id},receiveTransactionId:{receiveId}",
-                    transfer.TransferTransactionId, crossChainTransferInfo.ReceiveTransactionId);
-                var receiveToken = await _tokenAppService.GetAsync(new GetTokenInput
-                {
-                    ChainId = transfer.ToChainId,
-                    Symbol = crossChainTransferInfo.ReceiveTokenSymbol
-                });
-                transfer.ReceiveTokenId = receiveToken.Id;
-                transfer.ReceiveTransactionId = crossChainTransferInfo.ReceiveTransactionId;
-                transfer.ReceiveTime = crossChainTransferInfo.ReceiveTime;
-                transfer.ReceiveAmount = crossChainTransferInfo.ReceiveAmount;
-                transfer.Status = CrossChainStatus.Received;
-                toUpdate.Add(transfer);
-            }
-
-            page++;
-            crossChainTransfers = await GetHomogeneousToCheckReceivedTransactionAsync(page);
-        }
-
-        if (toUpdate.Count > 0)
-        {
-            await _crossChainTransferRepository.UpdateManyAsync(toUpdate);
-        }
-    }
-
     public async Task CheckTransferTransactionConfirmedAsync(string chainId)
     {
         Log.Information(
@@ -1127,20 +1063,6 @@ public partial class CrossChainTransferAppService : CrossChainServerAppService, 
                         o.ReceiveBlockHeight > 0 &&
                         o.ReceiveBlockHeight <= lib)
             .OrderBy(o => o.ReceiveTime)
-            .Skip(PageCount * page)
-            .Take(PageCount));
-        await uow.CompleteAsync();
-        return crossChainTransfers;
-    }
-
-    private async Task<List<CrossChainTransfer>> GetHomogeneousToCheckReceivedTransactionAsync(int page)
-    {
-        using var uow = _unitOfWorkManager.Begin();
-        var q = await _crossChainTransferRepository.GetQueryableAsync();
-        var crossChainTransfers = await AsyncExecuter.ToListAsync(q
-            .Where(o => o.Progress == CrossChainServerConsts.FullOfTheProgress &&
-                        o.Status == CrossChainStatus.Indexed && o.Type == CrossChainType.Homogeneous)
-            .OrderBy(o => o.ProgressUpdateTime)
             .Skip(PageCount * page)
             .Take(PageCount));
         await uow.CompleteAsync();

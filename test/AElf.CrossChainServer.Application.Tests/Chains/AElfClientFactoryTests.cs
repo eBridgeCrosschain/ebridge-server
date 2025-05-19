@@ -16,10 +16,8 @@ public class AElfClientFactoryTests : CrossChainServerApplicationTestBase
     [Fact]
     public void GetClientTest()
     {
-        var client = _aelfClientFactory.GetClient("MainChain_AELF");
-        client.ShouldNotBeNull();
         
-        client = _aelfClientFactory.GetClient("MainChain_AELF");
+        var client = _aelfClientFactory.GetClient("MainChain_AELF");
         client.ShouldNotBeNull();
     }
 }

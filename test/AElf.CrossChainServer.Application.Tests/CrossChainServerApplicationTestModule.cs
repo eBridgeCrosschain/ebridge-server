@@ -4,6 +4,7 @@ using AElf.CrossChainServer.Chains.Ton;
 using AElf.CrossChainServer.Contracts.Bridge;
 using AElf.CrossChainServer.CrossChain;
 using AElf.CrossChainServer.EntityHandler.Core;
+using AElf.CrossChainServer.Indexer;
 using AElf.CrossChainServer.Tokens;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -26,6 +27,7 @@ public class CrossChainServerApplicationTestModule : AbpModule
         context.Services.AddTransient<IBlockchainClientProvider, MockEvmClientProvider>();
         context.Services.AddTransient<ICheckTransferProvider, MockCheckTransferProvider>();
         context.Services.AddTransient<IAetherLinkProvider, MockAetherLinkProvider>();
+        context.Services.AddTransient<IIndexerAppService, MockIndexerAppService>();
         
         context.Services.AddTransient<IBlockchainClientProvider, TonClientProvider>();
         
@@ -33,7 +35,7 @@ public class CrossChainServerApplicationTestModule : AbpModule
         {
             o.ChainNodeApis = new Dictionary<string, string>
             {
-                { "Ethereum", "https://kovan.infura.io/v3/" },
+                { "Ethereum", "https://ethereum-sepolia-rpc.publicnode.com" },
                 { "MainChain_AELF", "https://aelf.io" },
                 { "Ton", "https://toncenter.com/api/v3/" }
             };
