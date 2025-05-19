@@ -11,7 +11,6 @@ public static class CrossChainServerConsts
     public const string AElfMainChainId = "MainChain_AELF";
     public const string AElfMainChain = "AELF";
 
-    public const int MaxReportQueryTimes = 10;
     public const int HalfOfTheProgress = 50;
     public const int FullOfTheProgress = 100;
     public const int DefaultReportTimeoutHeightThreshold = 3600;

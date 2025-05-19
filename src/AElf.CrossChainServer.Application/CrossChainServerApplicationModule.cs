@@ -53,7 +53,6 @@ public class CrossChainServerApplicationModule : AbpModule
         Configure<TokenSymbolMappingOptions>(configuration.GetSection("TokenSymbolMapping"));
         Configure<CrossChainOptions>(configuration.GetSection("CrossChain"));
         Configure<GraphQLClientOptions>(configuration.GetSection("GraphQLClients"));
-        Configure<EvmTokensOptions>(configuration.GetSection("EvmTokens"));
         Configure<CrossChainLimitsOptions>(configuration.GetSection("CrossChainLimits"));
         Configure<AutoReceiveConfigOptions>(configuration.GetSection("AutoReceiveConfig"));
         Configure<SyncStateServiceOption>(configuration.GetSection("SyncStateService"));

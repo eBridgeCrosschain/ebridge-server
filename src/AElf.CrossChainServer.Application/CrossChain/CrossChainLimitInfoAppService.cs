@@ -18,7 +18,6 @@ namespace AElf.CrossChainServer.CrossChain;
 public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossChainLimitInfoAppService
 {
     private readonly IIndexerCrossChainLimitInfoService _indexerCrossChainLimitInfoService;
-    private readonly IOptionsMonitor<EvmTokensOptions> _evmTokensOptions;
     private readonly ITokenAppService _tokenAppService;
     private readonly IChainAppService _chainAppService;
     private readonly IOptionsMonitor<CrossChainLimitsOptions> _crossChainLimitsOptions;
@@ -27,13 +26,12 @@ public class CrossChainLimitInfoAppService : CrossChainServerAppService, ICrossC
 
     public CrossChainLimitInfoAppService(
         IIndexerCrossChainLimitInfoService indexerCrossChainLimitInfoService,
-        IOptionsMonitor<EvmTokensOptions> evmTokensOptions, ITokenAppService tokenAppService,
+        ITokenAppService tokenAppService,
         IChainAppService chainAppService,
         IOptionsMonitor<CrossChainLimitsOptions> crossChainLimitsOptions,
         ITokenSymbolMappingProvider tokenSymbolMappingProvider, ICrossChainLimitAppService crossChainLimitAppService)
     {
         _indexerCrossChainLimitInfoService = indexerCrossChainLimitInfoService;
-        _evmTokensOptions = evmTokensOptions;
         _tokenAppService = tokenAppService;
         _chainAppService = chainAppService;
         _crossChainLimitsOptions = crossChainLimitsOptions;

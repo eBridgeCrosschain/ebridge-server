@@ -22,7 +22,6 @@ public class CrossChainLimitInfoAppServiceTest
     private readonly IObjectMapper _mockObjectMapper;
     private readonly IIndexerCrossChainLimitInfoService _mockIndexerCrossChainLimitInfoService;
     private readonly IBridgeContractAppService _mockBridgeContractAppService;
-    private readonly IOptionsMonitor<EvmTokensOptions> _mockEvmTokensOptions;
     private readonly ITokenAppService _mockTokenAppService;
     private readonly IChainAppService _mockChainAppService;
     private readonly IOptionsMonitor<CrossChainLimitsOptions> _mockCrossChainLimitsOptions;
@@ -34,7 +33,6 @@ public class CrossChainLimitInfoAppServiceTest
         _mockObjectMapper = Substitute.For<IObjectMapper>();
         _mockIndexerCrossChainLimitInfoService = Substitute.For<IIndexerCrossChainLimitInfoService>();
         _mockBridgeContractAppService = Substitute.For<IBridgeContractAppService>();
-        _mockEvmTokensOptions = Substitute.For<IOptionsMonitor<EvmTokensOptions>>();
         _mockTokenAppService = Substitute.For<ITokenAppService>();
         _mockChainAppService = Substitute.For<IChainAppService>();
         _mockCrossChainLimitsOptions = Substitute.For<IOptionsMonitor<CrossChainLimitsOptions>>();
@@ -43,7 +41,6 @@ public class CrossChainLimitInfoAppServiceTest
 
         _service = new CrossChainLimitInfoAppService(
             _mockIndexerCrossChainLimitInfoService,
-            _mockEvmTokensOptions,
             _mockTokenAppService,
             _mockChainAppService,
             _mockCrossChainLimitsOptions,
@@ -91,7 +88,6 @@ public class CrossChainLimitInfoAppServiceTest
 
         _mockCrossChainLimitsOptions.CurrentValue.Returns(MockEthChainIdsOptions());
         
-        _mockEvmTokensOptions.CurrentValue.Returns(MockEvmTokensOptions());
 
         MockChainAppService();
 
@@ -142,31 +138,6 @@ public class CrossChainLimitInfoAppServiceTest
                 {"BSC-tDVV", 6},
                 {"AELF-BSC", 7},
                 {"tDVV-BSC", 8}
-            }
-        };
-        return evmTokensOptions;
-    }
-    
-    private EvmTokensOptions MockEvmTokensOptions()
-    {
-        var evmTokensOptions = new EvmTokensOptions
-        {
-            Tokens = new Dictionary<string, List<TokenInfo>>
-            {
-                {
-                    "Sepolia", new List<TokenInfo>
-                    {
-                        new TokenInfo { Address = "Sepolia_Address", TargetChainId = "MainChain_AELF" },
-                        new TokenInfo { Address = "Sepolia_Address", TargetChainId = "SideChain_tDVV" }
-                    }
-                },
-                {
-                    "BSCTest", new List<TokenInfo>
-                    {
-                        new TokenInfo { Address = "BSCTest_Address", TargetChainId = "MainChain_AELF" },
-                        new TokenInfo { Address = "BSCTest_Address", TargetChainId = "SideChain_tDVV" }
-                    }
-                }
             }
         };
         return evmTokensOptions;
