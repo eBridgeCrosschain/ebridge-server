@@ -9,7 +9,9 @@ namespace AElf.CrossChainServer.EntityHandler.Core
 {
     public class CrossChainTransferEntityHandler : ITransientDependency,
         IDistributedEventHandler<EntityCreatedEto<CrossChainTransferEto>>,
-        IDistributedEventHandler<EntityUpdatedEto<CrossChainTransferEto>>
+        IDistributedEventHandler<EntityUpdatedEto<CrossChainTransferEto>>,
+        IDistributedEventHandler<EntityDeletedEto<CrossChainTransferEto>>
+
     {
         private readonly ICrossChainTransferAppService _crossChainTransferAppService;
         private readonly IObjectMapper _objectMapper;
@@ -31,6 +33,11 @@ namespace AElf.CrossChainServer.EntityHandler.Core
         {
             var input = _objectMapper.Map<CrossChainTransferEto, UpdateCrossChainTransferIndexInput>(eventData.Entity);
             await _crossChainTransferAppService.UpdateIndexAsync(input);
+        }
+
+        public async Task HandleEventAsync(EntityDeletedEto<CrossChainTransferEto> eventData)
+        {
+            await _crossChainTransferAppService.DeleteIndexAsync(eventData.Entity.Id);
         }
     }
 }

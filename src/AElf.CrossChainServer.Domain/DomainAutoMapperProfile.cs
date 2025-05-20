@@ -13,8 +13,6 @@ namespace AElf.CrossChainServer
         {
             CreateMap<CrossChainTransfer, CrossChainTransferEto>();
             CreateMap<CrossChainIndexingInfo, CrossChainIndexingInfoEto>();
-            CreateMap<OracleQueryInfo, OracleQueryInfoEto>();
-            CreateMap<ReportInfo, ReportInfoEto>();
             CreateMap<CrossChainDailyLimit, CrossChainDailyLimitEto>();
             CreateMap<CrossChainRateLimit, CrossChainRateLimitEto>();
             CreateMap<PoolLiquidityInfo, PoolLiquidityEto>();

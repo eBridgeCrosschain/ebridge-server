@@ -44,6 +44,7 @@ public class EvmIndexerSyncWorker : AsyncPeriodicBackgroundWorkerBase
         {
             foreach (var provider in _evmSyncProviders)
             {
+                Log.Debug("Start to sync evm chain {ChainId} with {ProviderName}.", chain.Id, provider.GetType().Name);
                 await provider.ExecuteAsync(chain.Id);
             }
         }

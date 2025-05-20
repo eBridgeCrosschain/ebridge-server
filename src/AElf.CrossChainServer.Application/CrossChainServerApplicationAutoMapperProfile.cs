@@ -31,18 +31,6 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<AddCrossChainIndexingInfoIndexInput, CrossChainIndexingInfoIndex>();
         CreateMap<CrossChainIndexingInfoEto, AddCrossChainIndexingInfoIndexInput>();
 
-        CreateMap<CreateOracleQueryInfoInput, OracleQueryInfo>();
-        CreateMap<AddOracleQueryInfoIndexInput, OracleQueryInfoIndex>();
-        CreateMap<UpdateOracleQueryInfoIndexInput, OracleQueryInfoIndex>();
-        CreateMap<OracleQueryInfoEto, AddOracleQueryInfoIndexInput>();
-        CreateMap<OracleQueryInfoEto, UpdateOracleQueryInfoIndexInput>();
-
-        CreateMap<CreateReportInfoInput, ReportInfo>();
-        CreateMap<AddReportInfoIndexInput, ReportInfoIndex>();
-        CreateMap<UpdateReportInfoIndexInput, ReportInfoIndex>();
-        CreateMap<ReportInfoEto, AddReportInfoIndexInput>();
-        CreateMap<ReportInfoEto, UpdateReportInfoIndexInput>();
-
         CreateMap<CrossChainTransferInput, CrossChainTransfer>();
         CreateMap<CrossChainReceiveInput, CrossChainTransfer>();
 
@@ -58,8 +46,7 @@ public class CrossChainServerApplicationAutoMapperProfile : Profile
         CreateMap<CrossChainTransferIndex, CrossChainTransferStatusDto>();
         CreateMap<CrossChainTransferEto, AddCrossChainTransferIndexInput>();
         CreateMap<CrossChainTransferEto, UpdateCrossChainTransferIndexInput>();
-
-        CreateMap<BridgeContractSyncInfo, BridgeContractSyncInfoDto>();
+        
         CreateMap<TonIndexTransaction, TonTransactionDto>();
         CreateMap<TonBlockId, TonBlockIdDto>();
         CreateMap<TonMessage, TonMessageDto>();

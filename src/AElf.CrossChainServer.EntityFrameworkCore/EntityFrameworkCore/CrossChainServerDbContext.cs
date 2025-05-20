@@ -69,9 +69,6 @@ public class CrossChainServerDbContext :
     public DbSet<CrossChainTransfer> CrossChainTransfers { get; set; }
     public DbSet<WalletUserDto> WalletUsers { get; set; }
     public DbSet<AddressInfoDto> WalletUserAddressInfos { get; set; }
-    public DbSet<BridgeContractSyncInfo> BridgeContractSyncInfos { get; set; }
-    public DbSet<OracleQueryInfo> OracleQueryInfos { get; set; }
-    public DbSet<ReportInfo> ReportInfos { get; set; }
     public DbSet<Settings.Settings> Settings { get; set; }
     public DbSet<CrossChainDailyLimit> CrossChainDailyLimits { get; set; }
     public DbSet<CrossChainRateLimit> CrossChainRateLimits { get; set; }
@@ -147,27 +144,6 @@ public class CrossChainServerDbContext :
         builder.Entity<AddressInfoDto>(b =>
         {
             b.ToTable(CrossChainServerConsts.DbTablePrefix + "WalletUserAddressInfos", CrossChainServerConsts.DbSchema);
-            b.ConfigureByConvention();
-        });
-
-        builder.Entity<BridgeContractSyncInfo>(b =>
-        {
-            b.ToTable(CrossChainServerConsts.DbTablePrefix + "BridgeContractSyncInfos",
-                CrossChainServerConsts.DbSchema);
-            b.ConfigureByConvention();
-        });
-
-        builder.Entity<OracleQueryInfo>(b =>
-        {
-            b.ToTable(CrossChainServerConsts.DbTablePrefix + "OracleQueryInfos", CrossChainServerConsts.DbSchema);
-            b.HasIndex(o => new { o.ChainId, o.QueryId });
-            b.ConfigureByConvention();
-        });
-
-        builder.Entity<ReportInfo>(b =>
-        {
-            b.ToTable(CrossChainServerConsts.DbTablePrefix + "ReportInfos", CrossChainServerConsts.DbSchema);
-            b.HasIndex(o => new { o.ChainId, o.RoundId, o.Token, o.TargetChainId });
             b.ConfigureByConvention();
         });
 

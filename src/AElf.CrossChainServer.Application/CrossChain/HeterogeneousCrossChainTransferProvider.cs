@@ -18,32 +18,20 @@ namespace AElf.CrossChainServer.CrossChain;
 public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvider, ITransientDependency
 {
     private readonly IChainAppService _chainAppService;
-    private readonly IOracleQueryInfoAppService _oracleQueryInfoAppService;
-    private readonly IReportInfoAppService _reportInfoAppService;
-    private readonly ITokenRepository _tokenRepository;
-    private readonly ITokenSymbolMappingProvider _tokenSymbolMappingProvider;
-    private readonly IBridgeContractAppService _bridgeContractAppService;
     private readonly ICrossChainTransferRepository _crossChainTransferRepository;
     private readonly IAetherLinkProvider _aetherLinkProvider;
 
     public HeterogeneousCrossChainTransferProvider(IChainAppService chainAppService,
-        IOracleQueryInfoAppService oracleQueryInfoAppService, IReportInfoAppService reportInfoAppService,
-        ITokenRepository tokenRepository, ITokenSymbolMappingProvider tokenSymbolMappingProvider,
-        IBridgeContractAppService bridgeContractAppService, ICrossChainTransferRepository crossChainTransferRepository,
+        ICrossChainTransferRepository crossChainTransferRepository,
         IAetherLinkProvider aetherLinkProvider)
     {
         _chainAppService = chainAppService;
-        _oracleQueryInfoAppService = oracleQueryInfoAppService;
-        _reportInfoAppService = reportInfoAppService;
-        _tokenRepository = tokenRepository;
-        _tokenSymbolMappingProvider = tokenSymbolMappingProvider;
-        _bridgeContractAppService = bridgeContractAppService;
         _crossChainTransferRepository = crossChainTransferRepository;
         _aetherLinkProvider = aetherLinkProvider;
     }
 
     public CrossChainType CrossChainType { get; } = CrossChainType.Heterogeneous;
-    
+
     [UnitOfWork]
     public async Task<CrossChainTransfer> FindTransferAsync(string fromChainId, string toChainId,
         string transferTransactionId, string receiptId)
@@ -62,7 +50,8 @@ public class HeterogeneousCrossChainTransferProvider : ICrossChainTransferProvid
         {
             return 0;
         }
-        Log.Debug("Calculate cross chain progress {txId}",transfer.TransferTransactionId);
+
+        Log.Debug("Calculate cross chain progress {txId}", transfer.TransferTransactionId);
         return await _aetherLinkProvider.CalculateCrossChainProgressAsync(new AetherLinkCrossChainStatusInput
         {
             TransactionId = transfer.TransferTransactionId

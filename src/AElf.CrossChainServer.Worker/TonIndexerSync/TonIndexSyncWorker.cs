@@ -108,8 +108,8 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
                     switch (outMsg.Opcode)
                     {
                         case CrossChainServerConsts.TonReceivedOpCode:
-                            await ReceiveAsync(chainId, DateTimeHelper.FromUnixTimeSeconds(tx.Now), outMsg,
-                                txId);
+                            await ReceiveAsync(chainId, tx.McBlockSeqno, DateTimeHelper.FromUnixTimeSeconds(tx.Now),
+                                outMsg, txId);
                             break;
                         case CrossChainServerConsts.TonTransferredOpCode:
                             await TransferAsync(chainId, tx.McBlockSeqno, DateTimeHelper.FromUnixTimeSeconds(tx.Now),
@@ -188,11 +188,12 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
             FromChainId = chainId,
             ToChainId = toChain.Id,
             TransferBlockHeight = blockHeight,
-            TransferTokenId = token.Id
+            TransferTokenId = token.Id,
+            TransferStatus = ReceiptStatus.Confirmed
         });
     }
 
-    private async Task ReceiveAsync(string chainId, DateTime blockTime, TonMessageDto outMessage,
+    private async Task ReceiveAsync(string chainId, long blockHeight, DateTime blockTime, TonMessageDto outMessage,
         string txId)
     {
         Log.ForContext("chainId", chainId).Debug(
@@ -227,6 +228,8 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
             ReceiveAmount = (decimal)((BigDecimal)amount / BigInteger.Pow(10, token.Decimals)),
             ReceiveTime = blockTime,
             ReceiveTokenId = token.Id,
+            ReceiveStatus = ReceiptStatus.Confirmed,
+            ReceiveBlockHeight = blockHeight
         });
     }
 
@@ -351,5 +354,4 @@ public class TonIndexSyncWorker : AsyncPeriodicBackgroundWorkerBase
             Amount = (decimal)((BigDecimal)amount / BigInteger.Pow(10, token.Decimals))
         });
     }
-    
 }

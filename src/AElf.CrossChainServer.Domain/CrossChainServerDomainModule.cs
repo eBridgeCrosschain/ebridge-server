@@ -87,12 +87,6 @@ public class CrossChainServerDomainModule : AbpModule
             options.AutoEventSelectors.Add<CrossChainIndexingInfo>();
             options.EtoMappings.Add<CrossChainIndexingInfo, CrossChainIndexingInfoEto>();
 
-            options.AutoEventSelectors.Add<OracleQueryInfo>();
-            options.EtoMappings.Add<OracleQueryInfo, OracleQueryInfoEto>();
-
-            options.AutoEventSelectors.Add<ReportInfo>();
-            options.EtoMappings.Add<ReportInfo, ReportInfoEto>();
-
             options.AutoEventSelectors.Add<CrossChainDailyLimit>();
             options.EtoMappings.Add<CrossChainDailyLimit, CrossChainDailyLimitEto>();
             options.AutoEventSelectors.Add<CrossChainRateLimit>();

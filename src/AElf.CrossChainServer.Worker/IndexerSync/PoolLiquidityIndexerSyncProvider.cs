@@ -22,22 +22,29 @@ public class PoolLiquidityIndexerSyncProvider : IndexerSyncProviderBase
 
     public PoolLiquidityIndexerSyncProvider(IGraphQLClientFactory graphQlClientFactory, ISettingManager settingManager,
         IJsonSerializer jsonSerializer, IIndexerAppService indexerAppService, IChainAppService chainAppService,
-        IPoolLiquidityInfoAppService poolLiquidityInfoAppService, ITokenAppService tokenAppService, IOptionsSnapshot<EvmContractSyncOptions> evmContractSyncOptions) : base(
+        IPoolLiquidityInfoAppService poolLiquidityInfoAppService, ITokenAppService tokenAppService,
+        IOptionsSnapshot<EvmContractSyncOptions> evmContractSyncOptions) : base(
         graphQlClientFactory, settingManager, jsonSerializer, indexerAppService, chainAppService)
     {
         _poolLiquidityInfoAppService = poolLiquidityInfoAppService;
         _tokenAppService = tokenAppService;
         _evmContractSyncOptions = evmContractSyncOptions.Value;
     }
-    public override bool IsConfirmEnabled { get; set; } = false;
+
+    public override bool RequiresRealTime { get; set; } = false;
     protected override string SyncType { get; } = CrossChainServerSettings.PoolLiquidityIndexerSync;
 
-    protected override async Task<long> HandleDataAsync(string aelfChainId, long startHeight, long endHeight)
+    protected override async Task<long> HandleDataAsync(string aelfChainId, long startHeight, long endHeight,
+        bool isConfirmed)
     {
+        Log.Debug(
+            "Start to sync pool liquidity info {chainId} from {StartHeight} to {EndHeight}, isConfirmed:{isConfirmed}",
+            aelfChainId, startHeight, endHeight, isConfirmed);
         if (!_evmContractSyncOptions.Enabled)
         {
             return 0;
         }
+
         Log.ForContext("chainId", aelfChainId).Debug(
             "Start to sync pool liquidity info {chainId} from {StartHeight} to {EndHeight}",
             aelfChainId, startHeight, endHeight);

@@ -5,6 +5,7 @@ namespace AElf.CrossChainServer.CrossChain;
 
 public interface ICrossChainLimitAppService
 {
+    Task InitLimitAsync();
     Task SetCrossChainRateLimitAsync(SetCrossChainRateLimitInput input);
     Task ConsumeCrossChainRateLimitAsync(ConsumeCrossChainRateLimitInput input);
     Task SetCrossChainRateLimitIndexAsync(SetCrossChainRateLimitInput input);

@@ -38,7 +38,7 @@ public class EvmTokenPoolIndexerSyncProvider(
         Log.ForContext("chainId", chainId).Debug(
             "Start to sync pool liquidity info {chainId} from {StartHeight} to {EndHeight}",
             chainId, startHeight, endHeight);
-        var tokenPoolContractAddress = _evmContractSyncOptions.ContractAddresses[chainId].TokenPoolContract;
+        var tokenPoolContractAddress = _evmContractSyncOptions.IndexerInfos[chainId].TokenPoolContract;
         var logs = await GetContractLogsAsync(chainId, tokenPoolContractAddress, startHeight, endHeight);
         if (logs == null || logs.Logs.Count == 0)
         {

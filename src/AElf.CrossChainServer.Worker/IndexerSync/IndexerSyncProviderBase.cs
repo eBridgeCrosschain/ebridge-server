@@ -25,18 +25,30 @@ public abstract class IndexerSyncProviderBase : IIndexerSyncProvider, ITransient
     protected IndexerSyncProviderBase(IGraphQLClientFactory graphQlClientFactory, ISettingManager settingManager,
         IJsonSerializer jsonSerializer, IIndexerAppService indexerAppService, IChainAppService chainAppService)
     {
-        GraphQlClient = graphQlClientFactory.GetClient(GraphQLClientEnum.CrossChainServerClient);
+        GraphQlClient = graphQlClientFactory.GetClient(GraphQLClientEnum.CrossChainClient);
         SettingManager = settingManager;
         JsonSerializer = jsonSerializer;
         IndexerAppService = indexerAppService;
         ChainAppService = chainAppService;
     }
-    public virtual bool IsConfirmEnabled { get; set; } = true;
-    
-    public async Task ExecuteAsync(string chainId, int syncDelayHeight = 0, string typePrefix = null)
+
+    public virtual bool RequiresRealTime { get; set; } = true;
+
+    public async Task ExecuteAsync(string chainId, int syncDelayHeight = 0, string typePrefix = null,
+        bool isConfirmed = false)
     {
+        Log.Debug("Start to sync indexer data for chain {chainId},{prefix}", chainId, typePrefix);
         var syncHeight = await GetSyncHeightAsync(chainId, typePrefix);
-        var currentIndexHeight = await GetIndexBlockHeightAsync(chainId);
+        long currentIndexHeight;
+        if (isConfirmed)
+        {
+            currentIndexHeight = await GetLatestIndexConfirmedHeightAsync(chainId);
+        }
+        else
+        {
+            currentIndexHeight = await GetLatestIndexBestHeightAsync(chainId);
+        }
+
         var endHeight = Math.Min(syncHeight + MaxRequestCount, currentIndexHeight - syncDelayHeight);
         if (endHeight <= syncHeight)
         {
@@ -48,11 +60,12 @@ public abstract class IndexerSyncProviderBase : IIndexerSyncProvider, ITransient
         {
             return;
         }
+
         Log.ForContext("chainId", chainId).Debug("Start to sync chain {chainId} from {SyncHeight} to {EndHeight}",
             chainId, syncHeight + 1, endHeight);
 
         var height = await HandleDataAsync(ChainHelper.ConvertChainIdToBase58(chain.AElfChainId), syncHeight + 1,
-            endHeight);
+            endHeight,isConfirmed);
 
         await SetSyncHeightAsync(chainId, typePrefix, height);
     }
@@ -64,12 +77,18 @@ public abstract class IndexerSyncProviderBase : IIndexerSyncProvider, ITransient
         {
             return data.Data;
         }
+
         Log.Error("Query indexer failed. errors: {Errors}",
             string.Join(",", data.Errors.Select(e => e.Message).ToList()));
         throw new Exception("Query indexer failed. ");
     }
 
-    private async Task<long> GetIndexBlockHeightAsync(string chainId)
+    private async Task<long> GetLatestIndexBestHeightAsync(string chainId)
+    {
+        return await IndexerAppService.GetLatestIndexBestHeightAsync(chainId);
+    }
+
+    private async Task<long> GetLatestIndexConfirmedHeightAsync(string chainId)
     {
         return await IndexerAppService.GetLatestIndexHeightAsync(chainId);
     }
@@ -86,14 +105,14 @@ public abstract class IndexerSyncProviderBase : IIndexerSyncProvider, ITransient
         var settingKey = GetSettingKey(typePrefix);
         await SettingManager.SetAsync(chainId, settingKey, height.ToString());
     }
-    
+
     private string GetSettingKey(string typePrefix)
     {
-        return string.IsNullOrWhiteSpace(typePrefix)? SyncType : $"{typePrefix}-{SyncType}";
+        return string.IsNullOrWhiteSpace(typePrefix) ? SyncType : $"{typePrefix}-{SyncType}";
     }
 
     protected abstract string SyncType { get; }
 
-    protected abstract Task<long> HandleDataAsync(string aelfChainId, long startHeight, long endHeight);
+    protected abstract Task<long> HandleDataAsync(string aelfChainId, long startHeight, long endHeight,
+        bool isConfirmed);
 }
-

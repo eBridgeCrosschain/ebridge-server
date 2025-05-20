@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Nethereum.ABI" Version="4.29.0"/>
+        <PackageReference Include="Nethereum.BlockchainProcessing" Version="4.29.0" />
+        <PackageReference Include="Nethereum.Contracts" Version="4.29.0"/>
+        <PackageReference Include="Nethereum.JsonRpc.WebSocketClient" Version="4.29.0"/>
+        <PackageReference Include="Serilog" Version="4.2.0" />
+        <PackageReference Include="Volo.Abp.BackgroundJobs.RabbitMQ" Version="8.2.0" />
+        <PackageReference Include="Volo.Abp.Core" Version="8.2.0"/>
+        <PackageReference Include="Nethereum.RPC.Reactive" Version="4.29.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\AElf.CrossChainServer.Application.Contracts\AElf.CrossChainServer.Application.Contracts.csproj" />
+    </ItemGroup>
+
+</Project>
