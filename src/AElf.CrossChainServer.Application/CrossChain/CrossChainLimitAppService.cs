@@ -71,7 +71,7 @@ public class CrossChainLimitAppService : CrossChainServerAppService, ICrossChain
             await _settingManager.SetAsync(chain.Id,
                 GetSettingKey(CrossChainServerSettings.EvmRateLimitConsumedIndexerSync, null),
                 currentChainHeight.ToString());
-            // Step 2: Query the EVM contract to sync the liquidity of configured tokens - getBalance.  
+            // Step 2: Query the EVM contract to sync the liquidity of configured tokens.
             // receipt limit
             var limitsInfos = _limitSyncOptions.LimitInfos[chain.Id];
             var tokenIdList = new List<Guid>();
