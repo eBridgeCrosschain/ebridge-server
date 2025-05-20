@@ -1,16 +1,40 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace AElf.CrossChainServer.TokenAccess;
 
-public class MockAwakenProvider :IAwakenProvider
+public class MockAwakenProvider : IAwakenProvider
 {
-    public async Task<string> GetTokenLiquidityInUsdAsync(string symbol)
+    private readonly Dictionary<string, string> _tokenLiquidityMap = new Dictionary<string, string>();
+    private readonly Dictionary<string, decimal> _tokenPriceMap = new Dictionary<string, decimal>();
+
+    public void SetupTokenLiquidityInUsd(string symbol, string liquidityInUsd)
     {
-        return "1.5";
+        _tokenLiquidityMap[symbol] = liquidityInUsd;
     }
 
-    public async Task<decimal> GetTokenPriceInUsdAsync(string symbol)
+    public void SetupTokenPrice(string symbol, decimal priceInUsd)
     {
-        return 1.5m;
+        _tokenPriceMap[symbol] = priceInUsd;
+    }
+
+    public Task<string> GetTokenLiquidityInUsdAsync(string symbol)
+    {
+        if (_tokenLiquidityMap.TryGetValue(symbol, out var liquidity))
+        {
+            return Task.FromResult(liquidity);
+        }
+        
+        return Task.FromResult("0");
+    }
+
+    public Task<decimal> GetTokenPriceInUsdAsync(string symbol)
+    {
+        if (_tokenPriceMap.TryGetValue(symbol, out var price))
+        {
+            return Task.FromResult(price);
+        }
+        
+        return Task.FromResult(1.5m); // Default price
     }
 }

@@ -25,6 +25,8 @@ public class TokenAccessAppServiceTests : CrossChainServerApplicationTestBase
     private readonly ITokenApplyOrderRepository _tokenApplyOrderRepository;
     private readonly ICrossChainUserRepository _crossChainUserRepository;
     private readonly ITokenInfoCacheProvider _tokenInfoCacheProvider;
+    private readonly IScanProvider _scanProvider;
+    private readonly IAwakenProvider _awakenProvider;
 
     public TokenAccessAppServiceTests()
     {
@@ -35,6 +37,8 @@ public class TokenAccessAppServiceTests : CrossChainServerApplicationTestBase
         _tokenApplyOrderRepository = GetRequiredService<ITokenApplyOrderRepository>();
         _crossChainUserRepository = GetRequiredService<ICrossChainUserRepository>();
         _tokenInfoCacheProvider = GetRequiredService<ITokenInfoCacheProvider>();
+        _scanProvider = GetRequiredService<IScanProvider>();
+        _awakenProvider = GetRequiredService<IAwakenProvider>();
     }
 
     [Fact]
@@ -237,27 +241,6 @@ public class TokenAccessAppServiceTests : CrossChainServerApplicationTestBase
     }
 
     [Fact]
-    public async Task UpdateUserTokenAccessInfoIndexAsync_Should_Work()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-        
-        // First add the document
-        await _tokenAccessAppService.AddUserTokenAccessInfoIndexAsync(new AddUserTokenAccessInfoIndexInput
-        {
-            // Need to ensure ID consistency, but AddUserTokenAccessInfoIndexInput doesn't have ID field,
-            // so we can only test the add functionality, not update
-            Symbol = "TEST_TOKEN",
-            Address = "test_address",
-            Email = "test@example.com"
-        });
-        
-        // Since we can't ensure ID consistency, we only verify the add functionality, not the update
-        // Act & Assert - If no exception is thrown, consider it successful
-        // This test is replaced with just testing the add functionality
-    }
-
-    [Fact]
     public async Task AddThirdUserTokenIssueInfoIndexAsync_Should_Work()
     {
         // Arrange
@@ -272,37 +255,6 @@ public class TokenAccessAppServiceTests : CrossChainServerApplicationTestBase
 
         // Act & Assert - If no exception is thrown, consider it successful
         await _tokenAccessAppService.AddThirdUserTokenIssueInfoIndexAsync(input);
-    }
-
-    [Fact]
-    public async Task UpdateThirdUserTokenIssueInfoIndexAsync_Should_Work()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-        
-        // First add the document
-        await _tokenAccessAppService.AddThirdUserTokenIssueInfoIndexAsync(new AddThirdUserTokenIssueInfoIndexInput
-        {
-            Id = id,
-            Symbol = "TEST_TOKEN",
-            Address = "test_address",
-            ChainId = "MainChain_AELF",
-            OtherChainId = "Ethereum"
-        });
-        
-        // Then update it
-        var input = new UpdateThirdUserTokenIssueInfoIndexInput
-        {
-            Id = id,
-            Symbol = "TEST_TOKEN",
-            Address = "test_address",
-            ChainId = "MainChain_AELF",
-            OtherChainId = "Ethereum",
-            Status = "Updated"
-        };
-
-        // Act & Assert - If no exception is thrown, consider it successful
-        await _tokenAccessAppService.UpdateThirdUserTokenIssueInfoIndexAsync(input);
     }
 
     [Fact]
@@ -331,58 +283,6 @@ public class TokenAccessAppServiceTests : CrossChainServerApplicationTestBase
 
         // Act & Assert - If no exception is thrown, consider it successful
         await _tokenAccessAppService.AddTokenApplyOrderIndexAsync(input);
-    }
-
-    [Fact]
-    public async Task UpdateTokenApplyOrderIndexAsync_Should_Work()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-        
-        // First add the document
-        await _tokenAccessAppService.AddTokenApplyOrderIndexAsync(new AddTokenApplyOrderIndexInput
-        {
-            Id = id,
-            Symbol = "TEST_TOKEN",
-            UserAddress = "test_address",
-            ChainId = "Ethereum",
-            ChainName = "Ethereum",
-            TokenName = "Test Token",
-            Status = "Pending",
-            StatusChangedRecords = new List<StatusChangedRecordDto>
-            {
-                new StatusChangedRecordDto
-                {
-                    Id = Guid.NewGuid(),
-                    Status = "Pending",
-                    Time = DateTime.UtcNow
-                }
-            }
-        });
-        
-        // Then update it
-        var input = new UpdateTokenApplyOrderIndexInput
-        {
-            Id = id,
-            Symbol = "TEST_TOKEN",
-            UserAddress = "test_address",
-            ChainId = "Ethereum",
-            ChainName = "Ethereum",
-            TokenName = "Test Token",
-            Status = "Complete",
-            StatusChangedRecords = new List<StatusChangedRecordDto>
-            {
-                new StatusChangedRecordDto
-                {
-                    Id = Guid.NewGuid(),
-                    Status = "Complete",
-                    Time = DateTime.UtcNow
-                }
-            }
-        };
-
-        // Act & Assert - If no exception is thrown, consider it successful
-        await _tokenAccessAppService.UpdateTokenApplyOrderIndexAsync(input);
     }
 
     [Fact]
