@@ -24,31 +24,6 @@ namespace AElf.CrossChainServer.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
-            modelBuilder.Entity("AElf.CrossChainServer.BridgeContract.BridgeContractSyncInfo", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("ChainId")
-                        .HasColumnType("longtext");
-
-                    b.Property<long>("SyncIndex")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("TargetChainId")
-                        .HasColumnType("longtext");
-
-                    b.Property<Guid>("TokenId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AppBridgeContractSyncInfos", (string)null);
-                });
-
             modelBuilder.Entity("AElf.CrossChainServer.Chains.Chain", b =>
                 {
                     b.Property<string>("Id")
@@ -213,6 +188,12 @@ namespace AElf.CrossChainServer.Migrations
                     b.Property<decimal>("ReceiveAmount")
                         .HasColumnType("decimal(65,30)");
 
+                    b.Property<long>("ReceiveBlockHeight")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("ReceiveStatus")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("ReceiveTime")
                         .HasColumnType("datetime(6)");
 
@@ -243,8 +224,8 @@ namespace AElf.CrossChainServer.Migrations
                     b.Property<long>("TransferBlockHeight")
                         .HasColumnType("bigint");
 
-                    b.Property<bool>("TransferNeedToBeApproved")
-                        .HasColumnType("tinyint(1)");
+                    b.Property<int>("TransferStatus")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("TransferTime")
                         .HasColumnType("datetime(6)");
@@ -270,84 +251,6 @@ namespace AElf.CrossChainServer.Migrations
                         .IsUnique();
 
                     b.ToTable("AppCrossChainTransfers", (string)null);
-                });
-
-            modelBuilder.Entity("AElf.CrossChainServer.CrossChain.OracleQueryInfo", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("ChainId")
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<long>("LastUpdateHeight")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Option")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("QueryId")
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<int>("Step")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ChainId", "QueryId");
-
-                    b.ToTable("AppOracleQueryInfos", (string)null);
-                });
-
-            modelBuilder.Entity("AElf.CrossChainServer.CrossChain.ReportInfo", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("ChainId")
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<long>("LastUpdateHeight")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("QueryTimes")
-                        .HasColumnType("int");
-
-                    b.Property<string>("QueryTransactionId")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("ReceiptHash")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("ReceiptId")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("ReceiptInfo")
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("ResendTimes")
-                        .HasColumnType("int");
-
-                    b.Property<long>("RoundId")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("Step")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TargetChainId")
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<string>("Token")
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<long>("TransmitHeight")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ChainId", "RoundId", "Token", "TargetChainId");
-
-                    b.ToTable("AppReportInfos", (string)null);
                 });
 
             modelBuilder.Entity("AElf.CrossChainServer.CrossChain.WalletUserDto", b =>

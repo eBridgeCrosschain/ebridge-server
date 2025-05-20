@@ -29,14 +29,27 @@ public class MockEvmClientProvider : IBlockchainClientProvider
         throw new System.NotImplementedException();
     }
 
-    public Task<ChainStatusDto> GetChainStatusAsync(string chainId)
+    public async Task<ChainStatusDto> GetChainStatusAsync(string chainId)
     {
-        throw new System.NotImplementedException();
+        return new ChainStatusDto
+        {
+            ChainId = chainId,
+            BlockHeight = 105,
+            ConfirmedBlockHeight = 100
+        };
     }
 
     public Task<TransactionResultDto> GetTransactionResultAsync(string chainId, string transactionId)
     {
-        throw new System.NotImplementedException();
+        return Task.FromResult(new TransactionResultDto
+        {
+            ChainId = chainId,
+            BlockHeight = 100,
+            Transaction = new TransactionDto(),
+            BlockHash = "BlockHash",
+            IsFailed = false,
+            IsMined = true
+        });
     }
 
     public Task<MerklePathDto> GetMerklePathAsync(string chainId, string txId)
