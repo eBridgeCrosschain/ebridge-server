@@ -33,6 +33,7 @@
                       **/src/AElf.CrossChainServer.Domain/Data/**/*.cs,
                       **/src/AElf.CrossChainServer.Domain/OpenIddict/*.cs,
                       **/src/AElf.CrossChainServer.Domain/Chains/ChainDataSeedContributor.cs,
+                      **/src/AElf.CrossChainServer.Domain.Shared/*.cs,
                       **/src/AElf.CrossChainServer.EntityFrameworkCore/EntityFrameworkCore/CrossChainServerDbContextFactory.cs,
                       **/src/AElf.CrossChainServer.EntityFrameworkCore/EntityFrameworkCore/EntityFrameworkCoreCrossChainServerDbSchemaMigrator.cs,
                       **/src/AElf.CrossChainServer.Application/HttpClient/*.cs</ExcludeByFile>
